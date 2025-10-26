@@ -2,7 +2,6 @@ package selflearn
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"go.uber.org/zap"
@@ -177,6 +176,21 @@ func (e *Engine) UpdateConfig(config CollectionConfig) {
 // GetConfig returns the current engine configuration
 func (e *Engine) GetConfig() CollectionConfig {
 	return e.config
+}
+
+// GetInsights returns insights by type with optional filtering
+func (e *Engine) GetInsights(ctx context.Context, insightType InsightType, limit int) ([]Insight, error) {
+	return e.storage.GetInsights(ctx, insightType, limit)
+}
+
+// GetInsightsByPriority returns insights filtered by priority
+func (e *Engine) GetInsightsByPriority(ctx context.Context, priority Priority, limit int) ([]Insight, error) {
+	return e.storage.GetInsightsByPriority(ctx, priority, limit)
+}
+
+// GetPatterns returns patterns by type
+func (e *Engine) GetPatterns(ctx context.Context, patternType PatternType, limit int) ([]Pattern, error) {
+	return e.storage.GetPatterns(ctx, patternType, limit)
 }
 
 // Close shuts down the learning engine
