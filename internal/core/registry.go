@@ -15,18 +15,45 @@ type Tool = types.Tool
 // ToolMetadata type alias for compatibility
 type ToolMetadata = types.ToolMetadata
 
-// ToolRegistry manages the collection of available tools
-type ToolRegistry struct {
-	mu     sync.RWMutex
-	tools  map[string]Tool
-	logger *zap.Logger
+// ToolRegistryEvent represents events in the tool registry
+type ToolRegistryEvent struct {
+	Type      ToolEventType `json:"type"`
+	ToolName  string        `json:"tool_name"`
+	Metadata  ToolMetadata  `json:"metadata"`
+	Timestamp time.Time     `json:"timestamp"`
 }
 
-// NewToolRegistry creates a new tool registry
+// ToolEventType represents the type of tool registry event
+type ToolEventType string
+
+const (
+	ToolEventAdded   ToolEventType = "tool_added"
+	ToolEventRemoved ToolEventType = "tool_removed"
+	ToolEventUpdated ToolEventType = "tool_updated"
+)
+
+// ToolRegistryEventHandler handles tool registry events
+type ToolRegistryEventHandler func(event ToolRegistryEvent)
+
+// ToolRegistry manages the collection of available tools with dynamic registration
+// It implements the types.ToolRegistry interface
+type ToolRegistry struct {
+	mu            sync.RWMutex
+	tools         map[string]Tool
+	versions      map[string]string // tool name -> version
+	sources       map[string]string // tool name -> source identifier
+	eventHandlers []ToolRegistryEventHandler
+	logger        *zap.Logger
+}
+
+// NewToolRegistry creates a new tool registry with dynamic capabilities
 func NewToolRegistry(logger *zap.Logger) *ToolRegistry {
 	registry := &ToolRegistry{
-		tools:  make(map[string]Tool),
-		logger: logger,
+		tools:         make(map[string]Tool),
+		versions:      make(map[string]string),
+		sources:       make(map[string]string),
+		eventHandlers: make([]ToolRegistryEventHandler, 0),
+		logger:        logger,
 	}
 
 	// Register built-in tools for iteration 0
@@ -35,8 +62,13 @@ func NewToolRegistry(logger *zap.Logger) *ToolRegistry {
 	return registry
 }
 
-// Register adds a tool to the registry
+// Register adds a tool to the registry with version and source tracking
 func (r *ToolRegistry) Register(tool Tool) error {
+	return r.RegisterWithSource(tool, "unknown", "")
+}
+
+// RegisterWithSource adds a tool to the registry with source information
+func (r *ToolRegistry) RegisterWithSource(tool Tool, sourceID, version string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -45,14 +77,119 @@ func (r *ToolRegistry) Register(tool Tool) error {
 		return fmt.Errorf("tool name cannot be empty")
 	}
 
+	eventType := ToolEventAdded
 	if _, exists := r.tools[name]; exists {
-		r.logger.Warn("Tool already exists, replacing", zap.String("tool", name))
+		eventType = ToolEventUpdated
+		r.logger.Warn("Tool already exists, updating", 
+			zap.String("tool", name),
+			zap.String("old_version", r.versions[name]),
+			zap.String("new_version", version))
 	}
 
 	r.tools[name] = tool
+	r.versions[name] = version
+	r.sources[name] = sourceID
+
 	r.logger.Info("Tool registered", 
 		zap.String("tool", name),
-		zap.String("description", tool.Description()))
+		zap.String("description", tool.Description()),
+		zap.String("version", version),
+		zap.String("source", sourceID))
+
+	// Emit event
+	event := ToolRegistryEvent{
+		Type:      eventType,
+		ToolName:  name,
+		Metadata:  tool.Metadata(),
+		Timestamp: time.Now(),
+	}
+	r.emitEvent(event)
+
+	return nil
+}
+
+// RegisterBatch adds multiple tools atomically
+func (r *ToolRegistry) RegisterBatch(tools []Tool, sourceID string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	// Validate all tools first
+	for _, tool := range tools {
+		if tool.Name() == "" {
+			return fmt.Errorf("tool name cannot be empty")
+		}
+	}
+
+	// Register all tools
+	events := make([]ToolRegistryEvent, 0, len(tools))
+	for _, tool := range tools {
+		name := tool.Name()
+		metadata := tool.Metadata()
+		
+		eventType := ToolEventAdded
+		if _, exists := r.tools[name]; exists {
+			eventType = ToolEventUpdated
+		}
+
+		r.tools[name] = tool
+		r.versions[name] = metadata.Version
+		r.sources[name] = sourceID
+
+		events = append(events, ToolRegistryEvent{
+			Type:      eventType,
+			ToolName:  name,
+			Metadata:  metadata,
+			Timestamp: time.Now(),
+		})
+	}
+
+	r.logger.Info("Batch tool registration completed",
+		zap.Int("count", len(tools)),
+		zap.String("source", sourceID))
+
+	// Emit all events
+	for _, event := range events {
+		r.emitEvent(event)
+	}
+
+	return nil
+}
+
+// UnregisterBySource removes all tools from a specific source
+func (r *ToolRegistry) UnregisterBySource(sourceID string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	var removedTools []string
+	for name, source := range r.sources {
+		if source == sourceID {
+			removedTools = append(removedTools, name)
+		}
+	}
+
+	for _, name := range removedTools {
+		tool := r.tools[name]
+		delete(r.tools, name)
+		delete(r.versions, name)
+		delete(r.sources, name)
+
+		r.logger.Info("Tool unregistered by source", 
+			zap.String("tool", name),
+			zap.String("source", sourceID))
+
+		// Emit event
+		event := ToolRegistryEvent{
+			Type:      ToolEventRemoved,
+			ToolName:  name,
+			Metadata:  tool.Metadata(),
+			Timestamp: time.Now(),
+		}
+		r.emitEvent(event)
+	}
+
+	r.logger.Info("Batch tool removal by source completed",
+		zap.Int("count", len(removedTools)),
+		zap.String("source", sourceID))
 
 	return nil
 }
@@ -62,12 +199,25 @@ func (r *ToolRegistry) Unregister(name string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if _, exists := r.tools[name]; !exists {
+	tool, exists := r.tools[name]
+	if !exists {
 		return fmt.Errorf("tool '%s' not found", name)
 	}
 
 	delete(r.tools, name)
+	delete(r.versions, name)
+	delete(r.sources, name)
+	
 	r.logger.Info("Tool unregistered", zap.String("tool", name))
+
+	// Emit event
+	event := ToolRegistryEvent{
+		Type:      ToolEventRemoved,
+		ToolName:  name,
+		Metadata:  tool.Metadata(),
+		Timestamp: time.Now(),
+	}
+	r.emitEvent(event)
 
 	return nil
 }
@@ -105,15 +255,131 @@ func (r *ToolRegistry) Count() int {
 	return len(r.tools)
 }
 
+// GetVersion returns the version of a specific tool
+func (r *ToolRegistry) GetVersion(name string) (string, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	version, exists := r.versions[name]
+	if !exists {
+		return "", fmt.Errorf("tool '%s' not found", name)
+	}
+	return version, nil
+}
+
+// GetSource returns the source of a specific tool
+func (r *ToolRegistry) GetSource(name string) (string, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	source, exists := r.sources[name]
+	if !exists {
+		return "", fmt.Errorf("tool '%s' not found", name)
+	}
+	return source, nil
+}
+
+// ListToolsBySource returns tools from a specific source
+func (r *ToolRegistry) ListToolsBySource(sourceID string) []ToolMetadata {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var tools []ToolMetadata
+	for name, source := range r.sources {
+		if source == sourceID {
+			if tool, exists := r.tools[name]; exists {
+				tools = append(tools, tool.Metadata())
+			}
+		}
+	}
+	return tools
+}
+
+// GetToolSources returns all unique source identifiers
+func (r *ToolRegistry) GetToolSources() []string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	sourceSet := make(map[string]bool)
+	for _, source := range r.sources {
+		sourceSet[source] = true
+	}
+
+	sources := make([]string, 0, len(sourceSet))
+	for source := range sourceSet {
+		sources = append(sources, source)
+	}
+	return sources
+}
+
+// AddEventHandler adds an event handler for tool registry changes
+func (r *ToolRegistry) AddEventHandler(handler ToolRegistryEventHandler) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.eventHandlers = append(r.eventHandlers, handler)
+}
+
+// RemoveEventHandler removes an event handler (note: this is a simple implementation)
+func (r *ToolRegistry) RemoveEventHandler(handler ToolRegistryEventHandler) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	// Note: In Go, function comparison is limited, so this is a basic implementation
+	// In a production system, you might want to use a different approach like handler IDs
+	for i, h := range r.eventHandlers {
+		if &h == &handler {
+			r.eventHandlers = append(r.eventHandlers[:i], r.eventHandlers[i+1:]...)
+			break
+		}
+	}
+}
+
+// emitEvent sends an event to all registered handlers
+func (r *ToolRegistry) emitEvent(event ToolRegistryEvent) {
+	// Don't hold the lock while calling handlers to avoid deadlocks
+	handlers := make([]ToolRegistryEventHandler, len(r.eventHandlers))
+	copy(handlers, r.eventHandlers)
+
+	for _, handler := range handlers {
+		go func(h ToolRegistryEventHandler, registry *ToolRegistry) {
+			defer func() {
+				if recovered := recover(); recovered != nil {
+					registry.logger.Error("Tool registry event handler panic", 
+						zap.String("event_type", string(event.Type)),
+						zap.String("tool_name", event.ToolName))
+				}
+			}()
+			h(event)
+		}(handler, r)
+	}
+}
+
+// GetRegistryStats returns statistics about the registry
+func (r *ToolRegistry) GetRegistryStats() map[string]interface{} {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	sourceStats := make(map[string]int)
+	for _, source := range r.sources {
+		sourceStats[source]++
+	}
+
+	return map[string]interface{}{
+		"total_tools":    len(r.tools),
+		"sources":        r.GetToolSources(),
+		"tools_by_source": sourceStats,
+		"event_handlers": len(r.eventHandlers),
+	}
+}
+
 // registerBuiltinTools adds some basic tools for iteration 0
 func (r *ToolRegistry) registerBuiltinTools() {
 	// Echo tool for testing
 	echoTool := &EchoTool{}
-	r.Register(echoTool)
+	r.RegisterWithSource(echoTool, "builtin", "1.0.0")
 
 	// Status tool
 	statusTool := &StatusTool{registry: r}
-	r.Register(statusTool)
+	r.RegisterWithSource(statusTool, "builtin", "1.0.0")
 }
 
 // EchoTool - simple tool for testing MCP functionality

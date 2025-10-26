@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aionmcp/aionmcp/pkg/agent"
+	agentpb "github.com/aionmcp/aionmcp/pkg/agent/proto"
 	"github.com/aionmcp/aionmcp/pkg/importer"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
@@ -23,6 +25,8 @@ type Server struct {
 	toolRegistry    *ToolRegistry
 	importerManager *importer.ImporterManager
 	fileWatcher     *importer.FileWatcher
+	agentServer     *agent.AgentServer
+	agentAPI        *agent.AgentAPI
 	shutdown        chan struct{}
 	wg              sync.WaitGroup
 }
@@ -46,6 +50,10 @@ func NewServer(logger *zap.Logger) (*Server, error) {
 		return nil, fmt.Errorf("failed to create file watcher: %w", err)
 	}
 
+	// Initialize agent server and API
+	agentServer := agent.NewAgentServer(logger, registry)
+	agentAPI := agent.NewAgentAPI(logger, registry, agentServer)
+
 	// Create HTTP server with Gin
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
@@ -65,16 +73,16 @@ func NewServer(logger *zap.Logger) (*Server, error) {
 	})
 
 	// Setup HTTP routes
-	setupHTTPRoutes(router, registry, importerManager, fileWatcher, logger)
+	setupHTTPRoutes(router, registry, importerManager, fileWatcher, agentAPI, logger)
 
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf(":%d", viper.GetInt("server.port")),
 		Handler: router,
 	}
 
-	// Create gRPC server
+	// Create gRPC server and register agent service
 	grpcServer := grpc.NewServer()
-	// TODO: Register gRPC services in iteration 4
+	agentpb.RegisterAgentServiceServer(grpcServer, agentServer)
 
 	return &Server{
 		logger:          logger,
@@ -83,6 +91,8 @@ func NewServer(logger *zap.Logger) (*Server, error) {
 		toolRegistry:    registry,
 		importerManager: importerManager,
 		fileWatcher:     fileWatcher,
+		agentServer:     agentServer,
+		agentAPI:        agentAPI,
 		shutdown:        make(chan struct{}),
 	}, nil
 }
@@ -146,7 +156,7 @@ func (s *Server) Run(ctx context.Context) error {
 }
 
 // setupHTTPRoutes configures HTTP API routes
-func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager *importer.ImporterManager, fileWatcher *importer.FileWatcher, logger *zap.Logger) {
+func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager *importer.ImporterManager, fileWatcher *importer.FileWatcher, agentAPI *agent.AgentAPI, logger *zap.Logger) {
 	api := router.Group("/api/v1")
 	
 	// Health check
@@ -155,9 +165,12 @@ func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager
 			"status":    "healthy",
 			"timestamp": time.Now().Unix(),
 			"version":   "0.1.0",
-			"iteration": "1",
+			"iteration": "4",
 		})
 	})
+
+	// Agent integration routes
+	agentAPI.RegisterRoutes(api)
 
 	// MCP endpoints
 	mcp := api.Group("/mcp")
