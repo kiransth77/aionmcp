@@ -1,3 +1,4 @@
+# Development files
 .vscode/**
 .vscode-test/**
 src/**
@@ -7,12 +8,26 @@ vsc-extension-quickstart.md
 **/tsconfig.json
 **/.eslintrc.json
 **/.eslintrc.js
-**/*.map
-**/*.ts
-!out/**/*.js
-!out/**/*.js.map
-!bin/**
-node_modules/**
 scripts/**
 .eslintcache
 *.vsix
+
+# Source maps and TypeScript
+**/*.map
+**/*.ts
+!out/**/*.js
+
+# Dependencies
+node_modules/**
+
+# Platform-specific binaries (windows only)
+bin/**
+!bin/aionmcp.exe
+
+# Documentation (minimal for package size)
+package-lock.json
+CHANGELOG.md
+
+# Media/resources
+media/**
+resources/**

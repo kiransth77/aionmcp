@@ -7,67 +7,41 @@ if (!fs.existsSync(binDir)) {
     fs.mkdirSync(binDir, { recursive: true });
 }
 
-// Source binary paths (from parent project)
-const parentBinDir = path.join(__dirname, '..', '..', 'bin');
-const platforms = {
-    'win32': 'aionmcp.exe',
-    'linux': 'aionmcp',
-    'darwin': 'aionmcp'
-};
+// Build optimized binary for current platform only
+console.log('Building optimized AionMCP binary for current platform...');
 
-console.log('Copying AionMCP binaries...');
+const { execSync } = require('child_process');
+const parentDir = path.join(__dirname, '..', '..');
 
-// Check if parent binaries exist
-if (!fs.existsSync(parentBinDir)) {
-    console.warn('Warning: Parent bin directory not found. Building AionMCP binary...');
+try {
+    process.chdir(parentDir);
+    const platform = process.platform;
+    const extension = platform === 'win32' ? '.exe' : '';
+    const outputPath = path.join('vscode-extension', 'bin', `aionmcp${extension}`);
     
-    // Build the binary
-    const { execSync } = require('child_process');
-    const parentDir = path.join(__dirname, '..', '..');
+    console.log(`Building optimized binary for ${platform}...`);
     
-    try {
-        // Build for current platform
-        process.chdir(parentDir);
-        const platform = process.platform;
-        const extension = platform === 'win32' ? '.exe' : '';
-        const outputPath = path.join('bin', `aionmcp${extension}`);
-        
-        console.log(`Building for ${platform}...`);
-        execSync(`go build -ldflags "-s -w" -o ${outputPath} cmd/server/main.go`, { stdio: 'inherit' });
-        
-        // Copy to extension bin directory
-        const sourcePath = path.join(parentDir, outputPath);
-        const targetPath = path.join(binDir, `aionmcp${extension}`);
-        
-        if (fs.existsSync(sourcePath)) {
-            fs.copyFileSync(sourcePath, targetPath);
-            fs.chmodSync(targetPath, 0o755); // Make executable
-            console.log(`✅ Copied binary: ${targetPath}`);
-        } else {
-            console.error(`❌ Binary not found: ${sourcePath}`);
-            process.exit(1);
-        }
-        
-    } catch (error) {
-        console.error('❌ Failed to build AionMCP binary:', error.message);
-        process.exit(1);
+    // Build with size optimizations: -s removes symbol table, -w removes debug info
+    execSync(`go build -ldflags="-s -w" -o ${outputPath} cmd/server/main.go`, { stdio: 'inherit' });
+    
+    // Make executable on Unix systems
+    if (platform !== 'win32') {
+        fs.chmodSync(path.join(__dirname, '..', 'bin', `aionmcp${extension}`), 0o755);
     }
-} else {
-    // Copy existing binaries
-    for (const [platform, filename] of Object.entries(platforms)) {
-        const sourcePath = path.join(parentBinDir, filename);
-        const targetPath = path.join(binDir, filename);
-        
-        if (fs.existsSync(sourcePath)) {
-            fs.copyFileSync(sourcePath, targetPath);
-            if (platform !== 'win32') {
-                fs.chmodSync(targetPath, 0o755); // Make executable on Unix systems
-            }
-            console.log(`✅ Copied ${platform} binary: ${targetPath}`);
-        } else {
-            console.log(`⚠️  Binary not found for ${platform}: ${sourcePath}`);
-        }
+    
+    console.log(`✅ Built optimized binary: ${outputPath}`);
+    
+    // Show file size
+    const binaryPath = path.join(__dirname, '..', 'bin', `aionmcp${extension}`);
+    if (fs.existsSync(binaryPath)) {
+        const stats = fs.statSync(binaryPath);
+        const sizeMB = (stats.size / (1024 * 1024)).toFixed(2);
+        console.log(`📦 Binary size: ${sizeMB} MB`);
     }
+    
+} catch (error) {
+    console.error('❌ Failed to build AionMCP binary:', error.message);
+    process.exit(1);
 }
 
-console.log('✅ Binary copy process completed!');
+console.log('✅ Optimized binary build completed!');

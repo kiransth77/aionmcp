@@ -166,7 +166,12 @@
         },
         "aionmcp.logLevel": {
           "type": "string",
-          "enum": ["debug", "info", "warn", "error"],
+          "enum": [
+            "debug",
+            "info",
+            "warn",
+            "error"
+          ],
           "default": "info",
           "description": "Log level for the AionMCP server"
         },
@@ -175,7 +180,10 @@
           "items": {
             "type": "string"
           },
-          "default": ["./examples/specs", "./specs"],
+          "default": [
+            "./examples/specs",
+            "./specs"
+          ],
           "description": "Directories to watch for API specifications"
         }
       }
