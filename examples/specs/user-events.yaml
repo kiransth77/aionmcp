@@ -1,0 +1,279 @@
+asyncapi: 2.6.0
+info:
+  title: User Events API
+  version: 1.0.0
+  description: |
+    An example AsyncAPI specification for user events in a social platform.
+    Demonstrates event-driven architecture with user registration, profile updates,
+    and activity notifications.
+  license:
+    name: MIT
+
+servers:
+  websocket:
+    url: ws://localhost:8080/events
+    protocol: ws
+    description: WebSocket server for real-time events
+  mqtt:
+    url: mqtt://localhost:1883
+    protocol: mqtt
+    description: MQTT broker for IoT and mobile clients
+
+defaultContentType: application/json
+
+channels:
+  user/register:
+    description: Channel for user registration events
+    publish:
+      operationId: publishUserRegister
+      summary: Publish user registration event
+      message:
+        $ref: '#/components/messages/UserRegistered'
+    subscribe:
+      operationId: subscribeUserRegister
+      summary: Subscribe to user registration events
+      message:
+        $ref: '#/components/messages/UserRegistered'
+
+  user/{userId}/profile:
+    description: Channel for user profile update events
+    parameters:
+      userId:
+        description: The user ID
+        schema:
+          type: string
+    publish:
+      operationId: publishProfileUpdate
+      summary: Publish profile update event
+      message:
+        $ref: '#/components/messages/ProfileUpdated'
+    subscribe:
+      operationId: subscribeProfileUpdate
+      summary: Subscribe to profile update events
+      message:
+        $ref: '#/components/messages/ProfileUpdated'
+
+  user/{userId}/activity:
+    description: Channel for user activity events
+    parameters:
+      userId:
+        description: The user ID
+        schema:
+          type: string
+    publish:
+      operationId: publishUserActivity
+      summary: Publish user activity event
+      message:
+        $ref: '#/components/messages/UserActivity'
+    subscribe:
+      operationId: subscribeUserActivity
+      summary: Subscribe to user activity events
+      message:
+        $ref: '#/components/messages/UserActivity'
+
+  notifications/global:
+    description: Channel for global notifications
+    subscribe:
+      operationId: subscribeGlobalNotifications
+      summary: Subscribe to global system notifications
+      message:
+        $ref: '#/components/messages/GlobalNotification'
+
+  system/health:
+    description: Channel for system health checks
+    publish:
+      operationId: publishHealthCheck
+      summary: Publish system health status
+      message:
+        $ref: '#/components/messages/HealthCheck'
+
+components:
+  messages:
+    UserRegistered:
+      name: UserRegistered
+      title: User Registration Event
+      summary: Event fired when a new user registers
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/UserRegisteredPayload'
+
+    ProfileUpdated:
+      name: ProfileUpdated
+      title: Profile Update Event
+      summary: Event fired when a user updates their profile
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProfileUpdatedPayload'
+
+    UserActivity:
+      name: UserActivity
+      title: User Activity Event
+      summary: Event fired when a user performs an activity
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/UserActivityPayload'
+
+    GlobalNotification:
+      name: GlobalNotification
+      title: Global Notification Event
+      summary: System-wide notification event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/GlobalNotificationPayload'
+
+    HealthCheck:
+      name: HealthCheck
+      title: System Health Check
+      summary: System health status event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/HealthCheckPayload'
+
+  schemas:
+    UserRegisteredPayload:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: Unique identifier for the user
+        username:
+          type: string
+          description: Username chosen by the user
+        email:
+          type: string
+          format: email
+          description: User's email address
+        registrationSource:
+          type: string
+          enum: [web, mobile, api]
+          description: Platform where user registered
+        timestamp:
+          type: string
+          format: date-time
+          description: When the registration occurred
+      required:
+        - userId
+        - username
+        - email
+        - timestamp
+
+    ProfileUpdatedPayload:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: User identifier
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of fields that were updated
+        previousValues:
+          type: object
+          description: Previous values of changed fields
+        newValues:
+          type: object
+          description: New values of changed fields
+        timestamp:
+          type: string
+          format: date-time
+          description: When the update occurred
+      required:
+        - userId
+        - changedFields
+        - timestamp
+
+    UserActivityPayload:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: User identifier
+        activityType:
+          type: string
+          enum: [login, logout, post_created, comment_added, like_given]
+          description: Type of activity performed
+        resourceId:
+          type: string
+          description: ID of the resource the activity relates to
+        metadata:
+          type: object
+          description: Additional activity-specific data
+        timestamp:
+          type: string
+          format: date-time
+          description: When the activity occurred
+        ipAddress:
+          type: string
+          description: IP address where activity originated
+      required:
+        - userId
+        - activityType
+        - timestamp
+
+    GlobalNotificationPayload:
+      type: object
+      properties:
+        notificationId:
+          type: string
+          description: Unique notification identifier
+        type:
+          type: string
+          enum: [maintenance, announcement, alert, update]
+          description: Type of notification
+        title:
+          type: string
+          description: Notification title
+        message:
+          type: string
+          description: Notification content
+        severity:
+          type: string
+          enum: [info, warning, error, critical]
+          description: Notification severity level
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the notification expires
+        timestamp:
+          type: string
+          format: date-time
+          description: When the notification was created
+      required:
+        - notificationId
+        - type
+        - title
+        - message
+        - timestamp
+
+    HealthCheckPayload:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          description: Overall system health status
+        services:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: [up, down, degraded]
+              responseTime:
+                type: number
+                description: Service response time in milliseconds
+              lastCheck:
+                type: string
+                format: date-time
+        uptime:
+          type: number
+          description: System uptime in seconds
+        timestamp:
+          type: string
+          format: date-time
+          description: When the health check was performed
+      required:
+        - status
+        - timestamp

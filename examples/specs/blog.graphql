@@ -1,0 +1,105 @@
+type Query {
+  # Get user information by ID
+  user(id: ID!): User
+  
+  # List all users with optional filtering
+  users(limit: Int = 10, offset: Int = 0, active: Boolean): [User]
+  
+  # Search posts by title or content
+  posts(search: String, authorId: ID, limit: Int = 20): [Post]
+  
+  # Get a specific post by ID
+  post(id: ID!): Post
+  
+  # Get current server stats
+  serverStats: ServerStats
+}
+
+type Mutation {
+  # Create a new user
+  createUser(input: CreateUserInput!): User
+  
+  # Update user information
+  updateUser(id: ID!, input: UpdateUserInput!): User
+  
+  # Delete a user
+  deleteUser(id: ID!): Boolean
+  
+  # Create a new post
+  createPost(input: CreatePostInput!): Post
+  
+  # Update an existing post
+  updatePost(id: ID!, input: UpdatePostInput!): Post
+  
+  # Delete a post
+  deletePost(id: ID!): Boolean
+  
+  # Add a comment to a post
+  addComment(postId: ID!, content: String!): Comment
+}
+
+type User {
+  id: ID!
+  username: String!
+  email: String!
+  fullName: String
+  active: Boolean!
+  createdAt: String!
+  posts: [Post]
+  commentCount: Int
+}
+
+type Post {
+  id: ID!
+  title: String!
+  content: String!
+  author: User!
+  createdAt: String!
+  updatedAt: String
+  published: Boolean!
+  comments: [Comment]
+  commentCount: Int
+}
+
+type Comment {
+  id: ID!
+  content: String!
+  author: User!
+  post: Post!
+  createdAt: String!
+}
+
+type ServerStats {
+  userCount: Int!
+  postCount: Int!
+  commentCount: Int!
+  uptime: String!
+  version: String!
+}
+
+input CreateUserInput {
+  username: String!
+  email: String!
+  fullName: String
+  active: Boolean = true
+}
+
+input UpdateUserInput {
+  username: String
+  email: String
+  fullName: String
+  active: Boolean
+}
+
+input CreatePostInput {
+  title: String!
+  content: String!
+  authorId: ID!
+  published: Boolean = false
+}
+
+input UpdatePostInput {
+  title: String
+  content: String
+  published: Boolean
+}
