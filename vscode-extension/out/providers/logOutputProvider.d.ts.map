@@ -1,0 +1,1 @@
+{"version":3,"file":"logOutputProvider.d.ts","sourceRoot":"","sources":["../../src/providers/logOutputProvider.ts"],"names":[],"mappings":"AAEA,qBAAa,iBAAiB;IAC1B,OAAO,CAAC,aAAa,CAAuB;;IAM5C,UAAU,CAAC,OAAO,EAAE,MAAM,GAAG,IAAI;IAKjC,MAAM,CAAC,OAAO,EAAE,MAAM,GAAG,IAAI;IAI7B,KAAK,IAAI,IAAI;IAIb,IAAI,IAAI,IAAI;IAIZ,IAAI,IAAI,IAAI;IAIZ,OAAO,IAAI,IAAI;CAGlB"}
