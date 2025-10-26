@@ -1,7 +1,6 @@
 package autodocs
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -60,12 +59,15 @@ func (h *APIHandler) GenerateDocument(c *gin.Context) {
 	}
 	
 	// Validate the request
-	if err := h.engine.ValidateRequest(request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid generation request",
-			"details": err.Error(),
-		})
-		return
+	engine, ok := h.engine.(*Engine)
+	if ok {
+		if err := engine.ValidateRequest(request); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":   "Invalid generation request",
+				"details": err.Error(),
+			})
+			return
+		}
 	}
 	
 	result, err := h.engine.Generate(request)

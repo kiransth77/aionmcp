@@ -247,8 +247,9 @@ func (r *ReadmeGenerator) extractPreservedSections(content string) map[string]st
 	}
 	
 	for _, section := range preserveSections {
-		// Use regex to extract section content
-		pattern := fmt.Sprintf(`(?i)## [^#]*%s[^#]*\n\n(.*?)(?=\n## |$)`, section)
+		// Use regex to extract section content  
+		// Match section header and capture content until next section or end
+		pattern := fmt.Sprintf(`(?i)## [^#]*%s[^#]*\n\n(.*?)(\n## |\z)`, section)
 		re := regexp.MustCompile(pattern)
 		
 		if match := re.FindStringSubmatch(content); len(match) > 1 {

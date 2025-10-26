@@ -2,7 +2,6 @@ package autodocs
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"os/exec"
 	"regexp"
