@@ -107,7 +107,7 @@ func (e *Engine) GetToolInsights(ctx context.Context, toolName string) ([]Insigh
 
 	var toolInsights []Insight
 	for _, insight := range insights {
-		if toolName, exists := insight.Metadata["tool_name"]; exists && toolName == toolName {
+		if toolNameFromMeta, exists := insight.Metadata["tool_name"]; exists && toolNameFromMeta == toolName {
 			toolInsights = append(toolInsights, insight)
 		}
 	}

@@ -146,7 +146,7 @@ func (c *Collector) classifyError(err error) ErrorType {
 
 	// Network-related errors
 	networkPatterns := []string{
-		"connection", "timeout", "network", "dns", "http", "tcp", "socket",
+		"connection", "network", "dns", "http", "tcp", "socket",
 		"refused", "unreachable", "reset", "broken pipe", "no route",
 	}
 	for _, pattern := range networkPatterns {
@@ -259,7 +259,10 @@ func (c *Collector) filterPII(data interface{}) interface{} {
 // generateID generates a unique ID for execution records
 func (c *Collector) generateID() string {
 	bytes := make([]byte, 8)
-	rand.Read(bytes)
+	if _, err := rand.Read(bytes); err != nil {
+		c.logger.Error("Failed to generate random ID", zap.Error(err))
+		return ""
+	}
 	return hex.EncodeToString(bytes)
 }
 
