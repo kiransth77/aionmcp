@@ -293,6 +293,9 @@ func (r *Reflector) generateConfigurationInsights(ctx context.Context) ([]Insigh
 // generateInsightID generates a unique ID for insights
 func (r *Reflector) generateInsightID() string {
 	bytes := make([]byte, 8)
-	rand.Read(bytes)
+	if _, err := rand.Read(bytes); err != nil {
+		zap.L().Error("failed to generate random bytes for insight ID", zap.Error(err))
+		return fmt.Sprintf("insight_fallback_%d", time.Now().UnixNano())
+	}
 	return "insight_" + hex.EncodeToString(bytes)
 }

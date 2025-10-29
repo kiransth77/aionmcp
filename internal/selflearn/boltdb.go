@@ -177,8 +177,8 @@ func (s *BoltStorage) GetExecutionsByTimeRange(ctx context.Context, start, end t
 				continue
 			}
 
-			// Double-check time range
-			if record.Timestamp.After(start) && record.Timestamp.Before(end) {
+			// Double-check time range (inclusive)
+			if !record.Timestamp.Before(start) && !record.Timestamp.After(end) {
 				records = append(records, record)
 				count++
 			}
