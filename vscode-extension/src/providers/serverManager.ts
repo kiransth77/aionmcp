@@ -58,7 +58,14 @@ export class ServerManager {
             throw new Error('AionMCP server path not configured');
         }
         
+        // Check if binary exists
+        const fs = require('fs');
+        if (!fs.existsSync(serverPath)) {
+            throw new Error(`AionMCP server binary not found at: ${serverPath}`);
+        }
+        
         this.outputChannel.appendLine(`Starting AionMCP server: ${serverPath}`);
+        this.outputChannel.appendLine(`Working directory: ${workspaceRoot}`);
         this.outputChannel.show();
         
         return new Promise((resolve, reject) => {
@@ -69,6 +76,8 @@ export class ServerManager {
                 AIONMCP_GRPC_PORT: this.config.get<number>('grpcPort', 50051).toString()
             };
             
+            this.outputChannel.appendLine(`Environment: HTTP_PORT=${env.AIONMCP_HTTP_PORT}, GRPC_PORT=${env.AIONMCP_GRPC_PORT}, LOG_LEVEL=${env.AIONMCP_LOG_LEVEL}`);
+            
             this.serverProcess = cp.spawn(serverPath, [], {
                 cwd: workspaceRoot,
                 env,
@@ -76,34 +85,41 @@ export class ServerManager {
             });
             
             this.serverProcess.stdout?.on('data', (data) => {
-                this.outputChannel.appendLine(data.toString());
+                this.outputChannel.appendLine(`[STDOUT] ${data.toString()}`);
             });
             
             this.serverProcess.stderr?.on('data', (data) => {
-                this.outputChannel.appendLine(`ERROR: ${data.toString()}`);
+                this.outputChannel.appendLine(`[STDERR] ${data.toString()}`);
             });
             
             this.serverProcess.on('error', (error) => {
-                this.outputChannel.appendLine(`Failed to start server: ${error.message}`);
+                this.outputChannel.appendLine(`[ERROR] Failed to start server: ${error.message}`);
                 this.isRunning = false;
                 this.stateChangeEmitter.fire(false);
-                reject(error);
+                reject(new Error(`Failed to start server: ${error.message}`));
             });
             
-            this.serverProcess.on('exit', (code) => {
-                this.outputChannel.appendLine(`Server exited with code: ${code}`);
+            this.serverProcess.on('exit', (code, signal) => {
+                this.outputChannel.appendLine(`[EXIT] Server exited with code: ${code}, signal: ${signal}`);
                 this.isRunning = false;
                 this.serverProcess = null;
                 this.stateChangeEmitter.fire(false);
+                
+                if (code !== 0 && code !== null) {
+                    reject(new Error(`Server exited with non-zero code: ${code}`));
+                }
             });
             
             // Wait for server to be ready
             this.waitForServer().then(() => {
                 this.isRunning = true;
                 this.stateChangeEmitter.fire(true);
-                this.outputChannel.appendLine('Server is ready and accepting connections');
+                this.outputChannel.appendLine('[SUCCESS] Server is ready and accepting connections');
                 resolve();
-            }).catch(reject);
+            }).catch((error) => {
+                this.outputChannel.appendLine(`[TIMEOUT] Server failed to start within timeout: ${error.message}`);
+                reject(error);
+            });
         });
     }
     
@@ -270,15 +286,19 @@ export class ServerManager {
     }
     
     private async waitForServer(maxRetries = 30, delayMs = 1000): Promise<void> {
+        this.outputChannel.appendLine(`[HEALTH] Waiting for server to be ready (${maxRetries} retries, ${delayMs}ms delay)...`);
+        
         for (let i = 0; i < maxRetries; i++) {
             try {
-                await axios.get(`http://localhost:${this.getServerPort()}/api/health`, {
+                const response = await axios.get(`http://localhost:${this.getServerPort()}/api/health`, {
                     timeout: 2000
                 });
+                this.outputChannel.appendLine(`[HEALTH] Server responded successfully: ${JSON.stringify(response.data)}`);
                 return; // Server is ready
-            } catch (error) {
+            } catch (error: any) {
+                this.outputChannel.appendLine(`[HEALTH] Attempt ${i + 1}/${maxRetries} failed: ${error.message}`);
                 if (i === maxRetries - 1) {
-                    throw new Error('Server failed to start within timeout period');
+                    throw new Error(`Server failed to start within timeout period (${maxRetries * delayMs}ms). Check server logs for details.`);
                 }
                 await new Promise(resolve => setTimeout(resolve, delayMs));
             }

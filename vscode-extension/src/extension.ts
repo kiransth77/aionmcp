@@ -15,6 +15,7 @@ let logOutputProvider: LogOutputProvider;
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('AionMCP extension is now active!');
+    vscode.window.showInformationMessage('AionMCP extension activated successfully!');
     
     // Initialize providers
     serverManager = new ServerManager(context);
@@ -70,39 +71,47 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 function registerCommands(context: vscode.ExtensionContext) {
+    console.log('Registering AionMCP commands...');
+    
     // Server management commands
-    context.subscriptions.push(
-        vscode.commands.registerCommand('aionmcp.startServer', async () => {
-            try {
-                await serverManager.startServer();
-                vscode.window.showInformationMessage('AionMCP server started successfully');
-            } catch (error) {
-                vscode.window.showErrorMessage(`Failed to start server: ${error}`);
-            }
-        })
-    );
+    const startServerCommand = vscode.commands.registerCommand('aionmcp.startServer', async () => {
+        console.log('aionmcp.startServer command executed');
+        try {
+            await serverManager.startServer();
+            vscode.window.showInformationMessage('AionMCP server started successfully');
+        } catch (error) {
+            console.error('Failed to start server:', error);
+            vscode.window.showErrorMessage(`Failed to start server: ${error}`);
+        }
+    });
+    context.subscriptions.push(startServerCommand);
+    console.log('Registered aionmcp.startServer command');
     
-    context.subscriptions.push(
-        vscode.commands.registerCommand('aionmcp.stopServer', async () => {
-            try {
-                await serverManager.stopServer();
-                vscode.window.showInformationMessage('AionMCP server stopped');
-            } catch (error) {
-                vscode.window.showErrorMessage(`Failed to stop server: ${error}`);
-            }
-        })
-    );
+    const stopServerCommand = vscode.commands.registerCommand('aionmcp.stopServer', async () => {
+        console.log('aionmcp.stopServer command executed');
+        try {
+            await serverManager.stopServer();
+            vscode.window.showInformationMessage('AionMCP server stopped');
+        } catch (error) {
+            console.error('Failed to stop server:', error);
+            vscode.window.showErrorMessage(`Failed to stop server: ${error}`);
+        }
+    });
+    context.subscriptions.push(stopServerCommand);
+    console.log('Registered aionmcp.stopServer command');
     
-    context.subscriptions.push(
-        vscode.commands.registerCommand('aionmcp.restartServer', async () => {
-            try {
-                await serverManager.restartServer();
-                vscode.window.showInformationMessage('AionMCP server restarted');
-            } catch (error) {
-                vscode.window.showErrorMessage(`Failed to restart server: ${error}`);
-            }
-        })
-    );
+    const restartServerCommand = vscode.commands.registerCommand('aionmcp.restartServer', async () => {
+        console.log('aionmcp.restartServer command executed');
+        try {
+            await serverManager.restartServer();
+            vscode.window.showInformationMessage('AionMCP server restarted');
+        } catch (error) {
+            console.error('Failed to restart server:', error);
+            vscode.window.showErrorMessage(`Failed to restart server: ${error}`);
+        }
+    });
+    context.subscriptions.push(restartServerCommand);
+    console.log('Registered aionmcp.restartServer command');
     
     // Tool management commands
     context.subscriptions.push(

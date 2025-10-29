@@ -3,14 +3,15 @@
   "displayName": "AionMCP - Autonomous MCP Server",
   "description": "Manage and interact with AionMCP server directly from VS Code",
   "version": "0.1.0",
-  "publisher": "aionmcp",
+  "publisher": "local-dev",
   "engines": {
     "vscode": "^1.85.0"
   },
   "categories": [
     "Other",
     "Testing",
-    "Debuggers"
+    "Debuggers",
+    "Extension Packs"
   ],
   "keywords": [
     "mcp",
@@ -27,6 +28,11 @@
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
+      {
+        "command": "aionmcp.testCommand",
+        "title": "Test Command",
+        "category": "AionMCP"
+      },
       {
         "command": "aionmcp.startServer",
         "title": "Start AionMCP Server",
