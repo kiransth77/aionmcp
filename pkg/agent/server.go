@@ -524,9 +524,6 @@ func (s *AgentServer) updateMetrics(session *AgentSession, toolName string, succ
 		session.Metrics.FailedInvocations++
 	}
 
-	if session.Metrics.ToolUsageCount[toolName] == 0 {
-		session.Metrics.ToolUsageCount[toolName] = 0
-	}
 	session.Metrics.ToolUsageCount[toolName]++
 }
 

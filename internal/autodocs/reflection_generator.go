@@ -253,7 +253,7 @@ func (r *ReflectionGenerator) generateDevelopmentActivity(content *strings.Build
 			commit.Author, commit.Date.Format("15:04")))
 		
 		if commit.ChangedFiles > 0 {
-			content.WriteString(fmt.Sprintf("  %d files, +%d/-%d lines\n", 
+			content.WriteString(fmt.Sprintf("  %d files, +%d -%d lines\n", 
 				commit.ChangedFiles, commit.Insertions, commit.Deletions))
 		}
 		content.WriteString("\n")
