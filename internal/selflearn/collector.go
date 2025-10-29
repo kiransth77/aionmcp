@@ -245,7 +245,12 @@ func (c *Collector) filterPII(data interface{}) interface{} {
 	}
 
 	// Try to maintain original data type if possible
-	switch reflect.TypeOf(data).Kind() {
+	typ := reflect.TypeOf(data)
+	if typ == nil {
+		// If data is a typed nil, return the filtered string representation
+		return dataStr
+	}
+	switch typ.Kind() {
 	case reflect.String:
 		return dataStr
 	case reflect.Map, reflect.Slice, reflect.Struct:

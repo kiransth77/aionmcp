@@ -162,12 +162,19 @@ func (s *BoltStorage) GetExecutionsByTimeRange(ctx context.Context, start, end t
 		count := 0
 
 		// Create key range for time-based search
-		startKey := []byte(fmt.Sprintf("%d", start.Unix()))
-		endKey := []byte(fmt.Sprintf("%d", end.Unix()))
+		startKey := []byte(fmt.Sprintf("%d_", start.Unix()))
+		endTimestamp := end.Unix()
 
 		for k, v := cursor.Seek(startKey); k != nil && count < limit; k, v = cursor.Next() {
+			// Parse timestamp from key (format: timestamp_id)
+			var keyTimestamp int64
+			if _, err := fmt.Sscanf(string(k), "%d_", &keyTimestamp); err != nil {
+				s.logger.Warn("Failed to parse timestamp from key", zap.String("key", string(k)))
+				continue
+			}
+
 			// Check if we've exceeded the end time
-			if string(k) > string(endKey) {
+			if keyTimestamp > endTimestamp {
 				break
 			}
 
@@ -233,6 +240,10 @@ func (s *BoltStorage) GetExecutionStats(ctx context.Context) (LearningStats, err
 					toolStat.SuccessRate = toolStat.SuccessRate * (float64(toolStat.ExecutionCount) - 1) / float64(toolStat.ExecutionCount)
 				}
 				toolStat.AverageLatency = time.Duration((int64(toolStat.AverageLatency)*(toolStat.ExecutionCount-1) + int64(record.Duration)) / toolStat.ExecutionCount)
+				// Track first and last used times
+				if record.Timestamp.Before(toolStat.FirstUsed) {
+					toolStat.FirstUsed = record.Timestamp
+				}
 				if record.Timestamp.After(toolStat.LastUsed) {
 					toolStat.LastUsed = record.Timestamp
 				}
@@ -246,6 +257,7 @@ func (s *BoltStorage) GetExecutionStats(ctx context.Context) (LearningStats, err
 					ExecutionCount: 1,
 					SuccessRate:    successRate,
 					AverageLatency: record.Duration,
+					FirstUsed:      record.Timestamp,
 					LastUsed:       record.Timestamp,
 				}
 			}
