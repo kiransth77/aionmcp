@@ -12,11 +12,26 @@ const (
 	maxHistoryEntries = 100
 )
 
+// EngineConfig holds configuration for the documentation engine
+type EngineConfig struct {
+	// WeekStartDay defines which day of the week is considered the start of the week
+	// for weekly scheduling. Default is time.Monday.
+	WeekStartDay time.Weekday
+}
+
+// DefaultEngineConfig returns the default engine configuration
+func DefaultEngineConfig() *EngineConfig {
+	return &EngineConfig{
+		WeekStartDay: time.Monday,
+	}
+}
+
 // Engine implements the DocumentEngine interface
 type Engine struct {
 	generators  map[DocumentType]Generator
 	dataSource  DataSource
 	projectRoot string
+	config      *EngineConfig
 	history     []GenerationResult
 	historyMu   sync.RWMutex
 	scheduledJobs map[string]*ScheduledJob
@@ -32,12 +47,22 @@ type ScheduledJob struct {
 	Active   bool
 }
 
-// NewEngine creates a new documentation engine
+// NewEngine creates a new documentation engine with default configuration
 func NewEngine(projectRoot string, dataSource DataSource) *Engine {
+	return NewEngineWithConfig(projectRoot, dataSource, DefaultEngineConfig())
+}
+
+// NewEngineWithConfig creates a new documentation engine with custom configuration
+func NewEngineWithConfig(projectRoot string, dataSource DataSource, config *EngineConfig) *Engine {
+	if config == nil {
+		config = DefaultEngineConfig()
+	}
+	
 	engine := &Engine{
 		generators:    make(map[DocumentType]Generator),
 		dataSource:    dataSource,
 		projectRoot:   projectRoot,
+		config:        config,
 		history:       make([]GenerationResult, 0),
 		scheduledJobs: make(map[string]*ScheduledJob),
 	}
@@ -445,14 +470,15 @@ func (e *Engine) parseSchedule(schedule string) (time.Time, error) {
 		tomorrow := now.AddDate(0, 0, 1)
 		return time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 0, 0, 0, 0, tomorrow.Location()), nil
 	case "weekly":
-		// Next week at midnight on Monday
-		daysUntilMonday := (8 - int(now.Weekday())) % 7
-		// If today is Monday, daysUntilMonday will be 0, so schedule for today
-		if daysUntilMonday == 0 {
-			daysUntilMonday = 7
+		// Next week at midnight on the configured week start day
+		weekStartDay := e.config.WeekStartDay
+		daysUntilWeekStart := (int(weekStartDay) - int(now.Weekday()) + 7) % 7
+		// If today is the week start day, schedule for next week
+		if daysUntilWeekStart == 0 {
+			daysUntilWeekStart = 7
 		}
-		nextMonday := now.AddDate(0, 0, daysUntilMonday)
-		return time.Date(nextMonday.Year(), nextMonday.Month(), nextMonday.Day(), 0, 0, 0, 0, nextMonday.Location()), nil
+		nextWeekStart := now.AddDate(0, 0, daysUntilWeekStart)
+		return time.Date(nextWeekStart.Year(), nextWeekStart.Month(), nextWeekStart.Day(), 0, 0, 0, 0, nextWeekStart.Location()), nil
 	case "monthly":
 		// Next month at midnight on the 1st
 		nextMonth := now.AddDate(0, 1, 0)

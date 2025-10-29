@@ -2,8 +2,6 @@ package autodocs
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -72,7 +70,7 @@ func (c *ChangelogGenerator) Generate(request GenerationRequest) (*GenerationRes
 	}
 	
 	// Write to file
-	if err := c.writeToFile(request.OutputPath, content); err != nil {
+	if err := WriteToFile(request.OutputPath, content); err != nil {
 		return &GenerationResult{
 			Type:    request.Type,
 			Success: false,
@@ -397,18 +395,3 @@ func (c *ChangelogGenerator) generateSummary(content *strings.Builder, commits [
 	content.WriteString(fmt.Sprintf("- Net change: %+d lines\n\n", totalInsertions-totalDeletions))
 }
 
-// writeToFile writes content to the specified file path
-func (c *ChangelogGenerator) writeToFile(outputPath, content string) error {
-	// Ensure directory exists
-	dir := filepath.Dir(outputPath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return fmt.Errorf("failed to create directory: %w", err)
-	}
-	
-	// Write file
-	if err := os.WriteFile(outputPath, []byte(content), 0644); err != nil {
-		return fmt.Errorf("failed to write file: %w", err)
-	}
-	
-	return nil
-}

@@ -8,6 +8,11 @@ import (
 	"context"
 )
 
+const (
+	// DefaultHTTPTimeout is the default timeout for HTTP client requests
+	DefaultHTTPTimeout = 30 * time.Second
+)
+
 // LearningDataSource implements DataSource interface by integrating with the learning system
 type LearningDataSource struct {
 	gitDataSource *GitDataSource
@@ -15,13 +20,18 @@ type LearningDataSource struct {
 	httpClient    *http.Client
 }
 
-// NewLearningDataSource creates a new learning-integrated data source
+// NewLearningDataSource creates a new learning-integrated data source with default timeout
 func NewLearningDataSource(repoPath, learningAPIURL string) *LearningDataSource {
+	return NewLearningDataSourceWithTimeout(repoPath, learningAPIURL, DefaultHTTPTimeout)
+}
+
+// NewLearningDataSourceWithTimeout creates a new learning-integrated data source with custom timeout
+func NewLearningDataSourceWithTimeout(repoPath, learningAPIURL string, timeout time.Duration) *LearningDataSource {
 	return &LearningDataSource{
 		gitDataSource:  NewGitDataSource(repoPath),
 		learningAPIURL: learningAPIURL,
 		httpClient: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout: timeout,
 		},
 	}
 }
