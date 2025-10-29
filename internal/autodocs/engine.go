@@ -7,6 +7,11 @@ import (
 	"time"
 )
 
+const (
+	// maxHistoryEntries is the maximum number of generation results to keep in history
+	maxHistoryEntries = 100
+)
+
 // Engine implements the DocumentEngine interface
 type Engine struct {
 	generators  map[DocumentType]Generator
@@ -441,7 +446,8 @@ func (e *Engine) parseSchedule(schedule string) (time.Time, error) {
 		return time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 0, 0, 0, 0, tomorrow.Location()), nil
 	case "weekly":
 		// Next week at midnight on Monday
-		daysUntilMonday := (7 - int(now.Weekday()) + 1) % 7
+		daysUntilMonday := (8 - int(now.Weekday())) % 7
+		// If today is Monday, daysUntilMonday will be 0, so schedule for today
 		if daysUntilMonday == 0 {
 			daysUntilMonday = 7
 		}
@@ -466,9 +472,9 @@ func (e *Engine) addToHistory(result GenerationResult) {
 	
 	e.history = append(e.history, result)
 	
-	// Keep only last 100 results
-	if len(e.history) > 100 {
-		e.history = e.history[len(e.history)-100:]
+	// Keep only last maxHistoryEntries results
+	if len(e.history) > maxHistoryEntries {
+		e.history = e.history[len(e.history)-maxHistoryEntries:]
 	}
 }
 
