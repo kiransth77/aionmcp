@@ -9,6 +9,11 @@ import (
 	"time"
 )
 
+const (
+	// maxCommitBodyLength is the maximum length of commit body to include in changelog
+	maxCommitBodyLength = 200
+)
+
 // ChangelogGenerator generates changelog documents from git history
 type ChangelogGenerator struct {
 	dataSource DataSource
@@ -191,7 +196,7 @@ func (c *ChangelogGenerator) generateDayEntry(content *strings.Builder, date str
 		parsedDate = time.Now()
 	}
 	
-	content.WriteString(fmt.Sprintf("## %s\n\n", parsedDate.Format("2006-01-02 (Monday)")))
+	content.WriteString(fmt.Sprintf("## %s (%s)\n\n", parsedDate.Format("2006-01-02"), parsedDate.Weekday().String()))
 	
 	// Categorize commits
 	categories := c.categorizeCommits(commits)
@@ -301,7 +306,7 @@ func (c *ChangelogGenerator) writeCommitEntry(content *strings.Builder, commit G
 	content.WriteString("\n")
 	
 	// Add body if it contains important information and is not too long
-	if len(commit.Body) > 0 && len(commit.Body) < 200 && !strings.Contains(strings.ToLower(commit.Body), "signed-off-by") {
+	if len(commit.Body) > 0 && len(commit.Body) < maxCommitBodyLength && !strings.Contains(strings.ToLower(commit.Body), "signed-off-by") {
 		// Format body as indented text
 		bodyLines := strings.Split(strings.TrimSpace(commit.Body), "\n")
 		for _, line := range bodyLines {

@@ -8,6 +8,15 @@ import (
 	"time"
 )
 
+const (
+	// maxSuccessRateDeduction is the maximum points deducted for low success rate
+	maxSuccessRateDeduction = 50
+	// highLatencyDeduction is the points deducted for latency over 1s
+	highLatencyDeduction = 20
+	// mediumLatencyDeduction is the points deducted for latency over 500ms
+	mediumLatencyDeduction = 10
+)
+
 // ReflectionGenerator generates daily reflection documents using learning insights
 type ReflectionGenerator struct {
 	dataSource DataSource
@@ -582,16 +591,16 @@ func (r *ReflectionGenerator) calculateHealthScore(learning *LearningSnapshot) i
 	
 	// Deduct for low success rate
 	if learning.SuccessRate < 1.0 {
-		score -= int((1.0-learning.SuccessRate)*50) // Up to -50 points
+		score -= int((1.0 - learning.SuccessRate) * maxSuccessRateDeduction)
 	}
 	
 	// Deduct for high latency
 	if learning.AvgLatency > 0 {
 		latencyMs := float64(learning.AvgLatency) / float64(time.Millisecond)
 		if latencyMs > 1000 {
-			score -= 20 // -20 for >1s latency
+			score -= highLatencyDeduction
 		} else if latencyMs > 500 {
-			score -= 10 // -10 for >500ms latency
+			score -= mediumLatencyDeduction
 		}
 	}
 	
