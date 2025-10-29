@@ -20,9 +20,12 @@ scripts/**
 # Dependencies
 node_modules/**
 
-# Platform-specific binaries (windows only)
+# Platform-specific binaries (cross-platform)
 bin/**
 !bin/aionmcp.exe
+!bin/aionmcp
+!bin/aionmcp-linux
+!bin/aionmcp-macos
 
 # Documentation (minimal for package size)
 package-lock.json
