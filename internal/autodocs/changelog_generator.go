@@ -259,20 +259,8 @@ func (c *ChangelogGenerator) categorizeCommit(commit GitCommit) string {
 		return "breaking"
 	}
 	
-	// Define patterns for different categories
-	patterns := map[string][]string{
-		"feature":  {"feat:", "feature:", "add:", "implement", "new"},
-		"fix":      {"fix:", "bug:", "bugfix:", "hotfix:", "patch:"},
-		"perf":     {"perf:", "performance:", "optimize", "speed", "improve performance"},
-		"docs":     {"docs:", "doc:", "documentation", "readme", "changelog"},
-		"refactor": {"refactor:", "cleanup:", "clean:", "reorganize"},
-		"test":     {"test:", "tests:", "testing:", "spec:"},
-		"chore":    {"chore:", "bump:", "update:", "upgrade:", "version:", "deps:"},
-		"style":    {"style:", "format:", "lint:", "prettier:"},
-		"ci":       {"ci:", "build:", "deploy:", "pipeline:", "github:", "actions:"},
-	}
-	
-	for category, keywords := range patterns {
+	// Use shared categorization patterns from utils
+	for category, keywords := range CommitCategorizationPatterns {
 		for _, keyword := range keywords {
 			if strings.Contains(subject, keyword) {
 				return category

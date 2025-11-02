@@ -619,33 +619,6 @@ func (r *ReadmeGenerator) generateFooter(content *strings.Builder) {
 
 // Helper functions
 func (r *ReadmeGenerator) calculateHealthScore(learning *LearningSnapshot) int {
-	score := 100
-	
-	if learning.SuccessRate < 1.0 {
-		score -= int((1.0-learning.SuccessRate)*50)
-	}
-	
-	if learning.AvgLatency > 0 {
-		latencyMs := float64(learning.AvgLatency) / float64(time.Millisecond)
-		if latencyMs > 1000 {
-			score -= 20
-		} else if latencyMs > 500 {
-			score -= 10
-		}
-	}
-	
-	for _, insight := range learning.ActiveInsights {
-		if insight.Priority == "critical" {
-			score -= 15
-		} else if insight.Priority == "high" {
-			score -= 5
-		}
-	}
-	
-	if score < 0 {
-		score = 0
-	}
-	
-	return score
+	return CalculateHealthScore(learning)
 }
 

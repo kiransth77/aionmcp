@@ -294,36 +294,8 @@ func (l *LearningDataSource) GetHealthStatus() (map[string]interface{}, error) {
 		return nil, err
 	}
 	
-	// Calculate health score
-	healthScore := 100
-	
-	// Deduct for low success rate
-	if snapshot.SuccessRate < 1.0 {
-		healthScore -= int((1.0-snapshot.SuccessRate)*50)
-	}
-	
-	// Deduct for high latency
-	if snapshot.AvgLatency > 0 {
-		latencyMs := float64(snapshot.AvgLatency) / float64(time.Millisecond)
-		if latencyMs > 1000 {
-			healthScore -= 20
-		} else if latencyMs > 500 {
-			healthScore -= 10
-		}
-	}
-	
-	// Deduct for critical insights
-	for _, insight := range snapshot.ActiveInsights {
-		if insight.Priority == "critical" {
-			healthScore -= 15
-		} else if insight.Priority == "high" {
-			healthScore -= 5
-		}
-	}
-	
-	if healthScore < 0 {
-		healthScore = 0
-	}
+	// Calculate health score using shared utility
+	healthScore := CalculateHealthScore(snapshot)
 	
 	// Determine status
 	var status string

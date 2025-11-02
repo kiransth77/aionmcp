@@ -248,20 +248,8 @@ func (g *GitDataSource) GetCurrentVersion() (string, error) {
 func (g *GitDataSource) CategorizeCommit(commit GitCommit) string {
 	subject := strings.ToLower(commit.Subject)
 	
-	// Define patterns for different categories
-	patterns := map[string][]string{
-		"feature": {"feat:", "feature:", "add:", "implement", "new"},
-		"fix":     {"fix:", "bug:", "bugfix:", "hotfix:", "patch:"},
-		"docs":    {"docs:", "doc:", "documentation", "readme", "changelog"},
-		"perf":    {"perf:", "performance:", "optimize", "speed", "improve"},
-		"refactor": {"refactor:", "cleanup:", "clean:", "reorganize"},
-		"test":    {"test:", "tests:", "testing:", "spec:"},
-		"chore":   {"chore:", "bump:", "update:", "upgrade:", "version:"},
-		"style":   {"style:", "format:", "lint:", "prettier:"},
-		"ci":      {"ci:", "build:", "deploy:", "pipeline:"},
-	}
-	
-	for category, keywords := range patterns {
+	// Use shared categorization patterns from utils
+	for category, keywords := range CommitCategorizationPatterns {
 		for _, keyword := range keywords {
 			if strings.Contains(subject, keyword) {
 				return category
