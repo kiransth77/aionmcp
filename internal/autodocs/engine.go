@@ -8,8 +8,10 @@ import (
 )
 
 const (
-	// maxHistoryEntries is the maximum number of generation results to keep in history
-	maxHistoryEntries = 100
+	// DefaultMaxHistoryEntries is the default maximum number of generation results to keep in history.
+	// This limit prevents unbounded memory growth while maintaining sufficient history for analysis.
+	// Adjust this value based on memory constraints and history retention requirements.
+	DefaultMaxHistoryEntries = 100
 )
 
 // EngineConfig holds configuration for the documentation engine
@@ -17,12 +19,17 @@ type EngineConfig struct {
 	// WeekStartDay defines which day of the week is considered the start of the week
 	// for weekly scheduling. Default is time.Monday.
 	WeekStartDay time.Weekday
+	
+	// MaxHistoryEntries is the maximum number of generation results to keep in history.
+	// When the limit is reached, older entries are removed. Use 0 for default (100 entries).
+	MaxHistoryEntries int
 }
 
 // DefaultEngineConfig returns the default engine configuration
 func DefaultEngineConfig() *EngineConfig {
 	return &EngineConfig{
-		WeekStartDay: time.Monday,
+		WeekStartDay:      time.Monday,
+		MaxHistoryEntries: DefaultMaxHistoryEntries,
 	}
 }
 
@@ -56,6 +63,11 @@ func NewEngine(projectRoot string, dataSource DataSource) *Engine {
 func NewEngineWithConfig(projectRoot string, dataSource DataSource, config *EngineConfig) *Engine {
 	if config == nil {
 		config = DefaultEngineConfig()
+	}
+	
+	// Ensure MaxHistoryEntries has a valid value
+	if config.MaxHistoryEntries <= 0 {
+		config.MaxHistoryEntries = DefaultMaxHistoryEntries
 	}
 	
 	engine := &Engine{
@@ -498,9 +510,9 @@ func (e *Engine) addToHistory(result GenerationResult) {
 	
 	e.history = append(e.history, result)
 	
-	// Keep only last maxHistoryEntries results
-	if len(e.history) > maxHistoryEntries {
-		e.history = e.history[len(e.history)-maxHistoryEntries:]
+	// Keep only last MaxHistoryEntries results
+	if len(e.history) > e.config.MaxHistoryEntries {
+		e.history = e.history[len(e.history)-e.config.MaxHistoryEntries:]
 	}
 }
 

@@ -14,9 +14,6 @@ const (
 	mediumLatencyDeduction   = 10 // Points deducted for latency over 500ms
 	criticalIssueDeduction   = 15 // Points deducted per critical issue
 	highPriorityDeduction    = 5  // Points deducted per high priority issue
-	
-	// HTTP client timeout for learning API requests
-	defaultAPITimeout = 10 * time.Second
 )
 
 // GetHealthStatus returns a health status string based on the score
@@ -103,7 +100,4 @@ var CommitCategorizationPatterns = map[string][]string{
 	"ci":       {"ci:", "build:", "deploy:", "pipeline:", "github:", "actions:"},
 }
 
-// GetDefaultAPITimeout returns the default timeout for HTTP API requests
-func GetDefaultAPITimeout() time.Duration {
-	return defaultAPITimeout
-}
+
