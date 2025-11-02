@@ -7,12 +7,21 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	"github.com/aionmcp/aionmcp/internal/core"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
+
+// ConfigOverrides holds command-line configuration overrides
+type ConfigOverrides struct {
+	ConfigFile string
+	HTTPPort   int
+	GRPCPort   int
+	LogLevel   string
+}
 
 func main() {
 	// Define command line flags
@@ -54,7 +63,13 @@ func main() {
 	}
 
 	// Initialize configuration
-	if err := initConfig(*configFile, *httpPort, *grpcPort, *logLevel); err != nil {
+	overrides := ConfigOverrides{
+		ConfigFile: *configFile,
+		HTTPPort:   *httpPort,
+		GRPCPort:   *grpcPort,
+		LogLevel:   *logLevel,
+	}
+	if err := initConfig(overrides); err != nil {
 		log.Fatalf("Failed to initialize configuration: %v", err)
 	}
 
@@ -101,10 +116,10 @@ func main() {
 	logger.Info("AionMCP server shutdown complete")
 }
 
-func initConfig(configFile string, httpPort, grpcPort int, logLevel string) error {
+func initConfig(overrides ConfigOverrides) error {
 	// Use custom config file if provided
-	if configFile != "" {
-		viper.SetConfigFile(configFile)
+	if overrides.ConfigFile != "" {
+		viper.SetConfigFile(overrides.ConfigFile)
 	} else {
 		viper.SetConfigName("config")
 		viper.SetConfigType("yaml")
@@ -126,14 +141,14 @@ func initConfig(configFile string, httpPort, grpcPort int, logLevel string) erro
 	viper.SetEnvPrefix("AIONMCP")
 
 	// Override with command line flags if provided
-	if httpPort != 0 {
-		viper.Set("server.port", httpPort)
+	if overrides.HTTPPort != 0 {
+		viper.Set("server.port", overrides.HTTPPort)
 	}
-	if grpcPort != 0 {
-		viper.Set("server.grpc_port", grpcPort)
+	if overrides.GRPCPort != 0 {
+		viper.Set("server.grpc_port", overrides.GRPCPort)
 	}
-	if logLevel != "" {
-		viper.Set("log.level", logLevel)
+	if overrides.LogLevel != "" {
+		viper.Set("log.level", overrides.LogLevel)
 	}
 
 	if err := viper.ReadInConfig(); err != nil {
@@ -181,15 +196,7 @@ func ensureDataDirectory() error {
 	}
 	
 	// Extract directory from path
-	dir := dataPath
-	if lastSlash := len(dataPath) - 1; lastSlash >= 0 && dataPath[lastSlash] != '/' && dataPath[lastSlash] != '\\' {
-		for i := lastSlash; i >= 0; i-- {
-			if dataPath[i] == '/' || dataPath[i] == '\\' {
-				dir = dataPath[:i]
-				break
-			}
-		}
-	}
+	dir := filepath.Dir(dataPath)
 	
 	// Create directory if it doesn't exist
 	if err := os.MkdirAll(dir, 0755); err != nil {
