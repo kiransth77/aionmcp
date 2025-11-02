@@ -131,7 +131,10 @@ func (c *Collector) shouldSample() bool {
 
 	// Simple random sampling
 	randomBytes := make([]byte, 4)
-	rand.Read(randomBytes)
+	if _, err := rand.Read(randomBytes); err != nil {
+		c.logger.Error("failed to read random bytes for sampling", zap.Error(err))
+		return false
+	}
 	randomValue := float64(randomBytes[0]) / 255.0
 	return randomValue < c.config.SampleRate
 }
@@ -266,7 +269,8 @@ func (c *Collector) generateID() string {
 	bytes := make([]byte, 8)
 	if _, err := rand.Read(bytes); err != nil {
 		c.logger.Error("Failed to generate random ID", zap.Error(err))
-		return ""
+		// Fallback: use timestamp-based ID
+		return fmt.Sprintf("exec_fallback_%d", time.Now().UnixNano())
 	}
 	return hex.EncodeToString(bytes)
 }

@@ -75,7 +75,7 @@ const (
 	InsightTypeConfiguration   InsightType = "configuration"
 	InsightTypeReliability     InsightType = "reliability"
 	InsightTypePerformance     InsightType = "performance"
-	InsightTypeUsage          InsightType = "usage"
+	InsightTypeUsage           InsightType = "usage"
 )
 
 // Priority represents the priority level of an insight

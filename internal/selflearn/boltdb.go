@@ -9,7 +9,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/boltdb/bolt"
+	bolt "go.etcd.io/bbolt"
 	"go.uber.org/zap"
 )
 
@@ -453,7 +453,12 @@ func (s *BoltStorage) DeleteInsight(ctx context.Context, id string) error {
 	})
 }
 
-// Cleanup removes old records based on retention period
+// Cleanup removes old records based on retention period.
+// For large datasets, keys are collected during cursor iteration and then deleted
+// in a separate loop to avoid modifying the bucket during iteration. This approach
+// uses memory proportional to the number of records being deleted, but ensures
+// safe concurrent access. For very large cleanup operations (millions of records),
+// consider implementing batched deletion to reduce peak memory usage.
 func (s *BoltStorage) Cleanup(ctx context.Context, retentionPeriod time.Duration) error {
 	cutoff := time.Now().Add(-retentionPeriod)
 	
