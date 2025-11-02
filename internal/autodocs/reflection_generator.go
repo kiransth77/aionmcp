@@ -13,6 +13,10 @@ const (
 	highLatencyDeduction = 20
 	// mediumLatencyDeduction is the points deducted for latency over 500ms
 	mediumLatencyDeduction = 10
+	// criticalIssueDeduction is the points deducted per critical issue
+	criticalIssueDeduction = 15
+	// highPriorityDeduction is the points deducted per high priority issue
+	highPriorityDeduction = 5
 )
 
 // ReflectionGenerator generates daily reflection documents using learning insights
@@ -585,37 +589,6 @@ func (r *ReflectionGenerator) generateGoalsAndFocus(content *strings.Builder, le
 
 // calculateHealthScore calculates an overall health score
 func (r *ReflectionGenerator) calculateHealthScore(learning *LearningSnapshot) int {
-	score := 100
-	
-	// Deduct for low success rate
-	if learning.SuccessRate < 1.0 {
-		score -= int((1.0 - learning.SuccessRate) * maxSuccessRateDeduction)
-	}
-	
-	// Deduct for high latency
-	if learning.AvgLatency > 0 {
-		latencyMs := float64(learning.AvgLatency) / float64(time.Millisecond)
-		if latencyMs > 1000 {
-			score -= highLatencyDeduction
-		} else if latencyMs > 500 {
-			score -= mediumLatencyDeduction
-		}
-	}
-	
-	// Deduct for critical insights
-	for _, insight := range learning.ActiveInsights {
-		if insight.Priority == "critical" {
-			score -= 15 // -15 per critical issue
-		} else if insight.Priority == "high" {
-			score -= 5 // -5 per high priority issue
-		}
-	}
-	
-	// Ensure minimum score
-	if score < 0 {
-		score = 0
-	}
-	
-	return score
+	return CalculateHealthScore(learning)
 }
 
