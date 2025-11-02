@@ -14,7 +14,7 @@ type ExecutionRecord struct {
 	Input        interface{}            `json:"input,omitempty"`
 	Output       interface{}            `json:"output,omitempty"`
 	Error        string                 `json:"error,omitempty"`
-	ErrorType    ErrorType              `json:"error_type,omitempty"`
+	ErrorType    string                 `json:"error_type,omitempty"` // Use string for consistency with public API
 	Context      map[string]interface{} `json:"context,omitempty"`
 	RetryCount   int                    `json:"retry_count"`
 	SourceType   string                 `json:"source_type"` // openapi, graphql, asyncapi, builtin
@@ -90,20 +90,22 @@ const (
 
 // LearningStats represents overall learning statistics
 type LearningStats struct {
-	TotalExecutions   int64             `json:"total_executions"`
-	SuccessRate       float64           `json:"success_rate"`
-	AverageLatency    time.Duration     `json:"average_latency"`
-	ErrorBreakdown    map[ErrorType]int `json:"error_breakdown"`
-	TopTools          []ToolStat        `json:"top_tools"`
-	RecentPatterns    []Pattern         `json:"recent_patterns"`
-	ActiveInsights    []Insight         `json:"active_insights"`
-	LastUpdated       time.Time         `json:"last_updated"`
+	TotalExecutions   int64          `json:"total_executions"`
+	SuccessRate       float64        `json:"success_rate"`
+	AverageLatency    time.Duration  `json:"average_latency"`
+	ErrorBreakdown    map[string]int `json:"error_breakdown"` // Use string for error types
+	TopTools          []ToolStat     `json:"top_tools"`
+	RecentPatterns    []Pattern      `json:"recent_patterns"`
+	ActiveInsights    []Insight      `json:"active_insights"`
+	LastUpdated       time.Time      `json:"last_updated"`
 }
 
 // ToolStat represents statistics for a specific tool
 type ToolStat struct {
 	Name           string        `json:"name"`
 	ExecutionCount int64         `json:"execution_count"`
+	SuccessCount   int64         `json:"success_count"`   // Track successes separately
+	FailureCount   int64         `json:"failure_count"`   // Track failures separately
 	SuccessRate    float64       `json:"success_rate"`
 	AverageLatency time.Duration `json:"average_latency"`
 	FirstUsed      time.Time     `json:"first_used"`

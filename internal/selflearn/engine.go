@@ -7,6 +7,15 @@ import (
 	"go.uber.org/zap"
 )
 
+// contextKey is a custom type for context keys to avoid collisions
+type contextKey string
+
+const (
+	contextKeySessionID  contextKey = "session_id"
+	contextKeyRequestID  contextKey = "request_id"
+	contextKeyUserAgent  contextKey = "user_agent"
+)
+
 // Engine is the main self-learning engine that coordinates feedback collection,
 // analysis, and insight generation
 type Engine struct {
@@ -42,18 +51,18 @@ func (e *Engine) RecordExecution(ctx context.Context, toolName, sourceType strin
 		Metadata:   make(map[string]interface{}),
 	}
 
-	// Extract additional context from the context if available
-	if sessionID := ctx.Value("session_id"); sessionID != nil {
+	// Extract additional context from the context if available using custom context keys
+	if sessionID := ctx.Value(contextKeySessionID); sessionID != nil {
 		if sid, ok := sessionID.(string); ok {
 			execCtx.SessionID = sid
 		}
 	}
-	if requestID := ctx.Value("request_id"); requestID != nil {
+	if requestID := ctx.Value(contextKeyRequestID); requestID != nil {
 		if rid, ok := requestID.(string); ok {
 			execCtx.RequestID = rid
 		}
 	}
-	if userAgent := ctx.Value("user_agent"); userAgent != nil {
+	if userAgent := ctx.Value(contextKeyUserAgent); userAgent != nil {
 		if ua, ok := userAgent.(string); ok {
 			execCtx.UserAgent = ua
 		}

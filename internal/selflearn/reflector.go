@@ -264,7 +264,7 @@ func (r *Reflector) generateConfigurationInsights(ctx context.Context) ([]Insigh
 	}
 
 	// Check for network-heavy error patterns
-	if networkErrors, exists := stats.ErrorBreakdown[ErrorTypeNetwork]; exists && networkErrors > int(stats.TotalExecutions)/10 {
+	if networkErrors, exists := stats.ErrorBreakdown[string(ErrorTypeNetwork)]; exists && networkErrors > int(stats.TotalExecutions)/10 {
 		insight := Insight{
 			ID:          r.generateInsightID(),
 			Type:        InsightTypeConfiguration,
