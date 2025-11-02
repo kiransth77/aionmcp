@@ -320,21 +320,17 @@ func (r *ToolRegistry) AddEventHandler(handler ToolRegistryEventHandler) {
 }
 
 // RemoveEventHandler removes an event handler
-// Note: Due to Go's function comparison limitations, this method may not work reliably.
-// Function pointers cannot be compared directly. Consider using a handler registration ID
-// system in production code for reliable handler removal.
+// Note: Due to Go's function comparison limitations, this method cannot reliably remove handlers.
+// Function pointers cannot be compared directly in Go. This method is kept for API compatibility
+// but does not perform any removal. Consider implementing a handler registration ID system in
+// production code for reliable handler removal.
 func (r *ToolRegistry) RemoveEventHandler(handler ToolRegistryEventHandler) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	// This implementation has known limitations - function comparison in Go
-	// doesn't work as expected. Kept for API compatibility but may not function correctly.
+	// This method intentionally does nothing due to Go's function comparison limitations.
+	// Function pointers cannot be compared reliably, so we cannot identify which handler to remove.
 	// TODO: Implement handler ID-based removal system for reliable handler management
-	for i, h := range r.eventHandlers {
-		if &h == &handler {
-			r.eventHandlers = append(r.eventHandlers[:i], r.eventHandlers[i+1:]...)
-			break
-		}
-	}
+	r.logger.Warn("RemoveEventHandler called but cannot reliably remove handlers due to Go function comparison limitations")
 }
 
 // emitEvent sends an event to all registered handlers
@@ -368,11 +364,22 @@ func (r *ToolRegistry) GetRegistryStats() map[string]interface{} {
 		sourceStats[source]++
 	}
 
+	// Inline sources calculation to avoid nested lock acquisition
+	sourceSet := make(map[string]bool)
+	for _, source := range r.sources {
+		sourceSet[source] = true
+	}
+
+	sources := make([]string, 0, len(sourceSet))
+	for source := range sourceSet {
+		sources = append(sources, source)
+	}
+
 	return map[string]interface{}{
-		"total_tools":    len(r.tools),
-		"sources":        r.GetToolSources(),
+		"total_tools":     len(r.tools),
+		"sources":         sources,
 		"tools_by_source": sourceStats,
-		"event_handlers": len(r.eventHandlers),
+		"event_handlers":  len(r.eventHandlers),
 	}
 }
 

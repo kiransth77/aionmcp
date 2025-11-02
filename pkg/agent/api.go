@@ -473,9 +473,17 @@ func (api *AgentAPI) invokeTool(c *gin.Context) {
 		ExecutedAt:   grpcResp.ExecutedAtUnix,
 	}
 
-	// Parse result from JSON (placeholder)
+	// Parse result from JSON
 	if grpcResp.ResultJson != "" {
-		resp.Result = map[string]interface{}{} // Would parse JSON
+		var result interface{}
+		if err := json.Unmarshal([]byte(grpcResp.ResultJson), &result); err != nil {
+			api.logger.Error("Failed to parse tool result JSON", 
+				zap.Error(err), 
+				zap.String("result_json", grpcResp.ResultJson))
+			resp.Result = map[string]interface{}{"_error": "Failed to parse result JSON"}
+		} else {
+			resp.Result = result
+		}
 	}
 
 	if grpcResp.Error != nil {
