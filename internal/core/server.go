@@ -222,7 +222,7 @@ func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager
 		duration := time.Since(startTime)
 
 		// Record execution for learning (async, non-blocking)
-		// Capture err value and metadata before goroutine to avoid race condition
+		// Capture all variables before goroutine to avoid race conditions
 		execErr := err
 		metadata := tool.Metadata()
 		sourceType := "builtin"
@@ -230,22 +230,23 @@ func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager
 			sourceType = metadata.Source
 		}
 		
-		go func(st string) {
+		// Pass captured variables as parameters to avoid race conditions
+		go func(tn, st string, req, res interface{}, execErr error, dur time.Duration) {
 			// Record the execution
 			if recordErr := learningEngine.RecordExecution(
 				context.Background(),
-				toolName,
+				tn,
 				st,
-				request,
-				result,
+				req,
+				res,
 				execErr,
-				duration,
+				dur,
 			); recordErr != nil {
 				logger.Warn("Failed to record execution for learning",
-					zap.String("tool", toolName),
+					zap.String("tool", tn),
 					zap.Error(recordErr))
 			}
-		}(sourceType)
+		}(toolName, sourceType, request, result, execErr, duration)
 
 		if err != nil {
 			logger.Error("Tool execution failed",

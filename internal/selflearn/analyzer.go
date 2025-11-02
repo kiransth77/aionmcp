@@ -244,7 +244,7 @@ func (a *Analyzer) generatePatternID() string {
 // errorGroup represents a group of similar errors
 type errorGroup struct {
 	toolName      string
-	errorType     ErrorType
+	errorType     string
 	count         int
 	firstSeen     time.Time
 	lastSeen      time.Time

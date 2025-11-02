@@ -140,7 +140,7 @@ func (c *Collector) shouldSample() bool {
 }
 
 // classifyError attempts to classify the error into predefined types
-func (c *Collector) classifyError(err error) ErrorType {
+func (c *Collector) classifyError(err error) string {
 	if err == nil {
 		return ""
 	}
@@ -154,7 +154,7 @@ func (c *Collector) classifyError(err error) ErrorType {
 	}
 	for _, pattern := range networkPatterns {
 		if strings.Contains(errMsg, pattern) {
-			return ErrorTypeNetwork
+			return string(ErrorTypeNetwork)
 		}
 	}
 
@@ -165,7 +165,7 @@ func (c *Collector) classifyError(err error) ErrorType {
 	}
 	for _, pattern := range validationPatterns {
 		if strings.Contains(errMsg, pattern) {
-			return ErrorTypeValidation
+			return string(ErrorTypeValidation)
 		}
 	}
 
@@ -176,18 +176,18 @@ func (c *Collector) classifyError(err error) ErrorType {
 	}
 	for _, pattern := range configPatterns {
 		if strings.Contains(errMsg, pattern) {
-			return ErrorTypeConfiguration
+			return string(ErrorTypeConfiguration)
 		}
 	}
 
 	// Performance errors
 	performancePatterns := []string{
-		"timeout", "deadline", "slow", "rate limit", "throttle", "capacity",
+		"deadline", "slow", "rate limit", "throttle", "capacity",
 		"overload", "busy", "queue", "limit exceeded",
 	}
 	for _, pattern := range performancePatterns {
 		if strings.Contains(errMsg, pattern) {
-			return ErrorTypePerformance
+			return string(ErrorTypePerformance)
 		}
 	}
 
@@ -198,11 +198,11 @@ func (c *Collector) classifyError(err error) ErrorType {
 	}
 	for _, pattern := range logicPatterns {
 		if strings.Contains(errMsg, pattern) {
-			return ErrorTypeLogic
+			return string(ErrorTypeLogic)
 		}
 	}
 
-	return ErrorTypeUnknown
+	return string(ErrorTypeUnknown)
 }
 
 // sanitizeData sanitizes and truncates data for storage

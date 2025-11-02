@@ -200,7 +200,7 @@ func (s *BoltStorage) GetExecutionsByTimeRange(ctx context.Context, start, end t
 // GetExecutionStats calculates and returns learning statistics
 func (s *BoltStorage) GetExecutionStats(ctx context.Context) (LearningStats, error) {
 	stats := LearningStats{
-		ErrorBreakdown: make(map[ErrorType]int),
+		ErrorBreakdown: make(map[string]int),
 		TopTools:       []ToolStat{},
 		LastUpdated:    time.Now().UTC(),
 	}
@@ -235,10 +235,12 @@ func (s *BoltStorage) GetExecutionStats(ctx context.Context) (LearningStats, err
 			if toolStat, exists := toolStats[record.ToolName]; exists {
 				toolStat.ExecutionCount++
 				if record.Success {
-					toolStat.SuccessRate = (toolStat.SuccessRate*(float64(toolStat.ExecutionCount)-1) + 1) / float64(toolStat.ExecutionCount)
+					toolStat.SuccessCount++
 				} else {
-					toolStat.SuccessRate = toolStat.SuccessRate * (float64(toolStat.ExecutionCount) - 1) / float64(toolStat.ExecutionCount)
+					toolStat.FailureCount++
 				}
+				// Calculate success rate from counts to avoid floating-point errors
+				toolStat.SuccessRate = float64(toolStat.SuccessCount) / float64(toolStat.ExecutionCount)
 				toolStat.AverageLatency = time.Duration((int64(toolStat.AverageLatency)*(toolStat.ExecutionCount-1) + int64(record.Duration)) / toolStat.ExecutionCount)
 				// Track first and last used times
 				if record.Timestamp.Before(toolStat.FirstUsed) {
@@ -248,13 +250,20 @@ func (s *BoltStorage) GetExecutionStats(ctx context.Context) (LearningStats, err
 					toolStat.LastUsed = record.Timestamp
 				}
 			} else {
+				successCount := int64(0)
+				failureCount := int64(0)
 				successRate := 0.0
 				if record.Success {
+					successCount = 1
 					successRate = 1.0
+				} else {
+					failureCount = 1
 				}
 				toolStats[record.ToolName] = &ToolStat{
 					Name:           record.ToolName,
 					ExecutionCount: 1,
+					SuccessCount:   successCount,
+					FailureCount:   failureCount,
 					SuccessRate:    successRate,
 					AverageLatency: record.Duration,
 					FirstUsed:      record.Timestamp,
@@ -471,13 +480,14 @@ func (s *BoltStorage) Cleanup(ctx context.Context, retentionPeriod time.Duration
 		for k, v := cursor.First(); k != nil; k, v = cursor.Next() {
 			var record ExecutionRecord
 			if err := json.Unmarshal(v, &record); err != nil {
-				// Delete invalid records
-				keysToDelete = append(keysToDelete, k)
+				// Delete invalid records - copy key before appending
+				keysToDelete = append(keysToDelete, append([]byte(nil), k...))
 				continue
 			}
 			
 			if record.Timestamp.Before(cutoff) {
-				keysToDelete = append(keysToDelete, k)
+				// Copy key before appending since cursor keys are only valid during iteration
+				keysToDelete = append(keysToDelete, append([]byte(nil), k...))
 			}
 		}
 		
