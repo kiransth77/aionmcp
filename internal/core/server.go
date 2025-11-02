@@ -27,6 +27,8 @@ type Server struct {
 	learningEngine  *selflearn.Engine
 	shutdown        chan struct{}
 	wg              sync.WaitGroup
+	serverCtx       context.Context // Server-scoped context for background operations
+	cancelFunc      context.CancelFunc
 }
 
 // NewServer creates a new AionMCP server instance
@@ -70,8 +72,12 @@ func NewServer(logger *zap.Logger) (*Server, error) {
 		return nil, fmt.Errorf("failed to create learning storage: %w", err)
 	}
 
-	// Create learning engine
+	// Create learning engine (ensure storage cleanup on error)
 	learningEngine := selflearn.NewEngine(learningConfig, learningStorage, logger)
+	if learningEngine == nil {
+		learningStorage.Close()
+		return nil, fmt.Errorf("failed to create learning engine")
+	}
 
 	// Create HTTP server with Gin
 	gin.SetMode(gin.ReleaseMode)
@@ -91,8 +97,11 @@ func NewServer(logger *zap.Logger) (*Server, error) {
 		)
 	})
 
+	// Create server-scoped context for background operations
+	serverCtx, cancelFunc := context.WithCancel(context.Background())
+
 	// Setup HTTP routes
-	setupHTTPRoutes(router, registry, importerManager, fileWatcher, learningEngine, logger)
+	setupHTTPRoutes(router, registry, importerManager, fileWatcher, learningEngine, logger, serverCtx)
 
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf(":%d", viper.GetInt("server.port")),
@@ -112,6 +121,8 @@ func NewServer(logger *zap.Logger) (*Server, error) {
 		fileWatcher:     fileWatcher,
 		learningEngine:  learningEngine,
 		shutdown:        make(chan struct{}),
+		serverCtx:       serverCtx,
+		cancelFunc:      cancelFunc,
 	}, nil
 }
 
@@ -152,6 +163,9 @@ func (s *Server) Run(ctx context.Context) error {
 	<-ctx.Done()
 	s.logger.Info("Shutting down AionMCP server...")
 
+	// Cancel server-scoped context to stop background operations
+	s.cancelFunc()
+
 	// Graceful shutdown
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -174,7 +188,7 @@ func (s *Server) Run(ctx context.Context) error {
 }
 
 // setupHTTPRoutes configures HTTP API routes
-func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager *importer.ImporterManager, fileWatcher *importer.FileWatcher, learningEngine *selflearn.Engine, logger *zap.Logger) {
+func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager *importer.ImporterManager, fileWatcher *importer.FileWatcher, learningEngine *selflearn.Engine, logger *zap.Logger, serverCtx context.Context) {
 	api := router.Group("/api/v1")
 	
 	// Health check
@@ -231,10 +245,10 @@ func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager
 		}
 		
 		// Pass captured variables as parameters to avoid race conditions
-		go func(tn, st string, req, res interface{}, execErr error, dur time.Duration) {
-			// Record the execution
+		go func(ctx context.Context, tn, st string, req, res interface{}, execErr error, dur time.Duration) {
+			// Record the execution using server-scoped context
 			if recordErr := learningEngine.RecordExecution(
-				context.Background(),
+				ctx,
 				tn,
 				st,
 				req,
@@ -246,7 +260,7 @@ func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager
 					zap.String("tool", tn),
 					zap.Error(recordErr))
 			}
-		}(toolName, sourceType, request, result, execErr, duration)
+		}(serverCtx, toolName, sourceType, request, result, execErr, duration)
 
 		if err != nil {
 			logger.Error("Tool execution failed",

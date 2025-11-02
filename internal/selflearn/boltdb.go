@@ -241,7 +241,11 @@ func (s *BoltStorage) GetExecutionStats(ctx context.Context) (LearningStats, err
 				}
 				// Calculate success rate from counts to avoid floating-point errors
 				toolStat.SuccessRate = float64(toolStat.SuccessCount) / float64(toolStat.ExecutionCount)
-				toolStat.AverageLatency = time.Duration((int64(toolStat.AverageLatency)*(toolStat.ExecutionCount-1) + int64(record.Duration)) / toolStat.ExecutionCount)
+				// Use Welford's algorithm for numerically stable running mean
+				prevAvg := float64(toolStat.AverageLatency.Nanoseconds())
+				newVal := float64(record.Duration.Nanoseconds())
+				n := float64(toolStat.ExecutionCount)
+				toolStat.AverageLatency = time.Duration(prevAvg + (newVal-prevAvg)/n)
 				// Track first and last used times
 				if record.Timestamp.Before(toolStat.FirstUsed) {
 					toolStat.FirstUsed = record.Timestamp
@@ -481,13 +485,13 @@ func (s *BoltStorage) Cleanup(ctx context.Context, retentionPeriod time.Duration
 			var record ExecutionRecord
 			if err := json.Unmarshal(v, &record); err != nil {
 				// Delete invalid records - copy key before appending
-				keysToDelete = append(keysToDelete, append([]byte(nil), k...))
+				keysToDelete = append(keysToDelete, copyKey(k))
 				continue
 			}
 			
 			if record.Timestamp.Before(cutoff) {
 				// Copy key before appending since cursor keys are only valid during iteration
-				keysToDelete = append(keysToDelete, append([]byte(nil), k...))
+				keysToDelete = append(keysToDelete, copyKey(k))
 			}
 		}
 		
@@ -501,6 +505,11 @@ func (s *BoltStorage) Cleanup(ctx context.Context, retentionPeriod time.Duration
 		s.logger.Info("Cleanup completed", zap.Int("deleted_records", len(keysToDelete)))
 		return nil
 	})
+}
+
+// copyKey creates a copy of a BoltDB key since cursor keys are only valid during iteration
+func copyKey(k []byte) []byte {
+	return append([]byte(nil), k...)
 }
 
 // Close closes the BoltDB connection

@@ -15,17 +15,27 @@ import (
 
 // Collector handles the collection of execution feedback
 type Collector struct {
-	config  CollectionConfig
-	storage Storage
-	logger  *zap.Logger
+	config      CollectionConfig
+	storage     Storage
+	logger      *zap.Logger
+	piiPatterns []*regexp.Regexp // Pre-compiled PII patterns for performance
 }
 
 // NewCollector creates a new feedback collector
 func NewCollector(config CollectionConfig, storage Storage, logger *zap.Logger) *Collector {
+	// Compile PII patterns once at initialization
+	piiPatterns := []*regexp.Regexp{
+		regexp.MustCompile(`\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b`), // email
+		regexp.MustCompile(`\b\d{3}-\d{2}-\d{4}\b`),                                    // SSN
+		regexp.MustCompile(`\b\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\b`),                       // credit card
+		regexp.MustCompile(`\b\d{3}-\d{3}-\d{4}\b`),                                   // phone
+	}
+	
 	return &Collector{
-		config:  config,
-		storage: storage,
-		logger:  logger,
+		config:      config,
+		storage:     storage,
+		logger:      logger,
+		piiPatterns: piiPatterns,
 	}
 }
 
@@ -129,13 +139,15 @@ func (c *Collector) shouldSample() bool {
 		return false
 	}
 
-	// Simple random sampling
+	// Simple random sampling - use all 4 bytes for better distribution
 	randomBytes := make([]byte, 4)
 	if _, err := rand.Read(randomBytes); err != nil {
 		c.logger.Error("failed to read random bytes for sampling", zap.Error(err))
 		return false
 	}
-	randomValue := float64(randomBytes[0]) / 255.0
+	// Convert 4 bytes to uint32 and normalize to [0, 1)
+	randomUint := uint32(randomBytes[0]) | uint32(randomBytes[1])<<8 | uint32(randomBytes[2])<<16 | uint32(randomBytes[3])<<24
+	randomValue := float64(randomUint) / float64(1<<32)
 	return randomValue < c.config.SampleRate
 }
 
@@ -225,25 +237,17 @@ func (c *Collector) sanitizeData(data interface{}, maxSize int) interface{} {
 	return data
 }
 
-// filterPII applies basic PII filtering to the data
+// filterPII applies basic PII filtering to the data using pre-compiled patterns
 func (c *Collector) filterPII(data interface{}) interface{} {
 	if data == nil {
 		return nil
 	}
 
-	// Define PII patterns (simplified)
-	piiPatterns := []*regexp.Regexp{
-		regexp.MustCompile(`\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b`), // email
-		regexp.MustCompile(`\b\d{3}-\d{2}-\d{4}\b`),                                    // SSN
-		regexp.MustCompile(`\b\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\b`),                       // credit card
-		regexp.MustCompile(`\b\d{3}-\d{3}-\d{4}\b`),                                   // phone
-	}
-
 	// Convert to string for pattern matching
 	dataStr := fmt.Sprintf("%v", data)
 	
-	// Apply PII masking
-	for _, pattern := range piiPatterns {
+	// Apply PII masking using pre-compiled patterns
+	for _, pattern := range c.piiPatterns {
 		dataStr = pattern.ReplaceAllString(dataStr, "[REDACTED]")
 	}
 
@@ -272,7 +276,7 @@ func (c *Collector) generateID() string {
 		// Fallback: use timestamp-based ID
 		return fmt.Sprintf("exec_fallback_%d", time.Now().UnixNano())
 	}
-	return hex.EncodeToString(bytes)
+	return "exec_" + hex.EncodeToString(bytes)
 }
 
 // UpdateConfig updates the collector configuration
