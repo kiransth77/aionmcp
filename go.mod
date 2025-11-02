@@ -8,12 +8,12 @@ require (
 	github.com/gin-gonic/gin v1.11.0
 	github.com/graphql-go/graphql v0.8.1
 	github.com/spf13/viper v1.21.0
+	go.etcd.io/bbolt v1.3.11
 	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.76.0
 )
 
 require (
-	github.com/boltdb/bolt v1.3.1 // indirect
 	github.com/bytedance/sonic v1.14.0 // indirect
 	github.com/bytedance/sonic/loader v0.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
