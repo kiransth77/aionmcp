@@ -23,13 +23,13 @@ AionMCP is an autonomous Go-based Model Context Protocol (MCP) server that dynam
 <!-- AUTO-GENERATED STATUS -->
 **Current Branch**: `copilot/sub-pr-6`
 
-**Latest Commit**: [`62b6699`](../../commit/62b6699c0a64df48fd1f518c76747c71d2d80187)
+**Latest Commit**: [`15fe886`](../../commit/15fe88627bc54a85f2440eea8068aa9c22fa6719)
 
 **System Health**: 99/100 (Excellent)
 
 **Active Tools**: 3
 
-**Commits (7 days)**: 6
+**Commits (7 days)**: 3
 
 *Status updated automatically*
 <!-- END AUTO-GENERATED STATUS -->
@@ -100,11 +100,9 @@ AionMCP follows Clean/Hexagonal Architecture principles:
 <!-- AUTO-GENERATED ACTIVITY -->
 ### Recent Commits
 
+- [`15fe886`](../../commit/15fe88627bc54a85f2440eea8068aa9c22fa6719) fix: Apply PR review feedback - improve API design and documentation *(0h ago)*
 - [`62b6699`](../../commit/62b6699c0a64df48fd1f518c76747c71d2d80187) Initial plan *(0h ago)*
-- [`ef4d6c8`](../../commit/ef4d6c871b1b129e374810f6faf3b2063cfdf208) fix: Apply PR review feedback - fix JSON parsing and serialization issues *(0h ago)*
-- [`1c2292a`](../../commit/1c2292ae07c091431e7844fc62e8e296c5512821) Initial plan *(1h ago)*
-- [`738fb1c`](../../commit/738fb1cea5496acfc136808ebee904687b091129) fix: Apply PR review feedback from code review comments *(4d ago)*
-- [`d5fc429`](../../commit/d5fc42934a34e6d0586b56b5b043a1719f67f482) Initial plan *(4d ago)*
+- [`5239982`](../../commit/523998216b7827d1c7273500e5b673622b79e15f) Merge pull request #12 from kiransth77/copilot/sub-pr-6 *(0h ago)*
 
 ### Active Insights
 
@@ -197,6 +195,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-*README last updated: 2025-11-02 06:48:25 UTC*
+*README last updated: 2025-11-02 06:58:31 UTC*
 
 *This README is automatically updated with current project status and metrics.*

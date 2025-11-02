@@ -393,10 +393,39 @@ func (api *AgentAPI) getTool(c *gin.Context) {
 
 	if includeSchema {
 		// Parse JSON schema strings back to objects
-		// TODO: Replace placeholder schemas with actual JSON unmarshaling from grpcResp
-		//       Current implementation returns hardcoded placeholder values.
-		resp.InputSchema = map[string]interface{}{"type": "object"}  // Placeholder - replace with actual input schema unmarshaling
-		resp.OutputSchema = map[string]interface{}{"type": "object"} // Placeholder - replace with actual output schema unmarshaling
+		// Parse input schema if available
+		if grpcResp.InputSchemaJson != "" {
+			var inputSchema map[string]interface{}
+			if err := json.Unmarshal([]byte(grpcResp.InputSchemaJson), &inputSchema); err != nil {
+				api.logger.Warn("Failed to parse input schema JSON", 
+					zap.String("schema", grpcResp.InputSchemaJson), 
+					zap.Error(err))
+				// Fallback to placeholder
+				resp.InputSchema = map[string]interface{}{"type": "object"}
+			} else {
+				resp.InputSchema = inputSchema
+			}
+		} else {
+			// TODO: Schema information not available from tool metadata yet
+			resp.InputSchema = map[string]interface{}{"type": "object"} // Placeholder
+		}
+		
+		// Parse output schema if available
+		if grpcResp.OutputSchemaJson != "" {
+			var outputSchema map[string]interface{}
+			if err := json.Unmarshal([]byte(grpcResp.OutputSchemaJson), &outputSchema); err != nil {
+				api.logger.Warn("Failed to parse output schema JSON", 
+					zap.String("schema", grpcResp.OutputSchemaJson), 
+					zap.Error(err))
+				// Fallback to placeholder
+				resp.OutputSchema = map[string]interface{}{"type": "object"}
+			} else {
+				resp.OutputSchema = outputSchema
+			}
+		} else {
+			// TODO: Schema information not available from tool metadata yet
+			resp.OutputSchema = map[string]interface{}{"type": "object"} // Placeholder
+		}
 		
 		resp.Examples = make([]ToolExample, len(grpcResp.Examples))
 		for i, example := range grpcResp.Examples {
@@ -404,18 +433,26 @@ func (api *AgentAPI) getTool(c *gin.Context) {
 			var outputMap map[string]interface{}
 
 			// Parse example input JSON
-			if err := json.Unmarshal([]byte(example.InputJson), &inputMap); err != nil {
-				api.logger.Warn("Failed to parse example input JSON", 
-					zap.String("input", example.InputJson), 
-					zap.Error(err))
+			if example.InputJson != "" {
+				if err := json.Unmarshal([]byte(example.InputJson), &inputMap); err != nil {
+					api.logger.Warn("Failed to parse example input JSON", 
+						zap.String("input", example.InputJson), 
+						zap.Error(err))
+					inputMap = map[string]interface{}{}
+				}
+			} else {
 				inputMap = map[string]interface{}{}
 			}
 			
 			// Parse example expected output JSON
-			if err := json.Unmarshal([]byte(example.ExpectedOutputJson), &outputMap); err != nil {
-				api.logger.Warn("Failed to parse example expected output JSON", 
-					zap.String("expected_output", example.ExpectedOutputJson), 
-					zap.Error(err))
+			if example.ExpectedOutputJson != "" {
+				if err := json.Unmarshal([]byte(example.ExpectedOutputJson), &outputMap); err != nil {
+					api.logger.Warn("Failed to parse example expected output JSON", 
+						zap.String("expected_output", example.ExpectedOutputJson), 
+						zap.Error(err))
+					outputMap = map[string]interface{}{}
+				}
+			} else {
 				outputMap = map[string]interface{}{}
 			}
 
