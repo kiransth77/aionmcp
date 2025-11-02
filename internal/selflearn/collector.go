@@ -142,7 +142,7 @@ func (c *Collector) shouldSample() bool {
 	// Simple random sampling - use all 4 bytes for better distribution
 	randomBytes := make([]byte, 4)
 	if _, err := rand.Read(randomBytes); err != nil {
-		c.logger.Error("failed to read random bytes for sampling", zap.Error(err))
+		c.logger.Error("Failed to read random bytes for sampling", zap.Error(err))
 		return false
 	}
 	// Convert 4 bytes to uint32 and normalize to [0, 1)

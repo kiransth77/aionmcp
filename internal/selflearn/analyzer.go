@@ -234,7 +234,7 @@ func (a *Analyzer) calculateConfidence(frequency, totalSamples int) float64 {
 func (a *Analyzer) generatePatternID() string {
 	bytes := make([]byte, 8)
 	if _, err := rand.Read(bytes); err != nil {
-		a.logger.Error("failed to generate random pattern ID", zap.Error(err))
+		a.logger.Error("Failed to generate random pattern ID", zap.Error(err))
 		// Fallback: use timestamp-based ID
 		return fmt.Sprintf("pattern_fallback_%d", time.Now().UnixNano())
 	}
