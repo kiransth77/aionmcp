@@ -106,6 +106,7 @@ type ToolStat struct {
 	ExecutionCount int64         `json:"execution_count"`
 	SuccessRate    float64       `json:"success_rate"`
 	AverageLatency time.Duration `json:"average_latency"`
+	FirstUsed      time.Time     `json:"first_used"`
 	LastUsed       time.Time     `json:"last_used"`
 }
 

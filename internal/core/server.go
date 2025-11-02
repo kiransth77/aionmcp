@@ -222,6 +222,8 @@ func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager
 		duration := time.Since(startTime)
 
 		// Record execution for learning (async, non-blocking)
+		// Capture err value before goroutine to avoid race condition
+		execErr := err
 		go func() {
 			// Determine source type from tool metadata
 			sourceType := "builtin"
@@ -236,7 +238,7 @@ func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager
 				sourceType,
 				request,
 				result,
-				err,
+				execErr,
 				duration,
 			); recordErr != nil {
 				logger.Warn("Failed to record execution for learning",

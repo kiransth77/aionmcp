@@ -152,7 +152,7 @@ func (a *Analyzer) analyzePerformancePatterns(ctx context.Context) ([]Pattern, e
 				Description: fmt.Sprintf("Tool %s shows consistently slow performance", toolStat.Name),
 				Frequency:   int(toolStat.ExecutionCount),
 				Confidence:  0.8, // High confidence for performance metrics
-				FirstSeen:   time.Now().Add(-7 * 24 * time.Hour), // Approximate
+				FirstSeen:   toolStat.FirstUsed,
 				LastSeen:    toolStat.LastUsed,
 				Metadata: map[string]string{
 					"tool_name":        toolStat.Name,
@@ -189,7 +189,7 @@ func (a *Analyzer) analyzeUsagePatterns(ctx context.Context) ([]Pattern, error) 
 				Description: fmt.Sprintf("Tool %s dominates usage with %.1f%% of all executions", topTool.Name, usagePercentage),
 				Frequency:   int(topTool.ExecutionCount),
 				Confidence:  0.9,
-				FirstSeen:   time.Now().Add(-30 * 24 * time.Hour), // Approximate
+				FirstSeen:   topTool.FirstUsed,
 				LastSeen:    topTool.LastUsed,
 				Metadata: map[string]string{
 					"tool_name":        topTool.Name,
