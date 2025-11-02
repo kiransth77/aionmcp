@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -423,13 +424,24 @@ func (api *AgentAPI) invokeTool(c *gin.Context) {
 
 	invocationID := uuid.New().String()
 
+	// Serialize parameters to JSON
+	parametersJSON := "{}"
+	if req.Parameters != nil {
+		paramsBytes, err := json.Marshal(req.Parameters)
+		if err != nil {
+			api.logger.Error("Failed to marshal parameters", zap.Error(err))
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid parameters format"})
+			return
+		}
+		parametersJSON = string(paramsBytes)
+	}
+
 	// Convert to gRPC request
 	grpcReq := &agentpb.InvokeToolRequest{
-		SessionId:    sessionID,
-		ToolName:     toolName,
-		InvocationId: invocationID,
-		// Would serialize parameters to JSON string
-		ParametersJson: "{}",
+		SessionId:      sessionID,
+		ToolName:       toolName,
+		InvocationId:   invocationID,
+		ParametersJson: parametersJSON,
 	}
 
 	if req.Options != nil {

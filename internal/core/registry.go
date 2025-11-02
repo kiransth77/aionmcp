@@ -319,12 +319,16 @@ func (r *ToolRegistry) AddEventHandler(handler ToolRegistryEventHandler) {
 	r.eventHandlers = append(r.eventHandlers, handler)
 }
 
-// RemoveEventHandler removes an event handler (note: this is a simple implementation)
+// RemoveEventHandler removes an event handler
+// Note: Due to Go's function comparison limitations, this method may not work reliably.
+// Function pointers cannot be compared directly. Consider using a handler registration ID
+// system in production code for reliable handler removal.
 func (r *ToolRegistry) RemoveEventHandler(handler ToolRegistryEventHandler) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	// Note: In Go, function comparison is limited, so this is a basic implementation
-	// In a production system, you might want to use a different approach like handler IDs
+	// This implementation has known limitations - function comparison in Go
+	// doesn't work as expected. Kept for API compatibility but may not function correctly.
+	// TODO: Implement handler ID-based removal system for reliable handler management
 	for i, h := range r.eventHandlers {
 		if &h == &handler {
 			r.eventHandlers = append(r.eventHandlers[:i], r.eventHandlers[i+1:]...)
@@ -345,7 +349,8 @@ func (r *ToolRegistry) emitEvent(event ToolRegistryEvent) {
 				if recovered := recover(); recovered != nil {
 					registry.logger.Error("Tool registry event handler panic", 
 						zap.String("event_type", string(event.Type)),
-						zap.String("tool_name", event.ToolName))
+						zap.String("tool_name", event.ToolName),
+						zap.Any("panic", recovered))
 				}
 			}()
 			h(event)
