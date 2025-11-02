@@ -393,17 +393,37 @@ func (api *AgentAPI) getTool(c *gin.Context) {
 
 	if includeSchema {
 		// Parse JSON schema strings back to objects
-		// In a real implementation, you'd use proper JSON unmarshaling
-		resp.InputSchema = map[string]interface{}{"type": "object"}
-		resp.OutputSchema = map[string]interface{}{"type": "object"}
+		// TODO: Replace placeholder schemas with actual JSON unmarshaling from grpcResp
+		//       Current implementation returns hardcoded placeholder values.
+		resp.InputSchema = map[string]interface{}{"type": "object"}  // Placeholder - replace with actual input schema unmarshaling
+		resp.OutputSchema = map[string]interface{}{"type": "object"} // Placeholder - replace with actual output schema unmarshaling
 		
 		resp.Examples = make([]ToolExample, len(grpcResp.Examples))
 		for i, example := range grpcResp.Examples {
+			var inputMap map[string]interface{}
+			var outputMap map[string]interface{}
+
+			// Parse example input JSON
+			if err := json.Unmarshal([]byte(example.InputJson), &inputMap); err != nil {
+				api.logger.Warn("Failed to parse example input JSON", 
+					zap.String("input", example.InputJson), 
+					zap.Error(err))
+				inputMap = map[string]interface{}{}
+			}
+			
+			// Parse example expected output JSON
+			if err := json.Unmarshal([]byte(example.ExpectedOutputJson), &outputMap); err != nil {
+				api.logger.Warn("Failed to parse example expected output JSON", 
+					zap.String("expected_output", example.ExpectedOutputJson), 
+					zap.Error(err))
+				outputMap = map[string]interface{}{}
+			}
+
 			resp.Examples[i] = ToolExample{
 				Name:           example.Name,
 				Description:    example.Description,
-				Input:          map[string]interface{}{}, // Would parse JSON
-				ExpectedOutput: map[string]interface{}{}, // Would parse JSON
+				Input:          inputMap,
+				ExpectedOutput: outputMap,
 			}
 		}
 	}

@@ -15,6 +15,11 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const (
+	// fallbackErrorResultJSON is used when result serialization fails
+	fallbackErrorResultJSON = `{"result": null}`
+)
+
 // AgentServer implements the gRPC AgentService interface
 type AgentServer struct {
 	agentpb.UnimplementedAgentServiceServer
@@ -248,9 +253,12 @@ func (s *AgentServer) GetTool(ctx context.Context, req *agentpb.GetToolRequest) 
 	var examples []*agentpb.ToolExample
 
 	if req.IncludeSchema {
-		// Get schema information if available
-		inputSchema = `{"type": "object", "properties": {}}`  // Placeholder
-		outputSchema = `{"type": "object", "properties": {}}` // Placeholder
+		// TODO: Replace placeholder schemas with actual schema extraction from tool metadata.
+		//       Current implementation returns hardcoded placeholder values which may mislead API consumers.
+		//       Schema extraction should be implemented when tool metadata supports schema information.
+		//       See iteration planning for schema support implementation timeline.
+		inputSchema = `{"type": "object", "properties": {}}`  // Placeholder - see TODO above
+		outputSchema = `{"type": "object", "properties": {}}` // Placeholder - see TODO above
 
 		// Add example usage
 		examples = []*agentpb.ToolExample{
@@ -340,7 +348,7 @@ func (s *AgentServer) InvokeTool(ctx context.Context, req *agentpb.InvokeToolReq
 				zap.String("session_id", req.SessionId),
 				zap.String("tool_name", req.ToolName),
 				zap.Error(err))
-			resultJson = `{"result": null}`
+			resultJson = fallbackErrorResultJSON
 		} else {
 			resultJson = string(resultBytes)
 		}

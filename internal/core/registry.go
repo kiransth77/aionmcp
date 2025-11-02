@@ -319,19 +319,10 @@ func (r *ToolRegistry) AddEventHandler(handler ToolRegistryEventHandler) {
 	r.eventHandlers = append(r.eventHandlers, handler)
 }
 
-// RemoveEventHandler removes an event handler
-// Note: Due to Go's function comparison limitations, this method cannot reliably remove handlers.
-// Function pointers cannot be compared directly in Go. This method is kept for API compatibility
-// but does not perform any removal. Consider implementing a handler registration ID system in
-// production code for reliable handler removal.
-func (r *ToolRegistry) RemoveEventHandler(handler ToolRegistryEventHandler) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	// This method intentionally does nothing due to Go's function comparison limitations.
-	// Function pointers cannot be compared reliably, so we cannot identify which handler to remove.
-	// TODO: Implement handler ID-based removal system for reliable handler management
-	r.logger.Warn("RemoveEventHandler called but cannot reliably remove handlers due to Go function comparison limitations")
-}
+// Note: RemoveEventHandler is not implemented due to Go's function comparison limitations.
+// Function pointers cannot be compared directly in Go. To implement handler removal in the future,
+// consider adding a handler registration ID system that returns an ID on AddEventHandler
+// which can then be used to identify and remove specific handlers.
 
 // emitEvent sends an event to all registered handlers
 func (r *ToolRegistry) emitEvent(event ToolRegistryEvent) {
