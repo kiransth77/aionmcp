@@ -2,8 +2,6 @@ package autodocs
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 )
@@ -84,7 +82,7 @@ func (r *ReflectionGenerator) Generate(request GenerationRequest) (*GenerationRe
 	}
 	
 	// Write to file
-	if err := r.writeToFile(request.OutputPath, content); err != nil {
+	if err := WriteToFile(request.OutputPath, content); err != nil {
 		return &GenerationResult{
 			Type:    request.Type,
 			Success: false,
@@ -199,7 +197,7 @@ func (r *ReflectionGenerator) generateExecutiveSummary(content *strings.Builder,
 	
 	// Overall health assessment
 	healthScore := r.calculateHealthScore(learning)
-	healthStatus := r.getHealthStatus(healthScore)
+	healthStatus := GetHealthStatus(healthScore)
 	
 	content.WriteString("### System Health\n\n")
 	content.WriteString(fmt.Sprintf("**Overall Health Score**: %d/100 (%s)\n\n", healthScore, healthStatus))
@@ -621,33 +619,3 @@ func (r *ReflectionGenerator) calculateHealthScore(learning *LearningSnapshot) i
 	return score
 }
 
-// getHealthStatus returns a health status string
-func (r *ReflectionGenerator) getHealthStatus(score int) string {
-	if score >= 90 {
-		return "Excellent"
-	} else if score >= 80 {
-		return "Good"
-	} else if score >= 70 {
-		return "Fair"
-	} else if score >= 50 {
-		return "Needs Attention"
-	} else {
-		return "Critical"
-	}
-}
-
-// writeToFile writes content to the specified file path
-func (r *ReflectionGenerator) writeToFile(outputPath, content string) error {
-	// Ensure directory exists
-	dir := filepath.Dir(outputPath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return fmt.Errorf("failed to create directory: %w", err)
-	}
-	
-	// Write file
-	if err := os.WriteFile(outputPath, []byte(content), 0644); err != nil {
-		return fmt.Errorf("failed to write file: %w", err)
-	}
-	
-	return nil
-}
