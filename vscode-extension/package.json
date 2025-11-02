@@ -1,0 +1,228 @@
+{
+  "name": "aionmcp-extension",
+  "displayName": "AionMCP - Autonomous MCP Server",
+  "description": "Manage and interact with AionMCP server directly from VS Code",
+  "version": "0.1.0",
+  "publisher": "local-dev",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Testing",
+    "Debuggers",
+    "Extension Packs"
+  ],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "api",
+    "openapi",
+    "graphql",
+    "tools",
+    "automation"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "aionmcp.testCommand",
+        "title": "Test Command",
+        "category": "AionMCP"
+      },
+      {
+        "command": "aionmcp.startServer",
+        "title": "Start AionMCP Server",
+        "icon": "$(play)"
+      },
+      {
+        "command": "aionmcp.stopServer",
+        "title": "Stop AionMCP Server",
+        "icon": "$(stop)"
+      },
+      {
+        "command": "aionmcp.restartServer",
+        "title": "Restart AionMCP Server",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "aionmcp.refreshTools",
+        "title": "Refresh Tools",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "aionmcp.executeTool",
+        "title": "Execute Tool",
+        "icon": "$(play)"
+      },
+      {
+        "command": "aionmcp.openToolExecutor",
+        "title": "Open Tool Executor",
+        "icon": "$(browser)"
+      },
+      {
+        "command": "aionmcp.importApiSpec",
+        "title": "Import API Specification",
+        "icon": "$(file-add)"
+      },
+      {
+        "command": "aionmcp.viewLogs",
+        "title": "View Server Logs",
+        "icon": "$(output)"
+      },
+      {
+        "command": "aionmcp.showDashboard",
+        "title": "Show Dashboard",
+        "icon": "$(dashboard)"
+      }
+    ],
+    "views": {
+      "aionmcp-explorer": [
+        {
+          "id": "aionmcp.toolsView",
+          "name": "Tools",
+          "when": "aionmcp.extensionActive"
+        },
+        {
+          "id": "aionmcp.agentsView",
+          "name": "Connected Agents",
+          "when": "aionmcp.extensionActive"
+        },
+        {
+          "id": "aionmcp.serverView",
+          "name": "Server Status",
+          "when": "aionmcp.extensionActive"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "aionmcp-explorer",
+          "title": "AionMCP",
+          "icon": "$(server-process)"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "aionmcp.refreshTools",
+          "when": "view == aionmcp.toolsView",
+          "group": "navigation"
+        },
+        {
+          "command": "aionmcp.importApiSpec",
+          "when": "view == aionmcp.toolsView",
+          "group": "navigation"
+        },
+        {
+          "command": "aionmcp.startServer",
+          "when": "view == aionmcp.serverView && !aionmcp.serverRunning",
+          "group": "navigation"
+        },
+        {
+          "command": "aionmcp.stopServer",
+          "when": "view == aionmcp.serverView && aionmcp.serverRunning",
+          "group": "navigation"
+        },
+        {
+          "command": "aionmcp.restartServer",
+          "when": "view == aionmcp.serverView",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "aionmcp.executeTool",
+          "when": "view == aionmcp.toolsView && viewItem == tool",
+          "group": "inline"
+        },
+        {
+          "command": "aionmcp.openToolExecutor",
+          "when": "view == aionmcp.toolsView && viewItem == tool"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "AionMCP",
+      "properties": {
+        "aionmcp.serverPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the AionMCP server executable (leave empty to use bundled binary)"
+        },
+        "aionmcp.serverPort": {
+          "type": "number",
+          "default": 8080,
+          "description": "Port for the AionMCP HTTP server"
+        },
+        "aionmcp.grpcPort": {
+          "type": "number",
+          "default": 50051,
+          "description": "Port for the AionMCP gRPC server"
+        },
+        "aionmcp.autoStart": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically start the server when VS Code opens"
+        },
+        "aionmcp.logLevel": {
+          "type": "string",
+          "enum": [
+            "debug",
+            "info",
+            "warn",
+            "error"
+          ],
+          "default": "info",
+          "description": "Log level for the AionMCP server"
+        },
+        "aionmcp.specDirectories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "./examples/specs",
+            "./specs"
+          ],
+          "description": "Directories to watch for API specifications"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile && npm run copy-binaries",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "npm run vscode:prepublish && vsce package",
+    "publish": "vsce publish",
+    "copy-binaries": "node scripts/copy-binaries.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "18.x",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.57.0",
+    "typescript": "^5.3.0",
+    "@vscode/test-electron": "^2.3.8",
+    "@vscode/vsce": "^3.6.2"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "ws": "^8.14.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kiransth77/aionmcp.git"
+  },
+  "license": "MIT"
+}
