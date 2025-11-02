@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -300,12 +301,11 @@ func (s *AgentServer) InvokeTool(ctx context.Context, req *agentpb.InvokeToolReq
 	}
 
 	// Parse parameters from JSON
-	// For now, we'll use a simple map[string]interface{} approach
-	// In a full implementation, you'd want proper JSON unmarshaling
 	var parameters map[string]interface{}
 	if req.ParametersJson != "" {
-		// Placeholder: would use json.Unmarshal here
-		parameters = make(map[string]interface{})
+		if err := json.Unmarshal([]byte(req.ParametersJson), &parameters); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "Failed to parse parameters JSON: %v", err)
+		}
 	}
 
 	// Execute tool
@@ -333,7 +333,17 @@ func (s *AgentServer) InvokeTool(ctx context.Context, req *agentpb.InvokeToolReq
 			zap.Error(err))
 	} else {
 		status = agentpb.ToolInvocationStatus_TOOL_INVOCATION_STATUS_SUCCESS
-		resultJson = fmt.Sprintf(`{"result": %v}`, result) // Placeholder JSON serialization
+		// Properly serialize result to JSON
+		resultBytes, err := json.Marshal(result)
+		if err != nil {
+			s.logger.Error("Failed to serialize tool result",
+				zap.String("session_id", req.SessionId),
+				zap.String("tool_name", req.ToolName),
+				zap.Error(err))
+			resultJson = `{"result": null}`
+		} else {
+			resultJson = string(resultBytes)
+		}
 		s.updateMetrics(session, req.ToolName, true, executionTime)
 		
 		s.logger.Info("Tool executed successfully",
