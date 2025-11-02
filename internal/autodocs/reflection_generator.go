@@ -6,19 +6,6 @@ import (
 	"time"
 )
 
-const (
-	// maxSuccessRateDeduction is the maximum points deducted for low success rate
-	maxSuccessRateDeduction = 50
-	// highLatencyDeduction is the points deducted for latency over 1s
-	highLatencyDeduction = 20
-	// mediumLatencyDeduction is the points deducted for latency over 500ms
-	mediumLatencyDeduction = 10
-	// criticalIssueDeduction is the points deducted per critical issue
-	criticalIssueDeduction = 15
-	// highPriorityDeduction is the points deducted per high priority issue
-	highPriorityDeduction = 5
-)
-
 // ReflectionGenerator generates daily reflection documents using learning insights
 type ReflectionGenerator struct {
 	dataSource DataSource
@@ -200,7 +187,7 @@ func (r *ReflectionGenerator) generateExecutiveSummary(content *strings.Builder,
 	content.WriteString(fmt.Sprintf("- **Patterns Detected**: %d\n\n", len(learning.RecentPatterns)))
 	
 	// Overall health assessment
-	healthScore := r.calculateHealthScore(learning)
+	healthScore := CalculateHealthScore(learning)
 	healthStatus := GetHealthStatus(healthScore)
 	
 	content.WriteString("### System Health\n\n")
@@ -585,10 +572,5 @@ func (r *ReflectionGenerator) generateGoalsAndFocus(content *strings.Builder, le
 	content.WriteString("---\n\n")
 	content.WriteString("*This reflection was generated to help improve system performance and development practices. ")
 	content.WriteString("Review regularly and adjust focus areas based on emerging patterns and insights.*\n")
-}
-
-// calculateHealthScore calculates an overall health score
-func (r *ReflectionGenerator) calculateHealthScore(learning *LearningSnapshot) int {
-	return CalculateHealthScore(learning)
 }
 

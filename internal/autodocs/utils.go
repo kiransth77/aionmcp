@@ -7,19 +7,33 @@ import (
 	"time"
 )
 
+const (
+	// Health score deduction constants
+	maxSuccessRateDeduction  = 50 // Maximum points deducted for low success rate
+	highLatencyDeduction     = 20 // Points deducted for latency over 1s
+	mediumLatencyDeduction   = 10 // Points deducted for latency over 500ms
+	criticalIssueDeduction   = 15 // Points deducted per critical issue
+	highPriorityDeduction    = 5  // Points deducted per high priority issue
+	
+	// HTTP client timeout for learning API requests
+	defaultAPITimeout = 10 * time.Second
+)
+
 // GetHealthStatus returns a health status string based on the score
 func GetHealthStatus(score int) string {
 	if score >= 90 {
 		return "Excellent"
-	} else if score >= 80 {
-		return "Good"
-	} else if score >= 70 {
-		return "Fair"
-	} else if score >= 50 {
-		return "Needs Attention"
-	} else {
-		return "Critical"
 	}
+	if score >= 80 {
+		return "Good"
+	}
+	if score >= 70 {
+		return "Fair"
+	}
+	if score >= 50 {
+		return "Needs Attention"
+	}
+	return "Critical"
 }
 
 // WriteToFile writes content to the specified file path
@@ -45,25 +59,25 @@ func CalculateHealthScore(learning *LearningSnapshot) int {
 	
 	// Deduct for low success rate
 	if learning.SuccessRate < 1.0 {
-		score -= int((1.0 - learning.SuccessRate) * 50) // maxSuccessRateDeduction = 50
+		score -= int((1.0 - learning.SuccessRate) * float64(maxSuccessRateDeduction))
 	}
 	
 	// Deduct for high latency
 	if learning.AvgLatency > 0 {
 		latencyMs := float64(learning.AvgLatency) / float64(time.Millisecond)
 		if latencyMs > 1000 {
-			score -= 20 // highLatencyDeduction = 20
+			score -= highLatencyDeduction
 		} else if latencyMs > 500 {
-			score -= 10 // mediumLatencyDeduction = 10
+			score -= mediumLatencyDeduction
 		}
 	}
 	
 	// Deduct for critical insights
 	for _, insight := range learning.ActiveInsights {
 		if insight.Priority == "critical" {
-			score -= 15 // criticalIssueDeduction = 15
+			score -= criticalIssueDeduction
 		} else if insight.Priority == "high" {
-			score -= 5 // highPriorityDeduction = 5
+			score -= highPriorityDeduction
 		}
 	}
 	
@@ -87,4 +101,9 @@ var CommitCategorizationPatterns = map[string][]string{
 	"chore":    {"chore:", "bump:", "update:", "upgrade:", "version:", "deps:"},
 	"style":    {"style:", "format:", "lint:", "prettier:"},
 	"ci":       {"ci:", "build:", "deploy:", "pipeline:", "github:", "actions:"},
+}
+
+// GetDefaultAPITimeout returns the default timeout for HTTP API requests
+func GetDefaultAPITimeout() time.Duration {
+	return defaultAPITimeout
 }
