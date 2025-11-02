@@ -61,7 +61,7 @@ func (l *LearningDataSource) GetLearningSnapshot() (*LearningSnapshot, error) {
 
 // fetchLearningData retrieves data from the learning system API
 func (l *LearningDataSource) fetchLearningData() (*LearningSnapshot, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), GetDefaultAPITimeout())
 	defer cancel()
 	
 	// Get learning statistics
@@ -193,7 +193,7 @@ func (l *LearningDataSource) GetDetailedInsights() ([]InsightSummary, error) {
 		return l.getMockLearningSnapshot().ActiveInsights, nil
 	}
 	
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), GetDefaultAPITimeout())
 	defer cancel()
 	
 	insightsURL := fmt.Sprintf("%s/api/v1/learning/insights", l.learningAPIURL)
@@ -229,7 +229,7 @@ func (l *LearningDataSource) GetPatterns() ([]PatternSummary, error) {
 		return l.getMockLearningSnapshot().RecentPatterns, nil
 	}
 	
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), GetDefaultAPITimeout())
 	defer cancel()
 	
 	patternsURL := fmt.Sprintf("%s/api/v1/learning/patterns", l.learningAPIURL)

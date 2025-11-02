@@ -21,9 +21,9 @@ AionMCP is an autonomous Go-based Model Context Protocol (MCP) server that dynam
 ## 📊 Project Status
 
 <!-- AUTO-GENERATED STATUS -->
-**Current Branch**: `copilot/sub-pr-2`
+**Current Branch**: `copilot/sub-pr-2-again`
 
-**Latest Commit**: [`e8a2a4b`](../../commit/e8a2a4bb652a2477bac85a073e25e16821385931)
+**Latest Commit**: [`ed72de9`](../../commit/ed72de972116228d3cb6e1c3a258e2d61e087f62)
 
 **System Health**: 99/100 (Excellent)
 
@@ -99,11 +99,11 @@ AionMCP follows Clean/Hexagonal Architecture principles:
 <!-- AUTO-GENERATED ACTIVITY -->
 ### Recent Commits
 
-- [`e8a2a4b`](../../commit/e8a2a4bb652a2477bac85a073e25e16821385931) Initial plan *(0h ago)*
+- [`ed72de9`](../../commit/ed72de972116228d3cb6e1c3a258e2d61e087f62) Initial plan *(0h ago)*
+- [`cd486cf`](../../commit/cd486cfe4f821fe30f18bfba9d3c5aacf23ace34) refactor: Extract duplicated logic and add missing constants *(0h ago)*
+- [`e8a2a4b`](../../commit/e8a2a4bb652a2477bac85a073e25e16821385931) Initial plan *(1h ago)*
 - [`7588b7c`](../../commit/7588b7ccfaf34e42a5d8dc1f59c78632ebe34ebf) refactor: Extract duplicated methods and add configuration options *(4d ago)*
 - [`f919146`](../../commit/f9191460ce1dbd298c49495de9c2a59b47aad58c) Initial plan *(4d ago)*
-- [`8d53b46`](../../commit/8d53b468520415da7ea89bfce4cc2040f1854278) fix: Address code review comments - constants, date format, regex patterns *(4d ago)*
-- [`ea588b7`](../../commit/ea588b75afdad2cba4fd5a0ce9cde721ee25601d) Initial plan *(4d ago)*
 
 ### Active Insights
 
@@ -190,6 +190,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-*README last updated: 2025-11-02 06:21:33 UTC*
+*README last updated: 2025-11-02 06:48:29 UTC*
 
 *This README is automatically updated with current project status and metrics.*

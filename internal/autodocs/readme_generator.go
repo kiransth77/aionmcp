@@ -361,7 +361,7 @@ func (r *ReadmeGenerator) generateStatus(content *strings.Builder, projectInfo m
 	}
 	
 	// System health
-	healthScore := r.calculateHealthScore(learning)
+	healthScore := CalculateHealthScore(learning)
 	healthStatus := GetHealthStatus(healthScore)
 	content.WriteString(fmt.Sprintf("**System Health**: %d/100 (%s)\n\n", healthScore, healthStatus))
 	
@@ -615,10 +615,5 @@ func (r *ReadmeGenerator) generateFooter(content *strings.Builder) {
 	content.WriteString("---\n\n")
 	content.WriteString(fmt.Sprintf("*README last updated: %s*\n", time.Now().Format("2006-01-02 15:04:05 MST")))
 	content.WriteString("\n*This README is automatically updated with current project status and metrics.*\n")
-}
-
-// Helper functions
-func (r *ReadmeGenerator) calculateHealthScore(learning *LearningSnapshot) int {
-	return CalculateHealthScore(learning)
 }
 

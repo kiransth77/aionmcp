@@ -5,12 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-*This changelog was automatically generated on 2025-11-02 06:21:33*
+*This changelog was automatically generated on 2025-11-02 06:48:29*
 
 ## 2025-11-02 (Sunday)
 
+### ♻️ Code Refactoring
+
+- refactor: Extract duplicated logic and add missing constants ([`cd486cf`](../../commit/cd486cfe4f821fe30f18bfba9d3c5aacf23ace34)) by copilot-swe-agent[bot] (12 files, +220/-166 lines)
+  Co-authored-by: kiransth77 <23469105+kiransth77@users.noreply.github.com>
+
 ### 📦 Other
 
+- Initial plan ([`ed72de9`](../../commit/ed72de972116228d3cb6e1c3a258e2d61e087f62)) by copilot-swe-agent[bot]
 - Initial plan ([`e8a2a4b`](../../commit/e8a2a4bb652a2477bac85a073e25e16821385931)) by copilot-swe-agent[bot]
 
 ## 2025-10-29 (Wednesday)
@@ -51,24 +57,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Period:** 2025-10-03 to 2025-11-02
 
-**Total commits:** 8
+**Total commits:** 10
 
 **Changes by type:**
 
-- Bug Fixes: 1
-- Other: 4
-- Features: 1
-- Refactoring: 1
 - Tests: 1
+- Other: 5
+- Features: 1
+- Bug Fixes: 1
+- Refactoring: 2
 
 **Contributors:** 2
 
-- copilot-swe-agent[bot]: 5 commits
+- copilot-swe-agent[bot]: 7 commits
 - Kiran Shrestha: 3 commits
 
 **Code changes:**
-- Files changed: 66
-- Lines added: +9479
-- Lines removed: -385
-- Net change: +9094 lines
+- Files changed: 78
+- Lines added: +9699
+- Lines removed: -551
+- Net change: +9148 lines
 
