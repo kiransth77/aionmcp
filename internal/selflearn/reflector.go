@@ -93,24 +93,30 @@ func (r *Reflector) generateErrorInsights(ctx context.Context) ([]Insight, error
 
 		var priority Priority
 		var suggestion string
+		
+		// Safely get error_type with default value
+		errorType := "unknown"
+		if et, exists := pattern.Metadata["error_type"]; exists && et != "" {
+			errorType = et
+		}
 
 		switch {
 		case pattern.Frequency >= 50:
 			priority = PriorityCritical
 			suggestion = fmt.Sprintf("Immediate attention required: %s errors occur very frequently (%d times). Consider reviewing the tool configuration, endpoint availability, or implementing retry logic.", 
-				pattern.Metadata["error_type"], pattern.Frequency)
+				errorType, pattern.Frequency)
 		case pattern.Frequency >= 20:
 			priority = PriorityHigh
 			suggestion = fmt.Sprintf("High priority: %s errors in %s tool need investigation. Review error logs and consider implementing error handling improvements.",
-				pattern.Metadata["error_type"], pattern.Metadata["tool_name"])
+				errorType, pattern.Metadata["tool_name"])
 		case pattern.Frequency >= 10:
 			priority = PriorityMedium
 			suggestion = fmt.Sprintf("Monitor %s tool for recurring %s errors. Consider implementing better error messaging or user guidance.",
-				pattern.Metadata["tool_name"], pattern.Metadata["error_type"])
+				pattern.Metadata["tool_name"], errorType)
 		default:
 			priority = PriorityLow
 			suggestion = fmt.Sprintf("Track %s errors in %s tool. May indicate edge cases or rare scenarios.",
-				pattern.Metadata["error_type"], pattern.Metadata["tool_name"])
+				errorType, pattern.Metadata["tool_name"])
 		}
 
 		insight := Insight{

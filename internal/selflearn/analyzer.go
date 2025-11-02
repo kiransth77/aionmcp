@@ -122,7 +122,7 @@ func (a *Analyzer) analyzeErrorPatterns(ctx context.Context) ([]Pattern, error) 
 				LastSeen:    group.lastSeen,
 				Metadata: map[string]string{
 					"tool_name":       group.toolName,
-					"error_type":      string(group.errorType),
+					"error_type":      group.errorType,
 					"unique_messages": fmt.Sprintf("%d", len(group.errorMessages)),
 				},
 			}
