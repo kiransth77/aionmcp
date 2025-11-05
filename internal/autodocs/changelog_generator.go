@@ -8,19 +8,32 @@ import (
 )
 
 const (
-	// maxCommitBodyLength is the maximum length of commit body to include in changelog
-	maxCommitBodyLength = 200
+	// DefaultMaxCommitBodyLength is the default maximum length of commit body to include in changelog.
+	// Rationale: 200 characters provides a good balance between detail and readability,
+	// ensuring concise summaries without excessive verbosity in generated changelogs.
+	DefaultMaxCommitBodyLength = 200
 )
 
 // ChangelogGenerator generates changelog documents from git history
 type ChangelogGenerator struct {
-	dataSource DataSource
+	dataSource          DataSource
+	maxCommitBodyLength int
 }
 
-// NewChangelogGenerator creates a new changelog generator
+// NewChangelogGenerator creates a new changelog generator with default settings
 func NewChangelogGenerator(dataSource DataSource) *ChangelogGenerator {
+	return NewChangelogGeneratorWithConfig(dataSource, DefaultMaxCommitBodyLength)
+}
+
+// NewChangelogGeneratorWithConfig creates a new changelog generator with custom configuration.
+// If maxCommitBodyLength is <= 0, DefaultMaxCommitBodyLength is used.
+func NewChangelogGeneratorWithConfig(dataSource DataSource, maxCommitBodyLength int) *ChangelogGenerator {
+	if maxCommitBodyLength <= 0 {
+		maxCommitBodyLength = DefaultMaxCommitBodyLength
+	}
 	return &ChangelogGenerator{
-		dataSource: dataSource,
+		dataSource:          dataSource,
+		maxCommitBodyLength: maxCommitBodyLength,
 	}
 }
 
@@ -292,7 +305,7 @@ func (c *ChangelogGenerator) writeCommitEntry(content *strings.Builder, commit G
 	content.WriteString("\n")
 	
 	// Add body if it contains important information and is not too long
-	if len(commit.Body) > 0 && len(commit.Body) < maxCommitBodyLength && !strings.Contains(strings.ToLower(commit.Body), "signed-off-by") {
+	if len(commit.Body) > 0 && len(commit.Body) < c.maxCommitBodyLength && !strings.Contains(strings.ToLower(commit.Body), "signed-off-by") {
 		// Format body as indented text
 		bodyLines := strings.Split(strings.TrimSpace(commit.Body), "\n")
 		for _, line := range bodyLines {

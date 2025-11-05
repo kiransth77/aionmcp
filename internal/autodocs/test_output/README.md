@@ -23,13 +23,13 @@ AionMCP is an autonomous Go-based Model Context Protocol (MCP) server that dynam
 <!-- AUTO-GENERATED STATUS -->
 **Current Branch**: `copilot/sub-pr-2-again`
 
-**Latest Commit**: [`ed72de9`](../../commit/ed72de972116228d3cb6e1c3a258e2d61e087f62)
+**Latest Commit**: [`4211070`](../../commit/42110703db96b228d6fadbaf2ccc633768e1c849)
 
 **System Health**: 99/100 (Excellent)
 
 **Active Tools**: 3
 
-**Commits (7 days)**: 7
+**Commits (7 days)**: 9
 
 *Status updated automatically*
 <!-- END AUTO-GENERATED STATUS -->
@@ -99,11 +99,11 @@ AionMCP follows Clean/Hexagonal Architecture principles:
 <!-- AUTO-GENERATED ACTIVITY -->
 ### Recent Commits
 
-- [`ed72de9`](../../commit/ed72de972116228d3cb6e1c3a258e2d61e087f62) Initial plan *(0h ago)*
-- [`cd486cf`](../../commit/cd486cfe4f821fe30f18bfba9d3c5aacf23ace34) refactor: Extract duplicated logic and add missing constants *(0h ago)*
-- [`e8a2a4b`](../../commit/e8a2a4bb652a2477bac85a073e25e16821385931) Initial plan *(1h ago)*
-- [`7588b7c`](../../commit/7588b7ccfaf34e42a5d8dc1f59c78632ebe34ebf) refactor: Extract duplicated methods and add configuration options *(4d ago)*
-- [`f919146`](../../commit/f9191460ce1dbd298c49495de9c2a59b47aad58c) Initial plan *(4d ago)*
+- [`4211070`](../../commit/42110703db96b228d6fadbaf2ccc633768e1c849) Initial plan *(0h ago)*
+- [`7724811`](../../commit/772481134d3b465bc56a0547288e8dfd5cc6d611) refactor: Extract magic numbers to constants and simplify code structure *(4h ago)*
+- [`ed72de9`](../../commit/ed72de972116228d3cb6e1c3a258e2d61e087f62) Initial plan *(4h ago)*
+- [`cd486cf`](../../commit/cd486cfe4f821fe30f18bfba9d3c5aacf23ace34) refactor: Extract duplicated logic and add missing constants *(5h ago)*
+- [`e8a2a4b`](../../commit/e8a2a4bb652a2477bac85a073e25e16821385931) Initial plan *(5h ago)*
 
 ### Active Insights
 
@@ -190,6 +190,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-*README last updated: 2025-11-02 06:48:29 UTC*
+*README last updated: 2025-11-02 11:10:32 UTC*
 
 *This README is automatically updated with current project status and metrics.*

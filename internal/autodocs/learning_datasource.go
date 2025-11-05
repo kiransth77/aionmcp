@@ -9,8 +9,10 @@ import (
 )
 
 const (
-	// DefaultHTTPTimeout is the default timeout for HTTP client requests
-	DefaultHTTPTimeout = 30 * time.Second
+	// DefaultLearningAPITimeout is the default timeout for learning API HTTP requests.
+	// Set to 30 seconds to allow for potentially longer-running learning system queries
+	// that may need to aggregate data or perform complex analysis.
+	DefaultLearningAPITimeout = 30 * time.Second
 )
 
 // LearningDataSource implements DataSource interface by integrating with the learning system
@@ -22,7 +24,7 @@ type LearningDataSource struct {
 
 // NewLearningDataSource creates a new learning-integrated data source with default timeout
 func NewLearningDataSource(repoPath, learningAPIURL string) *LearningDataSource {
-	return NewLearningDataSourceWithTimeout(repoPath, learningAPIURL, DefaultHTTPTimeout)
+	return NewLearningDataSourceWithTimeout(repoPath, learningAPIURL, DefaultLearningAPITimeout)
 }
 
 // NewLearningDataSourceWithTimeout creates a new learning-integrated data source with custom timeout
@@ -61,7 +63,7 @@ func (l *LearningDataSource) GetLearningSnapshot() (*LearningSnapshot, error) {
 
 // fetchLearningData retrieves data from the learning system API
 func (l *LearningDataSource) fetchLearningData() (*LearningSnapshot, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), GetDefaultAPITimeout())
+	ctx, cancel := context.WithTimeout(context.Background(), l.httpClient.Timeout)
 	defer cancel()
 	
 	// Get learning statistics
@@ -193,7 +195,7 @@ func (l *LearningDataSource) GetDetailedInsights() ([]InsightSummary, error) {
 		return l.getMockLearningSnapshot().ActiveInsights, nil
 	}
 	
-	ctx, cancel := context.WithTimeout(context.Background(), GetDefaultAPITimeout())
+	ctx, cancel := context.WithTimeout(context.Background(), l.httpClient.Timeout)
 	defer cancel()
 	
 	insightsURL := fmt.Sprintf("%s/api/v1/learning/insights", l.learningAPIURL)
@@ -229,7 +231,7 @@ func (l *LearningDataSource) GetPatterns() ([]PatternSummary, error) {
 		return l.getMockLearningSnapshot().RecentPatterns, nil
 	}
 	
-	ctx, cancel := context.WithTimeout(context.Background(), GetDefaultAPITimeout())
+	ctx, cancel := context.WithTimeout(context.Background(), l.httpClient.Timeout)
 	defer cancel()
 	
 	patternsURL := fmt.Sprintf("%s/api/v1/learning/patterns", l.learningAPIURL)
@@ -265,7 +267,7 @@ func (l *LearningDataSource) TriggerAnalysis() error {
 		return nil // No-op if learning system not available
 	}
 	
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), l.httpClient.Timeout)
 	defer cancel()
 	
 	analyzeURL := fmt.Sprintf("%s/api/v1/learning/analyze", l.learningAPIURL)

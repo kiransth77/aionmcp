@@ -251,9 +251,20 @@ func (r *ReadmeGenerator) extractPreservedSections(content string) map[string]st
 	}
 	
 	for _, section := range preserveSections {
-		// Use regex to extract section content  
-		// Match section header and capture content until next section or end
-		// Use (?s) for dot-matches-newline and flexible whitespace matching
+		// Extract section content using regex pattern.
+		// Pattern breakdown:
+		//   (?i)          - Case-insensitive matching (matches "## Features", "## features", etc.)
+		//   (?s)          - Dot-matches-newline mode (allows . to match \n characters)
+		//   ## [^#]*      - Match section header starting with "## " followed by any non-# characters
+		//   %s            - The section name we're searching for (e.g., "features", "installation")
+		//   [^#]*         - Any additional text after section name (before newline)
+		//   \n+           - One or more newlines after the section header
+		//   (.*?)         - Non-greedy capture group: captures section content (everything until next section or end)
+		//   (?:\n## |$)   - Non-capturing group: stop at either next section header ("\n## ") or end of string ($)
+		//
+		// Note: Go's regexp package doesn't support lookaheads, so we use a non-capturing group
+		// to match the delimiter without including it in the capture. This pattern assumes
+		// sections are separated by headers starting with "## ".
 		pattern := fmt.Sprintf(`(?is)## [^#]*%s[^#]*\n+(.*?)(?:\n## |$)`, section)
 		re := regexp.MustCompile(pattern)
 		
