@@ -241,7 +241,7 @@ func (s *BoltStorage) GetExecutionStats(ctx context.Context) (LearningStats, err
 				}
 				// Calculate success rate from counts to avoid floating-point errors
 				toolStat.SuccessRate = float64(toolStat.SuccessCount) / float64(toolStat.ExecutionCount)
-				// Use Welford's algorithm for numerically stable running mean
+				// Use incremental mean formula for numerically stable running average
 				prevAvg := float64(toolStat.AverageLatency.Nanoseconds())
 				newVal := float64(record.Duration.Nanoseconds())
 				n := float64(toolStat.ExecutionCount)

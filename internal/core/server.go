@@ -244,10 +244,10 @@ func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager
 			sourceType = metadata.Source
 		}
 		
-		// Pass captured variables as parameters to avoid race conditions
-		go func(ctx context.Context, tn, st string, req, res interface{}, execErr error, dur time.Duration) {
+		// Pass all captured variables as parameters to make dependencies explicit
+		go func(ctx context.Context, engine *selflearn.Engine, log *zap.Logger, tn, st string, req, res interface{}, execErr error, dur time.Duration) {
 			// Record the execution using server-scoped context
-			if recordErr := learningEngine.RecordExecution(
+			if recordErr := engine.RecordExecution(
 				ctx,
 				tn,
 				st,
@@ -256,11 +256,11 @@ func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager
 				execErr,
 				dur,
 			); recordErr != nil {
-				logger.Warn("Failed to record execution for learning",
+				log.Warn("Failed to record execution for learning",
 					zap.String("tool", tn),
 					zap.Error(recordErr))
 			}
-		}(serverCtx, toolName, sourceType, request, result, execErr, duration)
+		}(serverCtx, learningEngine, logger, toolName, sourceType, request, result, execErr, duration)
 
 		if err != nil {
 			logger.Error("Tool execution failed",
