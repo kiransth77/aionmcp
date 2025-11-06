@@ -163,6 +163,7 @@ func (c *Collector) classifyError(err error) string {
 	networkPatterns := []string{
 		"connection", "network", "dns", "http", "tcp", "socket",
 		"refused", "unreachable", "reset", "broken pipe", "no route",
+		"timeout", "deadline exceeded",
 	}
 	for _, pattern := range networkPatterns {
 		if strings.Contains(errMsg, pattern) {
@@ -194,7 +195,7 @@ func (c *Collector) classifyError(err error) string {
 
 	// Performance errors
 	performancePatterns := []string{
-		"deadline", "slow", "rate limit", "throttle", "capacity",
+		"slow", "rate limit", "throttle", "capacity",
 		"overload", "busy", "queue", "limit exceeded",
 	}
 	for _, pattern := range performancePatterns {

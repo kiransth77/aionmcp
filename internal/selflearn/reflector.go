@@ -123,7 +123,7 @@ func (r *Reflector) generateErrorInsights(ctx context.Context) ([]Insight, error
 			ID:          r.generateInsightID(),
 			Type:        InsightTypeReliability,
 			Priority:    priority,
-			Title:       fmt.Sprintf("Recurring %s Errors in %s", pattern.Metadata["error_type"], pattern.Metadata["tool_name"]),
+			Title:       fmt.Sprintf("Recurring %s Errors in %s", errorType, pattern.Metadata["tool_name"]),
 			Description: fmt.Sprintf("Pattern detected: %s (Confidence: %.1f%%)", pattern.Description, pattern.Confidence*100),
 			Suggestion:  suggestion,
 			Evidence: []string{
