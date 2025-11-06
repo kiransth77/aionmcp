@@ -35,25 +35,35 @@ const (
 // ToolRegistryEventHandler handles tool registry events
 type ToolRegistryEventHandler func(event ToolRegistryEvent)
 
+// eventHandlerEntry wraps a handler with its unique ID
+type eventHandlerEntry struct {
+	id      int
+	handler ToolRegistryEventHandler
+}
+
 // ToolRegistry manages the collection of available tools with dynamic registration
 // It implements the types.ToolRegistry interface
 type ToolRegistry struct {
-	mu            sync.RWMutex
-	tools         map[string]Tool
-	versions      map[string]string // tool name -> version
-	sources       map[string]string // tool name -> source identifier
-	eventHandlers []ToolRegistryEventHandler
-	logger        *zap.Logger
+	mu               sync.RWMutex
+	tools            map[string]Tool
+	versions         map[string]string // tool name -> version
+	sources          map[string]string // tool name -> source identifier
+	eventHandlers    []eventHandlerEntry
+	nextHandlerID    int
+	logger           *zap.Logger
+	handlerSemaphore chan struct{} // Limits concurrent event handler executions
 }
 
 // NewToolRegistry creates a new tool registry with dynamic capabilities
 func NewToolRegistry(logger *zap.Logger) *ToolRegistry {
 	registry := &ToolRegistry{
-		tools:         make(map[string]Tool),
-		versions:      make(map[string]string),
-		sources:       make(map[string]string),
-		eventHandlers: make([]ToolRegistryEventHandler, 0),
-		logger:        logger,
+		tools:            make(map[string]Tool),
+		versions:         make(map[string]string),
+		sources:          make(map[string]string),
+		eventHandlers:    make([]eventHandlerEntry, 0),
+		nextHandlerID:    1,
+		logger:           logger,
+		handlerSemaphore: make(chan struct{}, 50), // Limit to 50 concurrent handlers
 	}
 
 	// Register built-in tools for iteration 0
@@ -70,10 +80,10 @@ func (r *ToolRegistry) Register(tool Tool) error {
 // RegisterWithSource adds a tool to the registry with source information
 func (r *ToolRegistry) RegisterWithSource(tool Tool, sourceID, version string) error {
 	r.mu.Lock()
-	defer r.mu.Unlock()
 
 	name := tool.Name()
 	if name == "" {
+		r.mu.Unlock()
 		return fmt.Errorf("tool name cannot be empty")
 	}
 
@@ -96,13 +106,16 @@ func (r *ToolRegistry) RegisterWithSource(tool Tool, sourceID, version string) e
 		zap.String("version", version),
 		zap.String("source", sourceID))
 
-	// Emit event
+	// Prepare event while still holding lock
 	event := ToolRegistryEvent{
 		Type:      eventType,
 		ToolName:  name,
 		Metadata:  tool.Metadata(),
 		Timestamp: time.Now(),
 	}
+	r.mu.Unlock()
+	
+	// Emit event after releasing lock to avoid deadlock
 	r.emitEvent(event)
 
 	return nil
@@ -111,11 +124,11 @@ func (r *ToolRegistry) RegisterWithSource(tool Tool, sourceID, version string) e
 // RegisterBatch adds multiple tools atomically
 func (r *ToolRegistry) RegisterBatch(tools []Tool, sourceID string) error {
 	r.mu.Lock()
-	defer r.mu.Unlock()
 
 	// Validate all tools first
 	for _, tool := range tools {
 		if tool.Name() == "" {
+			r.mu.Unlock()
 			return fmt.Errorf("tool name cannot be empty")
 		}
 	}
@@ -147,7 +160,9 @@ func (r *ToolRegistry) RegisterBatch(tools []Tool, sourceID string) error {
 		zap.Int("count", len(tools)),
 		zap.String("source", sourceID))
 
-	// Emit all events
+	r.mu.Unlock()
+
+	// Emit all events after releasing lock to avoid deadlock
 	for _, event := range events {
 		r.emitEvent(event)
 	}
@@ -158,7 +173,6 @@ func (r *ToolRegistry) RegisterBatch(tools []Tool, sourceID string) error {
 // UnregisterBySource removes all tools from a specific source
 func (r *ToolRegistry) UnregisterBySource(sourceID string) error {
 	r.mu.Lock()
-	defer r.mu.Unlock()
 
 	var removedTools []string
 	for name, source := range r.sources {
@@ -167,6 +181,7 @@ func (r *ToolRegistry) UnregisterBySource(sourceID string) error {
 		}
 	}
 
+	var events []ToolRegistryEvent
 	for _, name := range removedTools {
 		tool := r.tools[name]
 		delete(r.tools, name)
@@ -177,19 +192,25 @@ func (r *ToolRegistry) UnregisterBySource(sourceID string) error {
 			zap.String("tool", name),
 			zap.String("source", sourceID))
 
-		// Emit event
-		event := ToolRegistryEvent{
+		// Prepare event
+		events = append(events, ToolRegistryEvent{
 			Type:      ToolEventRemoved,
 			ToolName:  name,
 			Metadata:  tool.Metadata(),
 			Timestamp: time.Now(),
-		}
-		r.emitEvent(event)
+		})
 	}
 
 	r.logger.Info("Batch tool removal by source completed",
 		zap.Int("count", len(removedTools)),
 		zap.String("source", sourceID))
+
+	r.mu.Unlock()
+
+	// Emit events after releasing lock to avoid deadlock
+	for _, event := range events {
+		r.emitEvent(event)
+	}
 
 	return nil
 }
@@ -197,10 +218,10 @@ func (r *ToolRegistry) UnregisterBySource(sourceID string) error {
 // Unregister removes a tool from the registry
 func (r *ToolRegistry) Unregister(name string) error {
 	r.mu.Lock()
-	defer r.mu.Unlock()
 
 	tool, exists := r.tools[name]
 	if !exists {
+		r.mu.Unlock()
 		return fmt.Errorf("tool '%s' not found", name)
 	}
 
@@ -210,13 +231,16 @@ func (r *ToolRegistry) Unregister(name string) error {
 	
 	r.logger.Info("Tool unregistered", zap.String("tool", name))
 
-	// Emit event
+	// Prepare event
 	event := ToolRegistryEvent{
 		Type:      ToolEventRemoved,
 		ToolName:  name,
 		Metadata:  tool.Metadata(),
 		Timestamp: time.Now(),
 	}
+	r.mu.Unlock()
+
+	// Emit event after releasing lock to avoid deadlock
 	r.emitEvent(event)
 
 	return nil
@@ -312,27 +336,56 @@ func (r *ToolRegistry) GetToolSources() []string {
 	return sources
 }
 
-// AddEventHandler adds an event handler for tool registry changes
-func (r *ToolRegistry) AddEventHandler(handler ToolRegistryEventHandler) {
+// AddEventHandler adds an event handler for tool registry changes and returns a handler ID
+func (r *ToolRegistry) AddEventHandler(handler ToolRegistryEventHandler) int {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.eventHandlers = append(r.eventHandlers, handler)
+	
+	handlerID := r.nextHandlerID
+	r.nextHandlerID++
+	
+	r.eventHandlers = append(r.eventHandlers, eventHandlerEntry{
+		id:      handlerID,
+		handler: handler,
+	})
+	
+	return handlerID
 }
 
-// Note: RemoveEventHandler is not implemented due to Go's function comparison limitations.
-// Function pointers cannot be compared directly in Go. To implement handler removal in the future,
-// consider adding a handler registration ID system that returns an ID on AddEventHandler
-// which can then be used to identify and remove specific handlers.
+// RemoveEventHandler removes an event handler by its ID
+func (r *ToolRegistry) RemoveEventHandler(handlerID int) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	
+	for i, entry := range r.eventHandlers {
+		if entry.id == handlerID {
+			// Remove by replacing with last element and truncating
+			r.eventHandlers[i] = r.eventHandlers[len(r.eventHandlers)-1]
+			r.eventHandlers = r.eventHandlers[:len(r.eventHandlers)-1]
+			return true
+		}
+	}
+	
+	r.logger.Warn("Attempted to remove non-existent event handler", zap.Int("handler_id", handlerID))
+	return false
+}
 
-// emitEvent sends an event to all registered handlers
+// emitEvent sends an event to all registered handlers with bounded concurrency
 func (r *ToolRegistry) emitEvent(event ToolRegistryEvent) {
 	// Don't hold the lock while calling handlers to avoid deadlocks
-	handlers := make([]ToolRegistryEventHandler, len(r.eventHandlers))
+	r.mu.RLock()
+	handlers := make([]eventHandlerEntry, len(r.eventHandlers))
 	copy(handlers, r.eventHandlers)
+	r.mu.RUnlock()
 
-	for _, handler := range handlers {
+	for _, entry := range handlers {
 		go func(h ToolRegistryEventHandler, registry *ToolRegistry) {
+			// Acquire semaphore slot (blocks if at capacity)
+			registry.handlerSemaphore <- struct{}{}
 			defer func() {
+				// Release semaphore slot
+				<-registry.handlerSemaphore
+				
 				if recovered := recover(); recovered != nil {
 					registry.logger.Error("Tool registry event handler panic", 
 						zap.String("event_type", string(event.Type)),
@@ -341,7 +394,7 @@ func (r *ToolRegistry) emitEvent(event ToolRegistryEvent) {
 				}
 			}()
 			h(event)
-		}(handler, r)
+		}(entry.handler, r)
 	}
 }
 

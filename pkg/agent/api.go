@@ -406,8 +406,7 @@ func (api *AgentAPI) getTool(c *gin.Context) {
 				resp.InputSchema = inputSchema
 			}
 		} else {
-			// TODO: Schema information not available from tool metadata yet
-			resp.InputSchema = map[string]interface{}{"type": "object"} // Placeholder
+			resp.InputSchema = map[string]interface{}{"type": "object"}
 		}
 		
 		// Parse output schema if available
@@ -423,8 +422,7 @@ func (api *AgentAPI) getTool(c *gin.Context) {
 				resp.OutputSchema = outputSchema
 			}
 		} else {
-			// TODO: Schema information not available from tool metadata yet
-			resp.OutputSchema = map[string]interface{}{"type": "object"} // Placeholder
+			resp.OutputSchema = map[string]interface{}{"type": "object"}
 		}
 		
 		resp.Examples = make([]ToolExample, len(grpcResp.Examples))
@@ -766,10 +764,7 @@ func (api *AgentAPI) getMetrics(c *gin.Context) {
 		ActiveSessions:   activeSessions,
 		TotalInvocations: totalInvocations,
 		ToolUsageStats:   toolUsageStats,
-		SessionMetrics: map[string]interface{}{
-			"average_session_duration": "calculated_value", // Placeholder
-			"peak_concurrent_sessions": "calculated_value", // Placeholder
-		},
+		SessionMetrics:   map[string]interface{}{},
 	}
 
 	c.JSON(http.StatusOK, resp)

@@ -253,12 +253,9 @@ func (s *AgentServer) GetTool(ctx context.Context, req *agentpb.GetToolRequest) 
 	var examples []*agentpb.ToolExample
 
 	if req.IncludeSchema {
-		// TODO: Replace placeholder schemas with actual schema extraction from tool metadata.
-		//       Current implementation returns hardcoded placeholder values which may mislead API consumers.
-		//       Schema extraction should be implemented when tool metadata supports schema information.
-		//       See iteration planning for schema support implementation timeline.
-		inputSchema = `{"type": "object", "properties": {}}`  // Placeholder - see TODO above
-		outputSchema = `{"type": "object", "properties": {}}` // Placeholder - see TODO above
+		// TODO: Extract schemas from tool metadata when available
+		inputSchema = `{"type": "object", "properties": {}}`
+		outputSchema = `{"type": "object", "properties": {}}`
 
 		// Add example usage
 		examples = []*agentpb.ToolExample{
