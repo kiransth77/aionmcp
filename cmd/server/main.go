@@ -135,6 +135,13 @@ func initConfig(overrides ConfigOverrides) error {
 	viper.SetDefault("storage.path", "./data/aionmcp.db")
 	viper.SetDefault("log.level", "info")
 	viper.SetDefault("log.format", "json")
+	
+	// Learning engine defaults
+	viper.SetDefault("learning.enabled", true)
+	viper.SetDefault("learning.sample_rate", 1.0)
+	viper.SetDefault("learning.retention_days", 30)
+	viper.SetDefault("learning.async_processing", true)
+	viper.SetDefault("learning.include_successful", true)
 
 	// Allow environment variable overrides
 	viper.AutomaticEnv()

@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aionmcp/aionmcp/internal/selflearn"
 	"github.com/aionmcp/aionmcp/pkg/importer"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
@@ -23,8 +24,11 @@ type Server struct {
 	toolRegistry    *ToolRegistry
 	importerManager *importer.ImporterManager
 	fileWatcher     *importer.FileWatcher
+	learningEngine  *selflearn.Engine
 	shutdown        chan struct{}
 	wg              sync.WaitGroup
+	serverCtx       context.Context // Server-scoped context for background operations
+	cancelFunc      context.CancelFunc
 }
 
 // NewServer creates a new AionMCP server instance
@@ -46,6 +50,35 @@ func NewServer(logger *zap.Logger) (*Server, error) {
 		return nil, fmt.Errorf("failed to create file watcher: %w", err)
 	}
 
+	// Initialize self-learning engine
+	learningConfig := selflearn.DefaultCollectionConfig()
+	learningConfig.Enabled = viper.GetBool("learning.enabled")
+	if learningConfig.Enabled {
+		if sampleRate := viper.GetFloat64("learning.sample_rate"); sampleRate > 0 {
+			learningConfig.SampleRate = sampleRate
+		}
+		if retentionDays := viper.GetInt("learning.retention_days"); retentionDays > 0 {
+			learningConfig.RetentionPeriod = time.Duration(retentionDays) * 24 * time.Hour
+		}
+	}
+
+	// Create learning storage
+	storagePath := viper.GetString("storage.path")
+	if storagePath == "" {
+		storagePath = "./data/aionmcp.db"
+	}
+	learningStorage, err := selflearn.NewBoltStorage(storagePath, logger)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create learning storage: %w", err)
+	}
+
+	// Create learning engine (ensure storage cleanup on error)
+	learningEngine := selflearn.NewEngine(learningConfig, learningStorage, logger)
+	if learningEngine == nil {
+		learningStorage.Close()
+		return nil, fmt.Errorf("failed to create learning engine")
+	}
+
 	// Create HTTP server with Gin
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
@@ -64,8 +97,11 @@ func NewServer(logger *zap.Logger) (*Server, error) {
 		)
 	})
 
+	// Create server-scoped context for background operations
+	serverCtx, cancelFunc := context.WithCancel(context.Background())
+
 	// Setup HTTP routes
-	setupHTTPRoutes(router, registry, importerManager, fileWatcher, logger)
+	setupHTTPRoutes(router, registry, importerManager, fileWatcher, learningEngine, logger, serverCtx)
 
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf(":%d", viper.GetInt("server.port")),
@@ -83,7 +119,10 @@ func NewServer(logger *zap.Logger) (*Server, error) {
 		toolRegistry:    registry,
 		importerManager: importerManager,
 		fileWatcher:     fileWatcher,
+		learningEngine:  learningEngine,
 		shutdown:        make(chan struct{}),
+		serverCtx:       serverCtx,
+		cancelFunc:      cancelFunc,
 	}, nil
 }
 
@@ -124,6 +163,9 @@ func (s *Server) Run(ctx context.Context) error {
 	<-ctx.Done()
 	s.logger.Info("Shutting down AionMCP server...")
 
+	// Cancel server-scoped context to stop background operations
+	s.cancelFunc()
+
 	// Graceful shutdown
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -146,7 +188,7 @@ func (s *Server) Run(ctx context.Context) error {
 }
 
 // setupHTTPRoutes configures HTTP API routes
-func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager *importer.ImporterManager, fileWatcher *importer.FileWatcher, logger *zap.Logger) {
+func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager *importer.ImporterManager, fileWatcher *importer.FileWatcher, learningEngine *selflearn.Engine, logger *zap.Logger, serverCtx context.Context) {
 	api := router.Group("/api/v1")
 	
 	// Health check
@@ -174,6 +216,7 @@ func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager
 	// Tool invocation endpoint
 	mcp.POST("/tools/:name/invoke", func(c *gin.Context) {
 		toolName := c.Param("name")
+		startTime := time.Now()
 		
 		var request map[string]interface{}
 		if err := c.ShouldBindJSON(&request); err != nil {
@@ -188,18 +231,49 @@ func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager
 			return
 		}
 
-		// Execute tool
+		// Execute tool and measure duration
 		result, err := tool.Execute(request)
+		duration := time.Since(startTime)
+
+		// Record execution for learning (async, non-blocking)
+		// Capture all variables before goroutine to avoid race conditions
+		execErr := err
+		metadata := tool.Metadata()
+		sourceType := "builtin"
+		if metadata.Source != "" {
+			sourceType = metadata.Source
+		}
+		
+		// Pass all captured variables as parameters to make dependencies explicit
+		go func(ctx context.Context, engine *selflearn.Engine, log *zap.Logger, tn, st string, req, res interface{}, execErr error, dur time.Duration) {
+			// Record the execution using server-scoped context
+			if recordErr := engine.RecordExecution(
+				ctx,
+				tn,
+				st,
+				req,
+				res,
+				execErr,
+				dur,
+			); recordErr != nil {
+				log.Warn("Failed to record execution for learning",
+					zap.String("tool", tn),
+					zap.Error(recordErr))
+			}
+		}(serverCtx, learningEngine, logger, toolName, sourceType, request, result, execErr, duration)
+
 		if err != nil {
 			logger.Error("Tool execution failed",
 				zap.String("tool", toolName),
+				zap.Duration("duration", duration),
 				zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
 		logger.Info("Tool executed successfully",
-			zap.String("tool", toolName))
+			zap.String("tool", toolName),
+			zap.Duration("duration", duration))
 
 		c.JSON(http.StatusOK, gin.H{
 			"tool":   toolName,
@@ -348,5 +422,99 @@ func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager
 		c.JSON(http.StatusOK, gin.H{
 			"supported_types": types,
 		})
+	})
+
+	// Learning endpoints
+	learning := api.Group("/learning")
+
+	// Get overall learning statistics
+	learning.GET("/stats", func(c *gin.Context) {
+		stats, err := learningEngine.GetStats(c.Request.Context())
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get learning stats"})
+			return
+		}
+		c.JSON(http.StatusOK, stats)
+	})
+
+	// Get insights
+	learning.GET("/insights", func(c *gin.Context) {
+		insightType := c.Query("type")
+		priority := c.Query("priority")
+		
+		var insights []selflearn.Insight
+		var err error
+
+		if priority != "" {
+			insights, err = learningEngine.GetInsightsByPriority(c.Request.Context(), selflearn.Priority(priority), 50)
+		} else {
+			insights, err = learningEngine.GetInsights(c.Request.Context(), selflearn.InsightType(insightType), 50)
+		}
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get insights"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"insights": insights})
+	})
+
+	// Get patterns
+	learning.GET("/patterns", func(c *gin.Context) {
+		patternType := c.Query("type")
+		toolName := c.Query("tool")
+
+		if toolName != "" {
+			patterns, err := learningEngine.GetErrorPatterns(c.Request.Context(), toolName)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get tool patterns"})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"patterns": patterns})
+			return
+		}
+
+		patterns, err := learningEngine.GetPatterns(c.Request.Context(), selflearn.PatternType(patternType), 50)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get patterns"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"patterns": patterns})
+	})
+
+	// Get tool-specific insights
+	learning.GET("/tools/:name/insights", func(c *gin.Context) {
+		toolName := c.Param("name")
+		insights, err := learningEngine.GetToolInsights(c.Request.Context(), toolName)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get tool insights"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"tool_name": toolName, "insights": insights})
+	})
+
+	// Trigger manual analysis
+	learning.POST("/analyze", func(c *gin.Context) {
+		patterns, err := learningEngine.AnalyzePatterns(c.Request.Context())
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to analyze patterns"})
+			return
+		}
+
+		insights, err := learningEngine.GenerateInsights(c.Request.Context())
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate insights"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"patterns_found": len(patterns),
+			"insights_generated": len(insights),
+		})
+	})
+
+	// Get/update learning configuration
+	learning.GET("/config", func(c *gin.Context) {
+		config := learningEngine.GetConfig()
+		c.JSON(http.StatusOK, config)
 	})
 }
