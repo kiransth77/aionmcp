@@ -356,18 +356,22 @@ func (r *ToolRegistry) AddEventHandler(handler ToolRegistryEventHandler) int {
 func (r *ToolRegistry) RemoveEventHandler(handlerID int) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
+
+	found := false
 	for i, entry := range r.eventHandlers {
 		if entry.id == handlerID {
 			// Remove by replacing with last element and truncating
 			r.eventHandlers[i] = r.eventHandlers[len(r.eventHandlers)-1]
 			r.eventHandlers = r.eventHandlers[:len(r.eventHandlers)-1]
-			return true
+			found = true
+			break
 		}
 	}
-	
-	r.logger.Warn("Attempted to remove non-existent event handler", zap.Int("handler_id", handlerID))
-	return false
+
+	if !found {
+		r.logger.Warn("Attempted to remove non-existent event handler", zap.Int("handler_id", handlerID))
+	}
+	return found
 }
 
 // emitEvent sends an event to all registered handlers with bounded concurrency
