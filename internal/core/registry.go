@@ -390,13 +390,11 @@ func (r *ToolRegistry) emitEvent(event ToolRegistryEvent) {
 
 	for _, entry := range handlers {
 		go func(h ToolRegistryEventHandler, registry *ToolRegistry) {
+			acquired := false
 			defer func() {
-				// Release semaphore slot if acquired
-				select {
-				case <-registry.handlerSemaphore:
-					// Successfully released
-				default:
-					// Semaphore was not acquired, nothing to release
+				// Release semaphore slot only if it was acquired
+				if acquired {
+					<-registry.handlerSemaphore
 				}
 				
 				if recovered := recover(); recovered != nil {
@@ -409,6 +407,7 @@ func (r *ToolRegistry) emitEvent(event ToolRegistryEvent) {
 			
 			// Acquire semaphore slot (blocks if at capacity)
 			registry.handlerSemaphore <- struct{}{}
+			acquired = true
 			
 			h(event)
 		}(entry.handler, r)
