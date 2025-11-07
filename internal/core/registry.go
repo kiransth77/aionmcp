@@ -30,6 +30,12 @@ const (
 	ToolEventAdded   ToolEventType = "tool_added"
 	ToolEventRemoved ToolEventType = "tool_removed"
 	ToolEventUpdated ToolEventType = "tool_updated"
+	
+	// DefaultMaxConcurrentHandlers defines the maximum number of event handlers
+	// that can execute concurrently. This prevents resource exhaustion when
+	// many events are emitted rapidly. The value of 50 provides a balance between
+	// throughput and resource usage for typical workloads.
+	DefaultMaxConcurrentHandlers = 50
 )
 
 // ToolRegistryEventHandler handles tool registry events
@@ -63,7 +69,7 @@ func NewToolRegistry(logger *zap.Logger) *ToolRegistry {
 		eventHandlers:    make([]eventHandlerEntry, 0),
 		nextHandlerID:    1,
 		logger:           logger,
-		handlerSemaphore: make(chan struct{}, 50), // Limit to 50 concurrent handlers
+		handlerSemaphore: make(chan struct{}, DefaultMaxConcurrentHandlers),
 	}
 
 	// Register built-in tools for iteration 0
@@ -384,11 +390,14 @@ func (r *ToolRegistry) emitEvent(event ToolRegistryEvent) {
 
 	for _, entry := range handlers {
 		go func(h ToolRegistryEventHandler, registry *ToolRegistry) {
-			// Acquire semaphore slot (blocks if at capacity)
-			registry.handlerSemaphore <- struct{}{}
 			defer func() {
-				// Release semaphore slot
-				<-registry.handlerSemaphore
+				// Release semaphore slot if acquired
+				select {
+				case <-registry.handlerSemaphore:
+					// Successfully released
+				default:
+					// Semaphore was not acquired, nothing to release
+				}
 				
 				if recovered := recover(); recovered != nil {
 					registry.logger.Error("Tool registry event handler panic", 
@@ -397,6 +406,10 @@ func (r *ToolRegistry) emitEvent(event ToolRegistryEvent) {
 						zap.Any("panic", recovered))
 				}
 			}()
+			
+			// Acquire semaphore slot (blocks if at capacity)
+			registry.handlerSemaphore <- struct{}{}
+			
 			h(event)
 		}(entry.handler, r)
 	}

@@ -212,10 +212,13 @@ func TestToolRegistry_EventHandlers(t *testing.T) {
 
 	var mu sync.Mutex
 	var receivedEvents []ToolRegistryEvent
+	eventReceived := make(chan struct{}, 10) // Buffered channel for event notifications
+	
 	handler := func(event ToolRegistryEvent) {
 		mu.Lock()
 		defer mu.Unlock()
 		receivedEvents = append(receivedEvents, event)
+		eventReceived <- struct{}{} // Signal that an event was received
 	}
 
 	handlerID := registry.AddEventHandler(handler)
@@ -229,8 +232,13 @@ func TestToolRegistry_EventHandlers(t *testing.T) {
 
 	registry.Register(tool)
 
-	// Wait a bit for goroutine to execute
-	time.Sleep(10 * time.Millisecond)
+	// Wait for event with timeout
+	select {
+	case <-eventReceived:
+		// Event received successfully
+	case <-time.After(1 * time.Second):
+		t.Fatal("Timeout waiting for tool registration event")
+	}
 
 	// Verify event was received
 	mu.Lock()
@@ -242,8 +250,13 @@ func TestToolRegistry_EventHandlers(t *testing.T) {
 	// Unregister the tool
 	registry.Unregister("event-tool")
 
-	// Wait a bit for goroutine to execute
-	time.Sleep(10 * time.Millisecond)
+	// Wait for event with timeout
+	select {
+	case <-eventReceived:
+		// Event received successfully
+	case <-time.After(1 * time.Second):
+		t.Fatal("Timeout waiting for tool unregistration event")
+	}
 
 	// Verify remove event was received
 	mu.Lock()
@@ -263,8 +276,13 @@ func TestToolRegistry_EventHandlers(t *testing.T) {
 	}
 	registry.Register(tool2)
 	
-	// Wait a bit
-	time.Sleep(10 * time.Millisecond)
+	// Wait a bit to ensure no event is received (with timeout)
+	select {
+	case <-eventReceived:
+		t.Fatal("Received unexpected event after handler removal")
+	case <-time.After(100 * time.Millisecond):
+		// Expected: no event should be received
+	}
 	
 	// Verify no new events were received (still 2)
 	mu.Lock()
