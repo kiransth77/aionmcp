@@ -38,7 +38,7 @@ func NewServer(logger *zap.Logger) (*Server, error) {
 
 	// Initialize importer manager
 	importerManager := importer.NewImporterManager(registry)
-	
+
 	// Register importers
 	importerManager.RegisterImporter(importer.NewOpenAPIImporter())
 	importerManager.RegisterImporter(importer.NewGraphQLImporter())
@@ -58,12 +58,12 @@ func NewServer(logger *zap.Logger) (*Server, error) {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 	router.Use(gin.Recovery())
-	
+
 	// Add request logging middleware
 	router.Use(func(c *gin.Context) {
 		start := time.Now()
 		c.Next()
-		
+
 		logger.Info("HTTP request",
 			zap.String("method", c.Request.Method),
 			zap.String("path", c.Request.URL.Path),
@@ -116,7 +116,7 @@ func (s *Server) Run(ctx context.Context) error {
 	s.wg.Add(1)
 	go func() {
 		defer s.wg.Done()
-		
+
 		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", viper.GetInt("server.grpc_port")))
 		if err != nil {
 			s.logger.Error("Failed to listen on gRPC port", zap.Error(err))
@@ -158,7 +158,7 @@ func (s *Server) Run(ctx context.Context) error {
 // setupHTTPRoutes configures HTTP API routes
 func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager *importer.ImporterManager, fileWatcher *importer.FileWatcher, agentAPI *agent.AgentAPI, logger *zap.Logger) {
 	api := router.Group("/api/v1")
-	
+
 	// Health check
 	api.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
@@ -174,7 +174,7 @@ func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager
 
 	// MCP endpoints
 	mcp := api.Group("/mcp")
-	
+
 	// List available tools
 	mcp.GET("/tools", func(c *gin.Context) {
 		tools := registry.ListTools()
@@ -187,7 +187,7 @@ func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager
 	// Tool invocation endpoint
 	mcp.POST("/tools/:name/invoke", func(c *gin.Context) {
 		toolName := c.Param("name")
-		
+
 		var request map[string]interface{}
 		if err := c.ShouldBindJSON(&request); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
@@ -222,7 +222,7 @@ func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager
 
 	// Importer management endpoints
 	specs := api.Group("/specs")
-	
+
 	// List specification sources
 	specs.GET("/", func(c *gin.Context) {
 		sources := importerManager.ListSources()
@@ -308,7 +308,7 @@ func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager
 	// Reload a specification
 	specs.POST("/:id/reload", func(c *gin.Context) {
 		sourceID := c.Param("id")
-		
+
 		result, err := importerManager.ReloadSpec(c.Request.Context(), sourceID)
 		if err != nil {
 			logger.Error("Failed to reload specification",
@@ -330,7 +330,7 @@ func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager
 	// Remove a specification
 	specs.DELETE("/:id", func(c *gin.Context) {
 		sourceID := c.Param("id")
-		
+
 		// Stop watching if enabled
 		if fileWatcher.IsWatching(sourceID) {
 			if err := fileWatcher.UnwatchSpec(sourceID); err != nil {

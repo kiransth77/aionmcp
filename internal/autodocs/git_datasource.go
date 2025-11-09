@@ -27,7 +27,7 @@ func (g *GitDataSource) GetCommits(dateRange DateRange) ([]GitCommit, error) {
 	// Format git log command with date range
 	sinceDate := dateRange.StartDate.Format("2006-01-02")
 	untilDate := dateRange.EndDate.Format("2006-01-02")
-	
+
 	// Use pretty format to get structured commit information
 	cmd := exec.Command("git", "log",
 		"--since="+sinceDate,
@@ -37,12 +37,12 @@ func (g *GitDataSource) GetCommits(dateRange DateRange) ([]GitCommit, error) {
 		"--no-merges",
 	)
 	cmd.Dir = g.repoPath
-	
+
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get git log: %w", err)
 	}
-	
+
 	return g.parseGitLog(string(output))
 }
 
@@ -51,29 +51,29 @@ func (g *GitDataSource) parseGitLog(logOutput string) ([]GitCommit, error) {
 	lines := strings.Split(logOutput, "\n")
 	var commits []GitCommit
 	var currentCommit *GitCommit
-	
+
 	commitPattern := regexp.MustCompile(`^([a-f0-9]{40})\|([a-f0-9]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]*)\|(.*)`)
 	statPattern := regexp.MustCompile(`^(\d+)\s+(\d+)\s+(.+)`)
-	
+
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
 		}
-		
+
 		// Check if this is a commit header line
 		if matches := commitPattern.FindStringSubmatch(line); matches != nil {
 			// Save previous commit if exists
 			if currentCommit != nil {
 				commits = append(commits, *currentCommit)
 			}
-			
+
 			// Parse commit date
 			commitDate, err := time.Parse("2006-01-02 15:04:05 -0700", matches[5])
 			if err != nil {
 				commitDate = time.Now() // Fallback
 			}
-			
+
 			// Create new commit
 			currentCommit = &GitCommit{
 				Hash:      matches[1],
@@ -88,18 +88,18 @@ func (g *GitDataSource) parseGitLog(logOutput string) ([]GitCommit, error) {
 			// Parse file statistics
 			insertions, _ := strconv.Atoi(statMatches[1])
 			deletions, _ := strconv.Atoi(statMatches[2])
-			
+
 			currentCommit.Insertions += insertions
 			currentCommit.Deletions += deletions
 			currentCommit.ChangedFiles++
 		}
 	}
-	
+
 	// Add the last commit
 	if currentCommit != nil {
 		commits = append(commits, *currentCommit)
 	}
-	
+
 	return commits, nil
 }
 
@@ -122,21 +122,21 @@ func (g *GitDataSource) GetLearningSnapshot() (*LearningSnapshot, error) {
 // GetProjectInfo retrieves general project information
 func (g *GitDataSource) GetProjectInfo() (map[string]interface{}, error) {
 	info := make(map[string]interface{})
-	
+
 	// Get current branch
 	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
 	cmd.Dir = g.repoPath
 	if output, err := cmd.Output(); err == nil {
 		info["current_branch"] = strings.TrimSpace(string(output))
 	}
-	
+
 	// Get latest commit hash
 	cmd = exec.Command("git", "rev-parse", "HEAD")
 	cmd.Dir = g.repoPath
 	if output, err := cmd.Output(); err == nil {
 		info["latest_commit"] = strings.TrimSpace(string(output))
 	}
-	
+
 	// Get total commit count
 	cmd = exec.Command("git", "rev-list", "--count", "HEAD")
 	cmd.Dir = g.repoPath
@@ -145,7 +145,7 @@ func (g *GitDataSource) GetProjectInfo() (map[string]interface{}, error) {
 			info["total_commits"] = count
 		}
 	}
-	
+
 	// Get repository status
 	cmd = exec.Command("git", "status", "--porcelain")
 	cmd.Dir = g.repoPath
@@ -153,14 +153,14 @@ func (g *GitDataSource) GetProjectInfo() (map[string]interface{}, error) {
 		dirty := len(strings.TrimSpace(string(output))) > 0
 		info["dirty"] = dirty
 	}
-	
+
 	// Get remote URL
 	cmd = exec.Command("git", "config", "--get", "remote.origin.url")
 	cmd.Dir = g.repoPath
 	if output, err := cmd.Output(); err == nil {
 		info["remote_url"] = strings.TrimSpace(string(output))
 	}
-	
+
 	// Get creation date (first commit)
 	cmd = exec.Command("git", "log", "--reverse", "--format=%ai", "--max-count=1")
 	cmd.Dir = g.repoPath
@@ -169,9 +169,9 @@ func (g *GitDataSource) GetProjectInfo() (map[string]interface{}, error) {
 			info["created_at"] = firstCommitDate
 		}
 	}
-	
+
 	info["snapshot_time"] = time.Now()
-	
+
 	return info, nil
 }
 
@@ -184,12 +184,12 @@ func (g *GitDataSource) GetCommitsSince(sinceCommit string) ([]GitCommit, error)
 		"--no-merges",
 	)
 	cmd.Dir = g.repoPath
-	
+
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get git log since %s: %w", sinceCommit, err)
 	}
-	
+
 	return g.parseGitLog(string(output))
 }
 
@@ -197,36 +197,36 @@ func (g *GitDataSource) GetCommitsSince(sinceCommit string) ([]GitCommit, error)
 func (g *GitDataSource) GetTags() ([]map[string]interface{}, error) {
 	cmd := exec.Command("git", "tag", "-l", "--sort=-version:refname", "--format=%(refname:short)|%(objectname)|%(creatordate:iso8601)")
 	cmd.Dir = g.repoPath
-	
+
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get git tags: %w", err)
 	}
-	
+
 	var tags []map[string]interface{}
 	scanner := bufio.NewScanner(strings.NewReader(string(output)))
-	
+
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if line == "" {
 			continue
 		}
-		
+
 		parts := strings.Split(line, "|")
 		if len(parts) >= 3 {
 			tag := map[string]interface{}{
 				"name": parts[0],
 				"hash": parts[1],
 			}
-			
+
 			if tagDate, err := time.Parse("2006-01-02 15:04:05 -0700", parts[2]); err == nil {
 				tag["date"] = tagDate
 			}
-			
+
 			tags = append(tags, tag)
 		}
 	}
-	
+
 	return tags, nil
 }
 
@@ -234,33 +234,33 @@ func (g *GitDataSource) GetTags() ([]map[string]interface{}, error) {
 func (g *GitDataSource) GetCurrentVersion() (string, error) {
 	cmd := exec.Command("git", "describe", "--tags", "--abbrev=0")
 	cmd.Dir = g.repoPath
-	
+
 	output, err := cmd.Output()
 	if err != nil {
 		// If no tags exist, return a default version
 		return "v0.1.0", nil
 	}
-	
+
 	return strings.TrimSpace(string(output)), nil
 }
 
 // CategorizeCommit categorizes a commit based on its message
 func (g *GitDataSource) CategorizeCommit(commit GitCommit) string {
 	subject := strings.ToLower(commit.Subject)
-	
+
 	// Define patterns for different categories
 	patterns := map[string][]string{
-		"feature": {"feat:", "feature:", "add:", "implement", "new"},
-		"fix":     {"fix:", "bug:", "bugfix:", "hotfix:", "patch:"},
-		"docs":    {"docs:", "doc:", "documentation", "readme", "changelog"},
-		"perf":    {"perf:", "performance:", "optimize", "speed", "improve"},
+		"feature":  {"feat:", "feature:", "add:", "implement", "new"},
+		"fix":      {"fix:", "bug:", "bugfix:", "hotfix:", "patch:"},
+		"docs":     {"docs:", "doc:", "documentation", "readme", "changelog"},
+		"perf":     {"perf:", "performance:", "optimize", "speed", "improve"},
 		"refactor": {"refactor:", "cleanup:", "clean:", "reorganize"},
-		"test":    {"test:", "tests:", "testing:", "spec:"},
-		"chore":   {"chore:", "bump:", "update:", "upgrade:", "version:"},
-		"style":   {"style:", "format:", "lint:", "prettier:"},
-		"ci":      {"ci:", "build:", "deploy:", "pipeline:"},
+		"test":     {"test:", "tests:", "testing:", "spec:"},
+		"chore":    {"chore:", "bump:", "update:", "upgrade:", "version:"},
+		"style":    {"style:", "format:", "lint:", "prettier:"},
+		"ci":       {"ci:", "build:", "deploy:", "pipeline:"},
 	}
-	
+
 	for category, keywords := range patterns {
 		for _, keyword := range keywords {
 			if strings.Contains(subject, keyword) {
@@ -268,12 +268,12 @@ func (g *GitDataSource) CategorizeCommit(commit GitCommit) string {
 			}
 		}
 	}
-	
+
 	// Check for breaking changes
 	if strings.Contains(subject, "breaking") || strings.Contains(subject, "!:") {
 		return "breaking"
 	}
-	
+
 	return "other"
 }
 
@@ -283,7 +283,7 @@ func (g *GitDataSource) GetCommitStats(dateRange DateRange) (map[string]interfac
 	if err != nil {
 		return nil, err
 	}
-	
+
 	stats := map[string]interface{}{
 		"total_commits":    len(commits),
 		"total_insertions": 0,
@@ -293,43 +293,43 @@ func (g *GitDataSource) GetCommitStats(dateRange DateRange) (map[string]interfac
 		"authors":          make(map[string]int),
 		"daily_activity":   make(map[string]int),
 	}
-	
+
 	categories := stats["categories"].(map[string]int)
 	authors := stats["authors"].(map[string]int)
 	daily := stats["daily_activity"].(map[string]int)
-	
+
 	totalInsertions := 0
 	totalDeletions := 0
 	totalFiles := 0
-	
+
 	for _, commit := range commits {
 		// Update totals
 		totalInsertions += commit.Insertions
 		totalDeletions += commit.Deletions
 		totalFiles += commit.ChangedFiles
-		
+
 		// Categorize commit
 		category := g.CategorizeCommit(commit)
 		categories[category]++
-		
+
 		// Track authors
 		authors[commit.Author]++
-		
+
 		// Track daily activity
 		day := commit.Date.Format("2006-01-02")
 		daily[day]++
 	}
-	
+
 	stats["total_insertions"] = totalInsertions
 	stats["total_deletions"] = totalDeletions
 	stats["total_files"] = totalFiles
-	
+
 	// Calculate averages
 	if len(commits) > 0 {
 		stats["avg_insertions_per_commit"] = totalInsertions / len(commits)
 		stats["avg_deletions_per_commit"] = totalDeletions / len(commits)
 		stats["avg_files_per_commit"] = totalFiles / len(commits)
 	}
-	
+
 	return stats, nil
 }

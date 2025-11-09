@@ -30,7 +30,7 @@ const (
 	ToolEventAdded   ToolEventType = "tool_added"
 	ToolEventRemoved ToolEventType = "tool_removed"
 	ToolEventUpdated ToolEventType = "tool_updated"
-	
+
 	// DefaultMaxConcurrentHandlers defines the maximum number of event handlers
 	// that can execute concurrently. This prevents resource exhaustion when
 	// many events are emitted rapidly. The value of 50 provides a balance between
@@ -74,7 +74,7 @@ func NewToolRegistry(logger *zap.Logger) *ToolRegistry {
 
 	// Register built-in tools for iteration 0
 	registry.registerBuiltinTools()
-	
+
 	return registry
 }
 
@@ -96,7 +96,7 @@ func (r *ToolRegistry) RegisterWithSource(tool Tool, sourceID, version string) e
 	eventType := ToolEventAdded
 	if _, exists := r.tools[name]; exists {
 		eventType = ToolEventUpdated
-		r.logger.Warn("Tool already exists, updating", 
+		r.logger.Warn("Tool already exists, updating",
 			zap.String("tool", name),
 			zap.String("old_version", r.versions[name]),
 			zap.String("new_version", version))
@@ -106,7 +106,7 @@ func (r *ToolRegistry) RegisterWithSource(tool Tool, sourceID, version string) e
 	r.versions[name] = version
 	r.sources[name] = sourceID
 
-	r.logger.Info("Tool registered", 
+	r.logger.Info("Tool registered",
 		zap.String("tool", name),
 		zap.String("description", tool.Description()),
 		zap.String("version", version),
@@ -120,7 +120,7 @@ func (r *ToolRegistry) RegisterWithSource(tool Tool, sourceID, version string) e
 		Timestamp: time.Now(),
 	}
 	r.mu.Unlock()
-	
+
 	// Emit event after releasing lock to avoid deadlock
 	r.emitEvent(event)
 
@@ -144,7 +144,7 @@ func (r *ToolRegistry) RegisterBatch(tools []Tool, sourceID string) error {
 	for _, tool := range tools {
 		name := tool.Name()
 		metadata := tool.Metadata()
-		
+
 		eventType := ToolEventAdded
 		if _, exists := r.tools[name]; exists {
 			eventType = ToolEventUpdated
@@ -194,7 +194,7 @@ func (r *ToolRegistry) UnregisterBySource(sourceID string) error {
 		delete(r.versions, name)
 		delete(r.sources, name)
 
-		r.logger.Info("Tool unregistered by source", 
+		r.logger.Info("Tool unregistered by source",
 			zap.String("tool", name),
 			zap.String("source", sourceID))
 
@@ -234,7 +234,7 @@ func (r *ToolRegistry) Unregister(name string) error {
 	delete(r.tools, name)
 	delete(r.versions, name)
 	delete(r.sources, name)
-	
+
 	r.logger.Info("Tool unregistered", zap.String("tool", name))
 
 	// Prepare event
@@ -346,15 +346,15 @@ func (r *ToolRegistry) GetToolSources() []string {
 func (r *ToolRegistry) AddEventHandler(handler ToolRegistryEventHandler) int {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
+
 	handlerID := r.nextHandlerID
 	r.nextHandlerID++
-	
+
 	r.eventHandlers = append(r.eventHandlers, eventHandlerEntry{
 		id:      handlerID,
 		handler: handler,
 	})
-	
+
 	return handlerID
 }
 
@@ -396,19 +396,19 @@ func (r *ToolRegistry) emitEvent(event ToolRegistryEvent) {
 				if acquired {
 					<-registry.handlerSemaphore
 				}
-				
+
 				if recovered := recover(); recovered != nil {
-					registry.logger.Error("Tool registry event handler panic", 
+					registry.logger.Error("Tool registry event handler panic",
 						zap.String("event_type", string(event.Type)),
 						zap.String("tool_name", event.ToolName),
 						zap.Any("panic", recovered))
 				}
 			}()
-			
+
 			// Acquire semaphore slot (blocks if at capacity)
 			registry.handlerSemaphore <- struct{}{}
 			acquired = true
-			
+
 			h(event)
 		}(entry.handler, r)
 	}

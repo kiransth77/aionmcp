@@ -26,7 +26,7 @@ func main() {
 	}
 	defer logger.Sync()
 
-	logger.Info("Starting AionMCP server", 
+	logger.Info("Starting AionMCP server",
 		zap.String("version", "0.1.0"),
 		zap.String("iteration", "0"))
 

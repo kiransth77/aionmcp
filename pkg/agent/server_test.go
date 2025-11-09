@@ -127,8 +127,8 @@ func TestAgentServer_RegisterAgent(t *testing.T) {
 	mockRegistry.On("ListTools").Return(mockTools)
 
 	req := &agentpb.RegisterAgentRequest{
-		AgentId:   "test-agent-1",
-		AgentName: "Test Agent",
+		AgentId:      "test-agent-1",
+		AgentName:    "Test Agent",
 		AgentVersion: "1.0.0",
 		Capabilities: &agentpb.AgentCapabilities{
 			SupportedProtocols: []string{"mcp/1.0"},
@@ -163,8 +163,8 @@ func TestAgentServer_RegisterAgent_ValidationErrors(t *testing.T) {
 	server := NewAgentServer(logger, mockRegistry)
 
 	tests := []struct {
-		name string
-		req  *agentpb.RegisterAgentRequest
+		name          string
+		req           *agentpb.RegisterAgentRequest
 		expectedError string
 	}{
 		{
@@ -398,8 +398,8 @@ func TestAgentServer_GetAgentStatus(t *testing.T) {
 	// Register an agent first
 	mockRegistry.On("ListTools").Return([]types.ToolMetadata{})
 	registerReq := &agentpb.RegisterAgentRequest{
-		AgentId:   "test-agent-1",
-		AgentName: "Test Agent",
+		AgentId:      "test-agent-1",
+		AgentName:    "Test Agent",
 		AgentVersion: "1.0.0",
 		Capabilities: &agentpb.AgentCapabilities{
 			SupportedProtocols: []string{"mcp/1.0"},

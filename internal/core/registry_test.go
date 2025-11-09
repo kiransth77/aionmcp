@@ -200,7 +200,7 @@ func TestToolRegistry_GetToolSources(t *testing.T) {
 	registry.RegisterWithSource(tool3, "source-a", "1.0.0")
 
 	sources := registry.GetToolSources()
-	assert.Contains(t, sources, "builtin")  // From builtin tools
+	assert.Contains(t, sources, "builtin") // From builtin tools
 	assert.Contains(t, sources, "source-a")
 	assert.Contains(t, sources, "source-b")
 	assert.Len(t, sources, 3)
@@ -213,7 +213,7 @@ func TestToolRegistry_EventHandlers(t *testing.T) {
 	var mu sync.Mutex
 	var receivedEvents []ToolRegistryEvent
 	eventReceived := make(chan struct{}, 10) // Buffered channel for event notifications
-	
+
 	handler := func(event ToolRegistryEvent) {
 		mu.Lock()
 		defer mu.Unlock()
@@ -264,18 +264,18 @@ func TestToolRegistry_EventHandlers(t *testing.T) {
 	assert.Equal(t, ToolEventRemoved, receivedEvents[1].Type)
 	assert.Equal(t, "event-tool", receivedEvents[1].ToolName)
 	mu.Unlock()
-	
+
 	// Test handler removal
 	removed := registry.RemoveEventHandler(handlerID)
 	assert.True(t, removed)
-	
+
 	// Register another tool - handler should not receive event
 	tool2 := &TestTool{
 		name:        "event-tool-2",
 		description: "Tool for testing removed handler",
 	}
 	registry.Register(tool2)
-	
+
 	// Wait a bit to ensure no event is received (with timeout)
 	select {
 	case <-eventReceived:
@@ -283,12 +283,12 @@ func TestToolRegistry_EventHandlers(t *testing.T) {
 	case <-time.After(100 * time.Millisecond):
 		// Expected: no event should be received
 	}
-	
+
 	// Verify no new events were received (still 2)
 	mu.Lock()
 	assert.Len(t, receivedEvents, 2)
 	mu.Unlock()
-	
+
 	// Test removing non-existent handler
 	removed = registry.RemoveEventHandler(999)
 	assert.False(t, removed)

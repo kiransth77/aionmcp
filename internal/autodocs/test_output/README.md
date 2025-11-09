@@ -23,13 +23,13 @@ AionMCP is an autonomous Go-based Model Context Protocol (MCP) server that dynam
 <!-- AUTO-GENERATED STATUS -->
 **Current Branch**: `copilot/sub-pr-6`
 
-**Latest Commit**: [`c6d73fe`](../../commit/c6d73fec2483f20bcebc9d5fd305b13e38eb9f24)
+**Latest Commit**: [`2281c15`](../../commit/2281c156acc1b22062c59250e21399ac81ffe8e4)
 
 **System Health**: 99/100 (Excellent)
 
 **Active Tools**: 3
 
-**Commits (7 days)**: 5
+**Commits (7 days)**: 6
 
 *Status updated automatically*
 <!-- END AUTO-GENERATED STATUS -->
@@ -100,11 +100,11 @@ AionMCP follows Clean/Hexagonal Architecture principles:
 <!-- AUTO-GENERATED ACTIVITY -->
 ### Recent Commits
 
-- [`c6d73fe`](../../commit/c6d73fec2483f20bcebc9d5fd305b13e38eb9f24) fix: Address PR review feedback - improve concurrency safety and test reliability *(0h ago)*
-- [`00f652e`](../../commit/00f652e7482387f43e4ae13d4070c8769df8c2d3) Update internal/core/registry.go *(0h ago)*
-- [`85d4dd5`](../../commit/85d4dd5894bced7e9e7694f6101a9aed1d29da9a) fix: Apply PR review feedback - implement handler removal and fix concurrency issues *(1d ago)*
-- [`0f89f83`](../../commit/0f89f83c3f120cf09cfb4976996649bf2cb5604d) Initial plan *(1d ago)*
-- [`2eb14b0`](../../commit/2eb14b0541675e6220eed92cbce29280463276bd) Merge pull request #14 from kiransth77/copilot/sub-pr-6 *(5d ago)*
+- [`2281c15`](../../commit/2281c156acc1b22062c59250e21399ac81ffe8e4) Initial plan *(0h ago)*
+- [`6a8bcb5`](../../commit/6a8bcb57df04f9b4e2c67d69c2ac723bb2a080a4) fix: Correct semaphore release logic with acquisition tracking *(2d ago)*
+- [`c6d73fe`](../../commit/c6d73fec2483f20bcebc9d5fd305b13e38eb9f24) fix: Address PR review feedback - improve concurrency safety and test reliability *(2d ago)*
+- [`00f652e`](../../commit/00f652e7482387f43e4ae13d4070c8769df8c2d3) Update internal/core/registry.go *(2d ago)*
+- [`85d4dd5`](../../commit/85d4dd5894bced7e9e7694f6101a9aed1d29da9a) fix: Apply PR review feedback - implement handler removal and fix concurrency issues *(3d ago)*
 
 ### Active Insights
 
@@ -197,6 +197,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-*README last updated: 2025-11-07 12:15:01 UTC*
+*README last updated: 2025-11-09 10:46:03 UTC*
 
 *This README is automatically updated with current project status and metrics.*

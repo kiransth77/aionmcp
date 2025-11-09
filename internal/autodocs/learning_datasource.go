@@ -1,18 +1,18 @@
 package autodocs
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
-	"encoding/json"
 	"time"
-	"context"
 )
 
 // LearningDataSource implements DataSource interface by integrating with the learning system
 type LearningDataSource struct {
-	gitDataSource *GitDataSource
+	gitDataSource  *GitDataSource
 	learningAPIURL string
-	httpClient    *http.Client
+	httpClient     *http.Client
 }
 
 // NewLearningDataSource creates a new learning-integrated data source
@@ -44,7 +44,7 @@ func (l *LearningDataSource) GetLearningSnapshot() (*LearningSnapshot, error) {
 			return snapshot, nil
 		}
 	}
-	
+
 	// Fallback to mock data if learning system is not available
 	return l.getMockLearningSnapshot(), nil
 }
@@ -53,39 +53,39 @@ func (l *LearningDataSource) GetLearningSnapshot() (*LearningSnapshot, error) {
 func (l *LearningDataSource) fetchLearningData() (*LearningSnapshot, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	
+
 	// Get learning statistics
 	statsURL := fmt.Sprintf("%s/api/v1/learning/stats", l.learningAPIURL)
 	req, err := http.NewRequestWithContext(ctx, "GET", statsURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create stats request: %w", err)
 	}
-	
+
 	resp, err := l.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch learning stats: %w", err)
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("learning API returned status: %d", resp.StatusCode)
 	}
-	
+
 	var stats struct {
-		TotalExecutions int                    `json:"total_executions"`
-		SuccessRate     float64                `json:"success_rate"`
-		AverageLatency  int64                  `json:"average_latency"` // nanoseconds
-		ErrorBreakdown  map[string]int         `json:"error_breakdown"`
-		TopTools        []ToolUsageInfo        `json:"top_tools"`
-		RecentPatterns  []PatternSummary       `json:"recent_patterns"`
-		ActiveInsights  []InsightSummary       `json:"active_insights"`
-		LastUpdated     time.Time              `json:"last_updated"`
+		TotalExecutions int              `json:"total_executions"`
+		SuccessRate     float64          `json:"success_rate"`
+		AverageLatency  int64            `json:"average_latency"` // nanoseconds
+		ErrorBreakdown  map[string]int   `json:"error_breakdown"`
+		TopTools        []ToolUsageInfo  `json:"top_tools"`
+		RecentPatterns  []PatternSummary `json:"recent_patterns"`
+		ActiveInsights  []InsightSummary `json:"active_insights"`
+		LastUpdated     time.Time        `json:"last_updated"`
 	}
-	
+
 	if err := json.NewDecoder(resp.Body).Decode(&stats); err != nil {
 		return nil, fmt.Errorf("failed to decode learning stats: %w", err)
 	}
-	
+
 	// Convert to LearningSnapshot
 	snapshot := &LearningSnapshot{
 		TotalExecutions: stats.TotalExecutions,
@@ -97,7 +97,7 @@ func (l *LearningDataSource) fetchLearningData() (*LearningSnapshot, error) {
 		ActiveInsights:  stats.ActiveInsights,
 		SnapshotTime:    time.Now(),
 	}
-	
+
 	return snapshot, nil
 }
 
@@ -131,9 +131,9 @@ func (l *LearningDataSource) getMockLearningSnapshot() *LearningSnapshot {
 			},
 		},
 		ErrorBreakdown: map[string]int{
-			"network":       2,
-			"validation":    1,
-			"timeout":       1,
+			"network":    2,
+			"validation": 1,
+			"timeout":    1,
 		},
 		RecentPatterns: []PatternSummary{
 			{
@@ -145,7 +145,7 @@ func (l *LearningDataSource) getMockLearningSnapshot() *LearningSnapshot {
 				LastSeen:    time.Now().Add(-2 * time.Hour),
 			},
 			{
-				ID:          "pattern_perf_001", 
+				ID:          "pattern_perf_001",
 				Type:        "performance",
 				Description: "AsyncAPI tools show higher latency (>300ms)",
 				Frequency:   8,
@@ -182,34 +182,34 @@ func (l *LearningDataSource) GetDetailedInsights() ([]InsightSummary, error) {
 	if l.learningAPIURL == "" {
 		return l.getMockLearningSnapshot().ActiveInsights, nil
 	}
-	
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	
+
 	insightsURL := fmt.Sprintf("%s/api/v1/learning/insights", l.learningAPIURL)
 	req, err := http.NewRequestWithContext(ctx, "GET", insightsURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create insights request: %w", err)
 	}
-	
+
 	resp, err := l.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch insights: %w", err)
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("insights API returned status: %d", resp.StatusCode)
 	}
-	
+
 	var response struct {
 		Insights []InsightSummary `json:"insights"`
 	}
-	
+
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("failed to decode insights: %w", err)
 	}
-	
+
 	return response.Insights, nil
 }
 
@@ -218,34 +218,34 @@ func (l *LearningDataSource) GetPatterns() ([]PatternSummary, error) {
 	if l.learningAPIURL == "" {
 		return l.getMockLearningSnapshot().RecentPatterns, nil
 	}
-	
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	
+
 	patternsURL := fmt.Sprintf("%s/api/v1/learning/patterns", l.learningAPIURL)
 	req, err := http.NewRequestWithContext(ctx, "GET", patternsURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create patterns request: %w", err)
 	}
-	
+
 	resp, err := l.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch patterns: %w", err)
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("patterns API returned status: %d", resp.StatusCode)
 	}
-	
+
 	var response struct {
 		Patterns []PatternSummary `json:"patterns"`
 	}
-	
+
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("failed to decode patterns: %w", err)
 	}
-	
+
 	return response.Patterns, nil
 }
 
@@ -254,26 +254,26 @@ func (l *LearningDataSource) TriggerAnalysis() error {
 	if l.learningAPIURL == "" {
 		return nil // No-op if learning system not available
 	}
-	
+
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	
+
 	analyzeURL := fmt.Sprintf("%s/api/v1/learning/analyze", l.learningAPIURL)
 	req, err := http.NewRequestWithContext(ctx, "POST", analyzeURL, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create analyze request: %w", err)
 	}
-	
+
 	resp, err := l.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to trigger analysis: %w", err)
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("analyze API returned status: %d", resp.StatusCode)
 	}
-	
+
 	return nil
 }
 
@@ -283,15 +283,15 @@ func (l *LearningDataSource) GetHealthStatus() (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Calculate health score
 	healthScore := 100
-	
+
 	// Deduct for low success rate
 	if snapshot.SuccessRate < 1.0 {
-		healthScore -= int((1.0-snapshot.SuccessRate)*50)
+		healthScore -= int((1.0 - snapshot.SuccessRate) * 50)
 	}
-	
+
 	// Deduct for high latency
 	if snapshot.AvgLatency > 0 {
 		latencyMs := float64(snapshot.AvgLatency) / float64(time.Millisecond)
@@ -301,7 +301,7 @@ func (l *LearningDataSource) GetHealthStatus() (map[string]interface{}, error) {
 			healthScore -= 10
 		}
 	}
-	
+
 	// Deduct for critical insights
 	for _, insight := range snapshot.ActiveInsights {
 		if insight.Priority == "critical" {
@@ -310,11 +310,11 @@ func (l *LearningDataSource) GetHealthStatus() (map[string]interface{}, error) {
 			healthScore -= 5
 		}
 	}
-	
+
 	if healthScore < 0 {
 		healthScore = 0
 	}
-	
+
 	// Determine status
 	var status string
 	if healthScore >= 90 {
@@ -328,7 +328,7 @@ func (l *LearningDataSource) GetHealthStatus() (map[string]interface{}, error) {
 	} else {
 		status = "critical"
 	}
-	
+
 	return map[string]interface{}{
 		"score":             healthScore,
 		"status":            status,
@@ -358,21 +358,21 @@ func (l *LearningDataSource) IsLearningSystemAvailable() bool {
 	if l.learningAPIURL == "" {
 		return false
 	}
-	
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	
+
 	healthURL := fmt.Sprintf("%s/health", l.learningAPIURL)
 	req, err := http.NewRequestWithContext(ctx, "GET", healthURL, nil)
 	if err != nil {
 		return false
 	}
-	
+
 	resp, err := l.httpClient.Do(req)
 	if err != nil {
 		return false
 	}
 	defer resp.Body.Close()
-	
+
 	return resp.StatusCode == http.StatusOK
 }

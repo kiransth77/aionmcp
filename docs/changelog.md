@@ -5,12 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-*This changelog was automatically generated on 2025-11-07 12:15:01*
+*This changelog was automatically generated on 2025-11-09 10:46:03*
+
+## 2025-11-09 (Sunday)
+
+### 📦 Other
+
+- Initial plan ([`2281c15`](../../commit/2281c156acc1b22062c59250e21399ac81ffe8e4)) by copilot-swe-agent[bot]
 
 ## 2025-11-07 (Friday)
 
 ### 🐛 Bug Fixes
 
+- fix: Correct semaphore release logic with acquisition tracking ([`6a8bcb5`](../../commit/6a8bcb57df04f9b4e2c67d69c2ac723bb2a080a4)) by copilot-swe-agent[bot] (7 files, +51/-39 lines)
+  Co-authored-by: kiransth77 <23469105+kiransth77@users.noreply.github.com>
 - fix: Address PR review feedback - improve concurrency safety and test reliability ([`c6d73fe`](../../commit/c6d73fec2483f20bcebc9d5fd305b13e38eb9f24)) by copilot-swe-agent[bot] (8 files, +193/-114 lines)
   Co-authored-by: kiransth77 <23469105+kiransth77@users.noreply.github.com>
 
@@ -21,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 2025-11-06 (Thursday)
 
-### 🐛 Bug Fixes
+### ✨ Features
 
 - fix: Apply PR review feedback - implement handler removal and fix concurrency issues ([`85d4dd5`](../../commit/85d4dd5894bced7e9e7694f6101a9aed1d29da9a)) by copilot-swe-agent[bot] (10 files, +325/-92 lines)
   Co-authored-by: kiransth77 <23469105+kiransth77@users.noreply.github.com>
@@ -32,30 +40,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 2025-11-02 (Sunday)
 
+### 🐛 Bug Fixes
+
+- fix: Apply PR review feedback - improve API design and documentation ([`15fe886`](../../commit/15fe88627bc54a85f2440eea8068aa9c22fa6719)) by copilot-swe-agent[bot] (9 files, +213/-74 lines)
+  Co-authored-by: kiransth77 <23469105+kiransth77@users.noreply.github.com>
+- fix: Apply PR review feedback - fix JSON parsing and serialization issues ([`ef4d6c8`](../../commit/ef4d6c871b1b129e374810f6faf3b2063cfdf208)) by copilot-swe-agent[bot] (3 files, +46/-21 lines)
+  Co-authored-by: kiransth77 <23469105+kiransth77@users.noreply.github.com>
+
+### ♻️ Code Refactoring
+
+- refactor: Improve JSON parsing robustness and implement schema parsing ([`e019252`](../../commit/e019252fa67325712a370c02f24b0f2c9a6d1a89)) by copilot-swe-agent[bot] (7 files, +93/-109 lines)
+  Co-authored-by: kiransth77 <23469105+kiransth77@users.noreply.github.com>
+
 ### 📦 Other
 
-- Merge pull request #14 from kiransth77/copilot/sub-pr-6 ([`2eb14b0`](../../commit/2eb14b0541675e6220eed92cbce29280463276bd)) by Kiran Shrestha (50 files, +15830/-0 lines)
-  Fix PR review feedback: remove broken RemoveEventHandler, add JSON parsing, improve documentation
+- Initial plan ([`62b6699`](../../commit/62b6699c0a64df48fd1f518c76747c71d2d80187)) by copilot-swe-agent[bot]
+- Initial plan ([`1c2292a`](../../commit/1c2292ae07c091431e7844fc62e8e296c5512821)) by copilot-swe-agent[bot]
+
+## 2025-10-29 (Wednesday)
+
+### 🐛 Bug Fixes
+
+- fix: Apply PR review feedback from code review comments ([`738fb1c`](../../commit/738fb1cea5496acfc136808ebee904687b091129)) by copilot-swe-agent[bot] (11 files, +181/-64 lines)
+  - Remove redundant zero-check logic in server.go (lines 527-529)
+
+### 📦 Other
+
+- Initial plan ([`d5fc429`](../../commit/d5fc42934a34e6d0586b56b5b043a1719f67f482)) by copilot-swe-agent[bot]
+
+## 2025-10-26 (Sunday)
+
+### ✨ Features
+
+- feat: Complete Iteration 4 - Agent Integration APIs ([`32fa72b`](../../commit/32fa72bac9497586deb61d85a7449f9e4e11f82e)) by Kiran Shrestha (19 files, +6693/-56 lines)
+  ✨ Features:
+- feat: Implement autonomous documentation system ([`09420b2`](../../commit/09420b2db7c210ce8c8cb86308d607e90e1dc65f)) by Kiran Shrestha (8 files, +3603/-0 lines)
+  Core Components:
+
+### ✅ Tests
+
+- test: Add comprehensive autodocs testing and fix build issues ([`5292773`](../../commit/529277322e17e7e3b9cf94d372fc05af3de43b8d)) by Kiran Shrestha (11 files, +1298/-184 lines)
+  Testing Infrastructure:
+
+### 📦 Other
+
+- Initial commit: AionMCP Iteration 1 Complete ([`df215f4`](../../commit/df215f4a4e9f2e7b5f96db151e667d345e8b92e7)) by Kiran Shrestha (24 files, +4211/-0 lines)
+  - Autonomous Go MCP server with multi-spec support
 
 ## Summary
 
-**Period:** 2025-10-08 to 2025-11-07
+**Period:** 2025-10-10 to 2025-11-09
 
-**Total commits:** 5
+**Total commits:** 17
 
 **Changes by type:**
 
-- Other: 3
-- Bug Fixes: 2
+- Features: 3
+- Bug Fixes: 6
+- Tests: 1
+- Other: 7
 
 **Contributors:** 2
 
-- copilot-swe-agent[bot]: 3 commits
-- Kiran Shrestha: 2 commits
+- copilot-swe-agent[bot]: 12 commits
+- Kiran Shrestha: 5 commits
 
 **Code changes:**
-- Files changed: 69
-- Lines added: +16357
-- Lines removed: -211
-- Net change: +16146 lines
+- Files changed: 118
+- Lines added: +16916
+- Lines removed: -758
+- Net change: +16158 lines
 

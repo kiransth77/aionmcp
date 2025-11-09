@@ -141,50 +141,50 @@ func TestDocumentationSystem(t *testing.T) {
 // TestDataSources tests data source functionality
 func TestDataSources(t *testing.T) {
 	projectRoot := "../../"
-	
+
 	t.Run("Git Data Source", func(t *testing.T) {
 		gitDS := NewGitDataSource(projectRoot)
-		
+
 		// Test project info
 		info, err := gitDS.GetProjectInfo()
 		if err != nil {
 			t.Fatalf("Failed to get project info: %v", err)
 		}
-		
+
 		if info["current_branch"] == nil {
 			t.Error("Current branch not found in project info")
 		}
-		
+
 		t.Logf("✅ Project info: %v", info["current_branch"])
-		
+
 		// Test commits
 		dateRange := DateRange{
 			StartDate: time.Now().AddDate(0, 0, -7),
 			EndDate:   time.Now(),
 		}
-		
+
 		commits, err := gitDS.GetCommits(dateRange)
 		if err != nil {
 			t.Fatalf("Failed to get commits: %v", err)
 		}
-		
+
 		t.Logf("✅ Found %d commits in last 7 days", len(commits))
 	})
 
 	t.Run("Learning Data Source", func(t *testing.T) {
 		learningDS := NewLearningDataSource(projectRoot, "")
-		
+
 		// Test learning snapshot (should return mock data)
 		snapshot, err := learningDS.GetLearningSnapshot()
 		if err != nil {
 			t.Fatalf("Failed to get learning snapshot: %v", err)
 		}
-		
+
 		if snapshot.TotalExecutions == 0 {
 			t.Error("Learning snapshot has no executions")
 		}
-		
-		t.Logf("✅ Learning snapshot: %d executions, %.1f%% success rate", 
+
+		t.Logf("✅ Learning snapshot: %d executions, %.1f%% success rate",
 			snapshot.TotalExecutions, snapshot.SuccessRate*100)
 	})
 }
@@ -240,6 +240,6 @@ func ExampleEngine_Generate() {
 		return
 	}
 
-	fmt.Printf("Changelog generated: %s (%d bytes)\n", 
+	fmt.Printf("Changelog generated: %s (%d bytes)\n",
 		result.OutputPath, result.ContentLength)
 }
