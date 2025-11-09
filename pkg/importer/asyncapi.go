@@ -54,7 +54,7 @@ func (i *AsyncAPIImporter) Validate(ctx context.Context, source SpecSource) erro
 // Import parses the AsyncAPI specification and generates tools
 func (i *AsyncAPIImporter) Import(ctx context.Context, source SpecSource) (*ImportResult, error) {
 	start := time.Now()
-	
+
 	result := &ImportResult{
 		Source:    source,
 		Tools:     []types.Tool{},
@@ -229,14 +229,14 @@ func (t *AsyncAPITool) executePublish(input map[string]interface{}, serverURL, p
 	// For now, return a simulation response
 	// TODO: Implement actual message publishing based on protocol (MQTT, AMQP, WebSocket, etc.)
 	result := map[string]interface{}{
-		"operation":    "publish",
-		"channel":      t.channelName,
-		"payload":      payload,
-		"server_url":   serverURL,
-		"protocol":     protocol,
-		"timestamp":    time.Now().Unix(),
-		"status":       "simulated", // Indicates this is a simulation
-		"message":      "Message publishing is simulated. Actual implementation depends on protocol adapter.",
+		"operation":  "publish",
+		"channel":    t.channelName,
+		"payload":    payload,
+		"server_url": serverURL,
+		"protocol":   protocol,
+		"timestamp":  time.Now().Unix(),
+		"status":     "simulated", // Indicates this is a simulation
+		"message":    "Message publishing is simulated. Actual implementation depends on protocol adapter.",
 	}
 
 	// Add any headers from input
@@ -260,14 +260,14 @@ func (t *AsyncAPITool) executeSubscribe(input map[string]interface{}, serverURL,
 	// For now, return a simulation response
 	// TODO: Implement actual message subscription based on protocol
 	result := map[string]interface{}{
-		"operation":    "subscribe",
-		"channel":      t.channelName,
-		"server_url":   serverURL,
-		"protocol":     protocol,
-		"timeout":      timeout,
-		"timestamp":    time.Now().Unix(),
-		"status":       "simulated",
-		"message":      "Message subscription is simulated. Actual implementation depends on protocol adapter.",
+		"operation":  "subscribe",
+		"channel":    t.channelName,
+		"server_url": serverURL,
+		"protocol":   protocol,
+		"timeout":    timeout,
+		"timestamp":  time.Now().Unix(),
+		"status":     "simulated",
+		"message":    "Message subscription is simulated. Actual implementation depends on protocol adapter.",
 		"simulated_messages": []map[string]interface{}{
 			{
 				"payload":   map[string]interface{}{"message": "Simulated message 1"},
@@ -323,12 +323,12 @@ func (t *AsyncAPITool) Metadata() types.ToolMetadata {
 	outputSchema := map[string]interface{}{
 		"type": "object",
 		"properties": map[string]interface{}{
-			"operation":    map[string]interface{}{"type": "string"},
-			"channel":      map[string]interface{}{"type": "string"},
-			"server_url":   map[string]interface{}{"type": "string"},
-			"protocol":     map[string]interface{}{"type": "string"},
-			"timestamp":    map[string]interface{}{"type": "integer"},
-			"status":       map[string]interface{}{"type": "string"},
+			"operation":  map[string]interface{}{"type": "string"},
+			"channel":    map[string]interface{}{"type": "string"},
+			"server_url": map[string]interface{}{"type": "string"},
+			"protocol":   map[string]interface{}{"type": "string"},
+			"timestamp":  map[string]interface{}{"type": "integer"},
+			"status":     map[string]interface{}{"type": "string"},
 		},
 	}
 
@@ -338,7 +338,7 @@ func (t *AsyncAPITool) Metadata() types.ToolMetadata {
 		outputSchema["properties"].(map[string]interface{})["payload"] = map[string]interface{}{"type": "object"}
 	case "subscribe":
 		outputSchema["properties"].(map[string]interface{})["messages"] = map[string]interface{}{
-			"type": "array",
+			"type":  "array",
 			"items": map[string]interface{}{"type": "object"},
 		}
 	}

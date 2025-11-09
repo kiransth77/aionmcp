@@ -31,23 +31,23 @@ func NewAgentAPI(logger *zap.Logger, registry types.ToolRegistry, agentServer *A
 // RegisterRoutes adds agent API routes to the gin router
 func (api *AgentAPI) RegisterRoutes(router *gin.RouterGroup) {
 	agents := router.Group("/agents")
-	
+
 	// Agent session management
 	agents.POST("/register", api.registerAgent)
 	agents.DELETE("/:session_id", api.unregisterAgent)
 	agents.GET("/:session_id/status", api.getAgentStatus)
 	agents.POST("/:session_id/heartbeat", api.heartbeat)
-	
+
 	// Tool discovery and information
 	agents.GET("/:session_id/tools", api.listTools)
 	agents.GET("/:session_id/tools/:tool_name", api.getTool)
-	
+
 	// Tool execution
 	agents.POST("/:session_id/tools/:tool_name/invoke", api.invokeTool)
-	
+
 	// Event subscription (WebSocket would be better, but HTTP for now)
 	agents.GET("/:session_id/events", api.getEvents)
-	
+
 	// Admin endpoints
 	admin := agents.Group("/admin")
 	admin.GET("/sessions", api.listSessions)
@@ -56,28 +56,28 @@ func (api *AgentAPI) RegisterRoutes(router *gin.RouterGroup) {
 
 // RegisterAgent request/response structures
 type RegisterAgentRequest struct {
-	AgentID              string                `json:"agent_id" binding:"required"`
-	AgentName            string                `json:"agent_name" binding:"required"`
-	AgentVersion         string                `json:"agent_version"`
-	Capabilities         *AgentCapabilities    `json:"capabilities"`
-	Metadata             map[string]string     `json:"metadata"`
-	SessionTimeoutSeconds int32                `json:"session_timeout_seconds"`
+	AgentID               string             `json:"agent_id" binding:"required"`
+	AgentName             string             `json:"agent_name" binding:"required"`
+	AgentVersion          string             `json:"agent_version"`
+	Capabilities          *AgentCapabilities `json:"capabilities"`
+	Metadata              map[string]string  `json:"metadata"`
+	SessionTimeoutSeconds int32              `json:"session_timeout_seconds"`
 }
 
 type AgentCapabilities struct {
-	SupportedProtocols    []string `json:"supported_protocols"`
-	SupportedToolTypes    []string `json:"supported_tool_types"`
-	SupportsStreaming     bool     `json:"supports_streaming"`
-	SupportsAsyncInvocation bool   `json:"supports_async_invocation"`
-	MaxConcurrentTools    int32    `json:"max_concurrent_tools"`
-	PreferredFormats      []string `json:"preferred_formats"`
+	SupportedProtocols      []string `json:"supported_protocols"`
+	SupportedToolTypes      []string `json:"supported_tool_types"`
+	SupportsStreaming       bool     `json:"supports_streaming"`
+	SupportsAsyncInvocation bool     `json:"supports_async_invocation"`
+	MaxConcurrentTools      int32    `json:"max_concurrent_tools"`
+	PreferredFormats        []string `json:"preferred_formats"`
 }
 
 type RegisterAgentResponse struct {
-	SessionID      string        `json:"session_id"`
-	ExpiresAt      int64         `json:"expires_at"`
-	ServerInfo     *ServerInfo   `json:"server_info"`
-	AvailableTools []ToolInfo    `json:"available_tools"`
+	SessionID      string      `json:"session_id"`
+	ExpiresAt      int64       `json:"expires_at"`
+	ServerInfo     *ServerInfo `json:"server_info"`
+	AvailableTools []ToolInfo  `json:"available_tools"`
 }
 
 type ServerInfo struct {
@@ -89,17 +89,17 @@ type ServerInfo struct {
 
 // Tool information structures
 type ToolInfo struct {
-	Name          string            `json:"name"`
-	DisplayName   string            `json:"display_name"`
-	Description   string            `json:"description"`
-	Version       string            `json:"version"`
-	Type          string            `json:"type"`
-	Status        string            `json:"status"`
-	Tags          []string          `json:"tags"`
-	Metadata      map[string]string `json:"metadata"`
-	CreatedAt     int64             `json:"created_at"`
-	UpdatedAt     int64             `json:"updated_at"`
-	Source        *ToolSource       `json:"source"`
+	Name        string            `json:"name"`
+	DisplayName string            `json:"display_name"`
+	Description string            `json:"description"`
+	Version     string            `json:"version"`
+	Type        string            `json:"type"`
+	Status      string            `json:"status"`
+	Tags        []string          `json:"tags"`
+	Metadata    map[string]string `json:"metadata"`
+	CreatedAt   int64             `json:"created_at"`
+	UpdatedAt   int64             `json:"updated_at"`
+	Source      *ToolSource       `json:"source"`
 }
 
 type ToolSource struct {
@@ -111,10 +111,10 @@ type ToolSource struct {
 }
 
 type GetToolResponse struct {
-	Tool         ToolInfo       `json:"tool"`
-	InputSchema  interface{}    `json:"input_schema,omitempty"`
-	OutputSchema interface{}    `json:"output_schema,omitempty"`
-	Examples     []ToolExample  `json:"examples,omitempty"`
+	Tool         ToolInfo      `json:"tool"`
+	InputSchema  interface{}   `json:"input_schema,omitempty"`
+	OutputSchema interface{}   `json:"output_schema,omitempty"`
+	Examples     []ToolExample `json:"examples,omitempty"`
 }
 
 type ToolExample struct {
@@ -138,18 +138,18 @@ type ToolInvocationOptions struct {
 }
 
 type ToolRetryPolicy struct {
-	MaxRetries            int32   `json:"max_retries"`
-	RetryDelaySeconds     int32   `json:"retry_delay_seconds"`
-	RetryableStatusCodes  []int32 `json:"retryable_status_codes"`
+	MaxRetries           int32   `json:"max_retries"`
+	RetryDelaySeconds    int32   `json:"retry_delay_seconds"`
+	RetryableStatusCodes []int32 `json:"retryable_status_codes"`
 }
 
 type InvokeToolResponse struct {
-	InvocationID string        `json:"invocation_id"`
-	Status       string        `json:"status"`
-	Result       interface{}   `json:"result,omitempty"`
-	Error        *ToolError    `json:"error,omitempty"`
-	Metrics      *ToolMetrics  `json:"metrics"`
-	ExecutedAt   int64         `json:"executed_at"`
+	InvocationID string       `json:"invocation_id"`
+	Status       string       `json:"status"`
+	Result       interface{}  `json:"result,omitempty"`
+	Error        *ToolError   `json:"error,omitempty"`
+	Metrics      *ToolMetrics `json:"metrics"`
+	ExecutedAt   int64        `json:"executed_at"`
 }
 
 type ToolError struct {
@@ -169,30 +169,30 @@ type ToolMetrics struct {
 
 // Session status structures
 type AgentStatusResponse struct {
-	SessionInfo     *AgentSessionInfo  `json:"session_info"`
-	Metrics         *AgentMetrics      `json:"metrics"`
-	RecentToolUsage []ToolUsageInfo    `json:"recent_tool_usage"`
+	SessionInfo     *AgentSessionInfo `json:"session_info"`
+	Metrics         *AgentMetrics     `json:"metrics"`
+	RecentToolUsage []ToolUsageInfo   `json:"recent_tool_usage"`
 }
 
 type AgentSessionInfo struct {
-	SessionID     string              `json:"session_id"`
-	AgentID       string              `json:"agent_id"`
-	AgentName     string              `json:"agent_name"`
-	AgentVersion  string              `json:"agent_version"`
-	CreatedAt     int64               `json:"created_at"`
-	LastHeartbeat int64               `json:"last_heartbeat"`
-	ExpiresAt     int64               `json:"expires_at"`
-	Status        string              `json:"status"`
-	Capabilities  *AgentCapabilities  `json:"capabilities"`
+	SessionID     string             `json:"session_id"`
+	AgentID       string             `json:"agent_id"`
+	AgentName     string             `json:"agent_name"`
+	AgentVersion  string             `json:"agent_version"`
+	CreatedAt     int64              `json:"created_at"`
+	LastHeartbeat int64              `json:"last_heartbeat"`
+	ExpiresAt     int64              `json:"expires_at"`
+	Status        string             `json:"status"`
+	Capabilities  *AgentCapabilities `json:"capabilities"`
 }
 
 type AgentMetrics struct {
-	TotalInvocations      int64             `json:"total_invocations"`
-	SuccessfulInvocations int64             `json:"successful_invocations"`
-	FailedInvocations     int64             `json:"failed_invocations"`
-	AverageResponseTimeMs float64           `json:"average_response_time_ms"`
-	LastInvocation        int64             `json:"last_invocation"`
-	ToolUsageCount        map[string]int64  `json:"tool_usage_count"`
+	TotalInvocations      int64            `json:"total_invocations"`
+	SuccessfulInvocations int64            `json:"successful_invocations"`
+	FailedInvocations     int64            `json:"failed_invocations"`
+	AverageResponseTimeMs float64          `json:"average_response_time_ms"`
+	LastInvocation        int64            `json:"last_invocation"`
+	ToolUsageCount        map[string]int64 `json:"tool_usage_count"`
 }
 
 type ToolUsageInfo struct {
@@ -232,11 +232,11 @@ type ListSessionsResponse struct {
 }
 
 type MetricsResponse struct {
-	TotalSessions     int                `json:"total_sessions"`
-	ActiveSessions    int                `json:"active_sessions"`
-	TotalInvocations  int64              `json:"total_invocations"`
-	ToolUsageStats    map[string]int64   `json:"tool_usage_stats"`
-	SessionMetrics    map[string]interface{} `json:"session_metrics"`
+	TotalSessions    int                    `json:"total_sessions"`
+	ActiveSessions   int                    `json:"active_sessions"`
+	TotalInvocations int64                  `json:"total_invocations"`
+	ToolUsageStats   map[string]int64       `json:"tool_usage_stats"`
+	SessionMetrics   map[string]interface{} `json:"session_metrics"`
 }
 
 // registerAgent handles agent registration
@@ -249,11 +249,11 @@ func (api *AgentAPI) registerAgent(c *gin.Context) {
 
 	// Convert to gRPC request
 	grpcReq := &agentpb.RegisterAgentRequest{
-		AgentId:              req.AgentID,
-		AgentName:            req.AgentName,
-		AgentVersion:         req.AgentVersion,
+		AgentId:               req.AgentID,
+		AgentName:             req.AgentName,
+		AgentVersion:          req.AgentVersion,
 		SessionTimeoutSeconds: req.SessionTimeoutSeconds,
-		Metadata:             req.Metadata,
+		Metadata:              req.Metadata,
 	}
 
 	if req.Capabilities != nil {
@@ -397,8 +397,8 @@ func (api *AgentAPI) getTool(c *gin.Context) {
 		if grpcResp.InputSchemaJson != "" {
 			var inputSchema map[string]interface{}
 			if err := json.Unmarshal([]byte(grpcResp.InputSchemaJson), &inputSchema); err != nil {
-				api.logger.Warn("Failed to parse input schema JSON", 
-					zap.String("schema", grpcResp.InputSchemaJson), 
+				api.logger.Warn("Failed to parse input schema JSON",
+					zap.String("schema", grpcResp.InputSchemaJson),
 					zap.Error(err))
 				// Fallback to placeholder
 				resp.InputSchema = map[string]interface{}{"type": "object"}
@@ -408,13 +408,13 @@ func (api *AgentAPI) getTool(c *gin.Context) {
 		} else {
 			resp.InputSchema = map[string]interface{}{"type": "object"}
 		}
-		
+
 		// Parse output schema if available
 		if grpcResp.OutputSchemaJson != "" {
 			var outputSchema map[string]interface{}
 			if err := json.Unmarshal([]byte(grpcResp.OutputSchemaJson), &outputSchema); err != nil {
-				api.logger.Warn("Failed to parse output schema JSON", 
-					zap.String("schema", grpcResp.OutputSchemaJson), 
+				api.logger.Warn("Failed to parse output schema JSON",
+					zap.String("schema", grpcResp.OutputSchemaJson),
 					zap.Error(err))
 				// Fallback to placeholder
 				resp.OutputSchema = map[string]interface{}{"type": "object"}
@@ -424,7 +424,7 @@ func (api *AgentAPI) getTool(c *gin.Context) {
 		} else {
 			resp.OutputSchema = map[string]interface{}{"type": "object"}
 		}
-		
+
 		resp.Examples = make([]ToolExample, len(grpcResp.Examples))
 		for i, example := range grpcResp.Examples {
 			var inputMap map[string]interface{}
@@ -433,20 +433,20 @@ func (api *AgentAPI) getTool(c *gin.Context) {
 			// Parse example input JSON
 			if example.InputJson != "" {
 				if err := json.Unmarshal([]byte(example.InputJson), &inputMap); err != nil {
-					api.logger.Warn("Failed to parse example input JSON", 
-						zap.String("input", example.InputJson), 
+					api.logger.Warn("Failed to parse example input JSON",
+						zap.String("input", example.InputJson),
 						zap.Error(err))
 					inputMap = map[string]interface{}{}
 				}
 			} else {
 				inputMap = map[string]interface{}{}
 			}
-			
+
 			// Parse example expected output JSON
 			if example.ExpectedOutputJson != "" {
 				if err := json.Unmarshal([]byte(example.ExpectedOutputJson), &outputMap); err != nil {
-					api.logger.Warn("Failed to parse example expected output JSON", 
-						zap.String("expected_output", example.ExpectedOutputJson), 
+					api.logger.Warn("Failed to parse example expected output JSON",
+						zap.String("expected_output", example.ExpectedOutputJson),
 						zap.Error(err))
 					outputMap = map[string]interface{}{}
 				}
@@ -532,8 +532,8 @@ func (api *AgentAPI) invokeTool(c *gin.Context) {
 	if grpcResp.ResultJson != "" {
 		var result interface{}
 		if err := json.Unmarshal([]byte(grpcResp.ResultJson), &result); err != nil {
-			api.logger.Error("Failed to parse tool result JSON", 
-				zap.Error(err), 
+			api.logger.Error("Failed to parse tool result JSON",
+				zap.Error(err),
 				zap.String("result_json", grpcResp.ResultJson))
 			resp.Result = map[string]interface{}{"_error": "Failed to parse result JSON"}
 		} else {
@@ -701,7 +701,7 @@ func (api *AgentAPI) getEvents(c *gin.Context) {
 func (api *AgentAPI) listSessions(c *gin.Context) {
 	api.agentServer.sessionsMux.RLock()
 	sessions := make([]AgentSessionInfo, 0, len(api.agentServer.sessions))
-	
+
 	for _, session := range api.agentServer.sessions {
 		sessionInfo := AgentSessionInfo{
 			SessionID:     session.ID,
@@ -741,7 +741,7 @@ func (api *AgentAPI) getMetrics(c *gin.Context) {
 	api.agentServer.sessionsMux.RLock()
 	totalSessions := len(api.agentServer.sessions)
 	activeSessions := 0
-	
+
 	var totalInvocations int64
 	toolUsageStats := make(map[string]int64)
 

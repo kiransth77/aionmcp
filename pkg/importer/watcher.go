@@ -13,14 +13,14 @@ import (
 
 // FileWatcher watches specification files for changes and triggers reloads
 type FileWatcher struct {
-	watcher   *fsnotify.Watcher
-	manager   *ImporterManager
-	logger    *zap.Logger
-	mu        sync.RWMutex
-	watching  map[string]string // file path -> source ID
-	debounce  map[string]*time.Timer // debounce timers for file changes
-	ctx       context.Context
-	cancel    context.CancelFunc
+	watcher  *fsnotify.Watcher
+	manager  *ImporterManager
+	logger   *zap.Logger
+	mu       sync.RWMutex
+	watching map[string]string      // file path -> source ID
+	debounce map[string]*time.Timer // debounce timers for file changes
+	ctx      context.Context
+	cancel   context.CancelFunc
 }
 
 // NewFileWatcher creates a new file watcher
@@ -107,7 +107,7 @@ func (w *FileWatcher) UnwatchSpec(sourceID string) error {
 
 	// Clean up tracking
 	delete(w.watching, pathToRemove)
-	
+
 	// Cancel any pending debounce timer
 	if timer, exists := w.debounce[pathToRemove]; exists {
 		timer.Stop()
@@ -185,7 +185,7 @@ func (w *FileWatcher) debounceReload(path, sourceID string) {
 	// Create new debounce timer
 	w.debounce[path] = time.AfterFunc(500*time.Millisecond, func() {
 		w.performReload(path, sourceID)
-		
+
 		// Clean up timer
 		w.mu.Lock()
 		delete(w.debounce, path)
@@ -200,7 +200,7 @@ func (w *FileWatcher) performReload(path, sourceID string) {
 		zap.String("path", path))
 
 	start := time.Now()
-	
+
 	// Reload the specification
 	result, err := w.manager.ReloadSpec(w.ctx, sourceID)
 	if err != nil {

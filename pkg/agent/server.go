@@ -142,8 +142,8 @@ func (s *AgentServer) RegisterAgent(ctx context.Context, req *agentpb.RegisterAg
 		SessionId:     sessionID,
 		ExpiresAtUnix: expiresAt.Unix(),
 		ServerInfo: &agentpb.ServerInfo{
-			ServerVersion:    "0.1.0",
-			ProtocolVersion:  "MCP/1.0",
+			ServerVersion:     "0.1.0",
+			ProtocolVersion:   "MCP/1.0",
 			SupportedFeatures: []string{"tool_execution", "event_streaming", "session_management"},
 			Capabilities: map[string]string{
 				"max_concurrent_tools": "10",
@@ -223,11 +223,11 @@ func (s *AgentServer) ListTools(ctx context.Context, req *agentpb.ListToolsReque
 		Tools:      tools,
 		TotalCount: int32(totalCount),
 		Pagination: &agentpb.PaginationMetadata{
-			CurrentPage:  1,
-			PageSize:     int32(len(tools)),
-			TotalPages:   1,
-			HasNext:      false,
-			HasPrevious:  false,
+			CurrentPage: 1,
+			PageSize:    int32(len(tools)),
+			TotalPages:  1,
+			HasNext:     false,
+			HasPrevious: false,
 		},
 	}, nil
 }
@@ -260,10 +260,10 @@ func (s *AgentServer) GetTool(ctx context.Context, req *agentpb.GetToolRequest) 
 		// Add example usage
 		examples = []*agentpb.ToolExample{
 			{
-				Name:                "Basic Usage",
-				Description:         fmt.Sprintf("Example usage of %s tool", req.ToolName),
-				InputJson:           `{"parameter": "example_value"}`,
-				ExpectedOutputJson:  `{"result": "example_result"}`,
+				Name:               "Basic Usage",
+				Description:        fmt.Sprintf("Example usage of %s tool", req.ToolName),
+				InputJson:          `{"parameter": "example_value"}`,
+				ExpectedOutputJson: `{"result": "example_result"}`,
 			},
 		}
 	}
@@ -292,7 +292,7 @@ func (s *AgentServer) InvokeTool(ctx context.Context, req *agentpb.InvokeToolReq
 	s.updateHeartbeat(req.SessionId)
 
 	startTime := time.Now()
-	
+
 	s.logger.Info("Tool invocation request",
 		zap.String("session_id", req.SessionId),
 		zap.String("tool_name", req.ToolName),
@@ -330,7 +330,7 @@ func (s *AgentServer) InvokeTool(ctx context.Context, req *agentpb.InvokeToolReq
 			Retryable: true,
 		}
 		s.updateMetrics(session, req.ToolName, false, executionTime)
-		
+
 		s.logger.Error("Tool execution failed",
 			zap.String("session_id", req.SessionId),
 			zap.String("tool_name", req.ToolName),
@@ -350,7 +350,7 @@ func (s *AgentServer) InvokeTool(ctx context.Context, req *agentpb.InvokeToolReq
 			resultJson = string(resultBytes)
 		}
 		s.updateMetrics(session, req.ToolName, true, executionTime)
-		
+
 		s.logger.Info("Tool executed successfully",
 			zap.String("session_id", req.SessionId),
 			zap.String("tool_name", req.ToolName),
@@ -368,10 +368,10 @@ func (s *AgentServer) InvokeTool(ctx context.Context, req *agentpb.InvokeToolReq
 	})
 
 	return &agentpb.InvokeToolResponse{
-		InvocationId:    req.InvocationId,
-		Status:          status,
-		ResultJson:      resultJson,
-		Error:           toolError,
+		InvocationId: req.InvocationId,
+		Status:       status,
+		ResultJson:   resultJson,
+		Error:        toolError,
 		Metrics: &agentpb.ToolMetrics{
 			ExecutionTimeMs: executionTime.Milliseconds(),
 			RetryCount:      0,
@@ -460,9 +460,9 @@ func (s *AgentServer) HeartBeat(ctx context.Context, req *agentpb.HeartBeatReque
 	nextHeartbeat := time.Now().Add(30 * time.Second) // 30 second heartbeat interval
 
 	return &agentpb.HeartBeatResponse{
-		SessionValid:           true,
-		NextHeartbeatAtUnix:    nextHeartbeat.Unix(),
-		PendingNotifications:   []string{}, // Placeholder for future notifications
+		SessionValid:         true,
+		NextHeartbeatAtUnix:  nextHeartbeat.Unix(),
+		PendingNotifications: []string{}, // Placeholder for future notifications
 	}, nil
 }
 
@@ -476,15 +476,15 @@ func (s *AgentServer) GetAgentStatus(ctx context.Context, req *agentpb.GetAgentS
 	s.updateHeartbeat(req.SessionId)
 
 	sessionInfo := &agentpb.AgentSessionInfo{
-		SessionId:          session.ID,
-		AgentId:            session.AgentID,
-		AgentName:          session.AgentName,
-		AgentVersion:       session.AgentVersion,
-		CreatedAtUnix:      session.CreatedAt.Unix(),
-		LastHeartbeatUnix:  session.LastHeartbeat.Unix(),
-		ExpiresAtUnix:      session.ExpiresAt.Unix(),
-		Status:             session.Status,
-		Capabilities:       session.Capabilities,
+		SessionId:         session.ID,
+		AgentId:           session.AgentID,
+		AgentName:         session.AgentName,
+		AgentVersion:      session.AgentVersion,
+		CreatedAtUnix:     session.CreatedAt.Unix(),
+		LastHeartbeatUnix: session.LastHeartbeat.Unix(),
+		ExpiresAtUnix:     session.ExpiresAt.Unix(),
+		Status:            session.Status,
+		Capabilities:      session.Capabilities,
 	}
 
 	session.Metrics.mu.RLock()
@@ -495,15 +495,15 @@ func (s *AgentServer) GetAgentStatus(ctx context.Context, req *agentpb.GetAgentS
 		ToolUsageCount:        session.Metrics.ToolUsageCount,
 		LastInvocationUnix:    session.Metrics.LastInvocation.Unix(),
 	}
-	
+
 	if session.Metrics.TotalInvocations > 0 {
 		metrics.AverageResponseTimeMs = float64(session.Metrics.TotalResponseTimeMs) / float64(session.Metrics.TotalInvocations)
 	}
 	session.Metrics.mu.RUnlock()
 
 	return &agentpb.GetAgentStatusResponse{
-		SessionInfo: sessionInfo,
-		Metrics:     metrics,
+		SessionInfo:     sessionInfo,
+		Metrics:         metrics,
 		RecentToolUsage: []*agentpb.ToolUsageInfo{}, // Placeholder for recent usage history
 	}, nil
 }
@@ -532,7 +532,7 @@ func (s *AgentServer) updateMetrics(session *AgentSession, toolName string, succ
 	session.Metrics.TotalInvocations++
 	session.Metrics.TotalResponseTimeMs += duration.Milliseconds()
 	session.Metrics.LastInvocation = time.Now()
-	
+
 	if success {
 		session.Metrics.SuccessfulInvocations++
 	} else {
@@ -560,16 +560,16 @@ func (s *AgentServer) convertToToolInfo(tool types.Tool) *agentpb.ToolInfo {
 
 func (s *AgentServer) convertToolMetadataToToolInfo(metadata types.ToolMetadata) *agentpb.ToolInfo {
 	return &agentpb.ToolInfo{
-		Name:            metadata.Name,
-		DisplayName:     metadata.Name,
-		Description:     metadata.Description,
-		Version:         metadata.Version,
-		Type:           agentpb.ToolType_TOOL_TYPE_FUNCTION, // Default type
-		Status:         agentpb.ToolStatus_TOOL_STATUS_AVAILABLE,
-		Tags:           metadata.Tags,
-		Metadata:       make(map[string]string),
-		CreatedAtUnix:  metadata.CreatedAt.Unix(),
-		UpdatedAtUnix:  metadata.UpdatedAt.Unix(),
+		Name:          metadata.Name,
+		DisplayName:   metadata.Name,
+		Description:   metadata.Description,
+		Version:       metadata.Version,
+		Type:          agentpb.ToolType_TOOL_TYPE_FUNCTION, // Default type
+		Status:        agentpb.ToolStatus_TOOL_STATUS_AVAILABLE,
+		Tags:          metadata.Tags,
+		Metadata:      make(map[string]string),
+		CreatedAtUnix: metadata.CreatedAt.Unix(),
+		UpdatedAtUnix: metadata.UpdatedAt.Unix(),
 		Source: &agentpb.ToolSource{
 			SpecId:   metadata.Source,
 			SpecType: metadata.Source,
@@ -654,7 +654,7 @@ func (s *AgentServer) sessionCleanup() {
 					zap.String("agent_id", session.AgentID))
 
 				delete(s.sessions, sessionID)
-				
+
 				// Close event streams for expired session
 				go s.closeEventStreams(sessionID)
 

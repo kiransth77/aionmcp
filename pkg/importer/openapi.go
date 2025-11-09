@@ -47,7 +47,7 @@ func (i *OpenAPIImporter) Validate(ctx context.Context, source SpecSource) error
 // Import parses the OpenAPI specification and generates tools
 func (i *OpenAPIImporter) Import(ctx context.Context, source SpecSource) (*ImportResult, error) {
 	start := time.Now()
-	
+
 	result := &ImportResult{
 		Source:    source,
 		Tools:     []types.Tool{},
@@ -196,7 +196,7 @@ func (t *OpenAPITool) Execute(input any) (any, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse URL: %w", err)
 		}
-		
+
 		query := parsedURL.Query()
 		for key, value := range params.Query {
 			query.Add(key, fmt.Sprintf("%v", value))

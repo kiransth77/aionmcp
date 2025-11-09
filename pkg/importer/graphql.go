@@ -52,7 +52,7 @@ func (i *GraphQLImporter) Validate(ctx context.Context, source SpecSource) error
 // Import parses the GraphQL schema and generates tools
 func (i *GraphQLImporter) Import(ctx context.Context, source SpecSource) (*ImportResult, error) {
 	start := time.Now()
-	
+
 	result := &ImportResult{
 		Source:    source,
 		Tools:     []types.Tool{},
@@ -175,7 +175,7 @@ func (t *GraphQLTool) Name() string {
 func (t *GraphQLTool) Description() string {
 	// Try to extract description from directives or comments
 	description := fmt.Sprintf("GraphQL %s: %s", t.operation, t.field.Name.Value)
-	
+
 	// Add argument information
 	if len(t.field.Arguments) > 0 {
 		var args []string
@@ -232,25 +232,25 @@ func (t *GraphQLTool) buildQuery(variables map[string]interface{}) string {
 	// Build arguments string
 	var argsBuilder strings.Builder
 	var varsBuilder strings.Builder
-	
+
 	if len(t.field.Arguments) > 0 {
 		argsBuilder.WriteString("(")
 		varsBuilder.WriteString("(")
-		
+
 		for i, arg := range t.field.Arguments {
 			if i > 0 {
 				argsBuilder.WriteString(", ")
 				varsBuilder.WriteString(", ")
 			}
-			
+
 			argName := arg.Name.Value
 			argsBuilder.WriteString(fmt.Sprintf("%s: $%s", argName, argName))
-			
+
 			// Get type from AST
 			typeStr := t.getTypeString(arg.Type)
 			varsBuilder.WriteString(fmt.Sprintf("$%s: %s", argName, typeStr))
 		}
-		
+
 		argsBuilder.WriteString(")")
 		varsBuilder.WriteString(")")
 	}
@@ -267,7 +267,7 @@ func (t *GraphQLTool) buildQuery(variables map[string]interface{}) string {
 	if argsBuilder.Len() > 2 { // More than just "()"
 		queryBuilder.WriteString(argsBuilder.String())
 	}
-	
+
 	// Add selection set (simplified - in real implementation, this would be more sophisticated)
 	queryBuilder.WriteString(" { __typename } ")
 	queryBuilder.WriteString(" }")

@@ -31,25 +31,25 @@ type SpecSource struct {
 
 // ImportResult contains the result of importing a specification
 type ImportResult struct {
-	Source    SpecSource     `json:"source"`
-	Tools     []types.Tool   `json:"tools"`
-	Errors    []error        `json:"errors"`
-	Warnings  []string       `json:"warnings"`
-	Duration  time.Duration  `json:"duration"`
-	Timestamp time.Time      `json:"timestamp"`
+	Source    SpecSource    `json:"source"`
+	Tools     []types.Tool  `json:"tools"`
+	Errors    []error       `json:"errors"`
+	Warnings  []string      `json:"warnings"`
+	Duration  time.Duration `json:"duration"`
+	Timestamp time.Time     `json:"timestamp"`
 }
 
 // SpecImporter is the interface for importing API specifications
 type SpecImporter interface {
 	// GetType returns the specification type this importer handles
 	GetType() SpecType
-	
+
 	// Validate checks if the specification is valid for this importer
 	Validate(ctx context.Context, source SpecSource) error
-	
+
 	// Import parses the specification and generates tools
 	Import(ctx context.Context, source SpecSource) (*ImportResult, error)
-	
+
 	// Supports checks if this importer can handle the given source
 	Supports(source SpecSource) bool
 }
