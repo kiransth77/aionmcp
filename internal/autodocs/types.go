@@ -8,9 +8,9 @@ import (
 type DocumentType string
 
 const (
-	DocumentTypeChangelog   DocumentType = "changelog"
-	DocumentTypeReflection  DocumentType = "reflection"
-	DocumentTypeReadme      DocumentType = "readme"
+	DocumentTypeChangelog    DocumentType = "changelog"
+	DocumentTypeReflection   DocumentType = "reflection"
+	DocumentTypeReadme       DocumentType = "readme"
 	DocumentTypeArchitecture DocumentType = "architecture"
 )
 
@@ -61,14 +61,14 @@ type CommitRange struct {
 
 // LearningSnapshot contains learning system data for documentation
 type LearningSnapshot struct {
-	TotalExecutions int                    `json:"total_executions"`
-	SuccessRate     float64                `json:"success_rate"`
-	AvgLatency      time.Duration          `json:"avg_latency"`
-	TopTools        []ToolUsageInfo        `json:"top_tools"`
-	ErrorBreakdown  map[string]int         `json:"error_breakdown"`
-	RecentPatterns  []PatternSummary       `json:"recent_patterns"`
-	ActiveInsights  []InsightSummary       `json:"active_insights"`
-	SnapshotTime    time.Time              `json:"snapshot_time"`
+	TotalExecutions int              `json:"total_executions"`
+	SuccessRate     float64          `json:"success_rate"`
+	AvgLatency      time.Duration    `json:"avg_latency"`
+	TopTools        []ToolUsageInfo  `json:"top_tools"`
+	ErrorBreakdown  map[string]int   `json:"error_breakdown"`
+	RecentPatterns  []PatternSummary `json:"recent_patterns"`
+	ActiveInsights  []InsightSummary `json:"active_insights"`
+	SnapshotTime    time.Time        `json:"snapshot_time"`
 }
 
 // ToolUsageInfo contains usage information for a tool
@@ -103,27 +103,27 @@ type InsightSummary struct {
 
 // GitCommit represents a git commit for changelog generation
 type GitCommit struct {
-	Hash        string    `json:"hash"`
-	ShortHash   string    `json:"short_hash"`
-	Author      string    `json:"author"`
-	Email       string    `json:"email"`
-	Date        time.Time `json:"date"`
-	Subject     string    `json:"subject"`
-	Body        string    `json:"body"`
-	ChangedFiles int      `json:"changed_files"`
-	Insertions  int       `json:"insertions"`
-	Deletions   int       `json:"deletions"`
+	Hash         string    `json:"hash"`
+	ShortHash    string    `json:"short_hash"`
+	Author       string    `json:"author"`
+	Email        string    `json:"email"`
+	Date         time.Time `json:"date"`
+	Subject      string    `json:"subject"`
+	Body         string    `json:"body"`
+	ChangedFiles int       `json:"changed_files"`
+	Insertions   int       `json:"insertions"`
+	Deletions    int       `json:"deletions"`
 }
 
 // ChangelogEntry represents an entry in the changelog
 type ChangelogEntry struct {
-	Version     string      `json:"version"`
-	Date        time.Time   `json:"date"`
-	Features    []GitCommit `json:"features"`
-	Fixes       []GitCommit `json:"fixes"`
-	Performance []GitCommit `json:"performance"`
-	Docs        []GitCommit `json:"docs"`
-	Other       []GitCommit `json:"other"`
+	Version         string      `json:"version"`
+	Date            time.Time   `json:"date"`
+	Features        []GitCommit `json:"features"`
+	Fixes           []GitCommit `json:"fixes"`
+	Performance     []GitCommit `json:"performance"`
+	Docs            []GitCommit `json:"docs"`
+	Other           []GitCommit `json:"other"`
 	BreakingChanges []GitCommit `json:"breaking_changes"`
 }
 
@@ -131,10 +131,10 @@ type ChangelogEntry struct {
 type Generator interface {
 	// Generate creates a document of the specified type
 	Generate(request GenerationRequest) (*GenerationResult, error)
-	
+
 	// GetSupportedTypes returns the document types this generator supports
 	GetSupportedTypes() []DocumentType
-	
+
 	// Validate checks if the generation request is valid for this generator
 	Validate(request GenerationRequest) error
 }
@@ -143,10 +143,10 @@ type Generator interface {
 type DataSource interface {
 	// GetCommits retrieves git commits within a date range
 	GetCommits(dateRange DateRange) ([]GitCommit, error)
-	
+
 	// GetLearningSnapshot retrieves current learning system data
 	GetLearningSnapshot() (*LearningSnapshot, error)
-	
+
 	// GetProjectInfo retrieves general project information
 	GetProjectInfo() (map[string]interface{}, error)
 }
@@ -155,16 +155,16 @@ type DataSource interface {
 type DocumentEngine interface {
 	// RegisterGenerator adds a new document generator
 	RegisterGenerator(generator Generator) error
-	
+
 	// Generate creates a document using the appropriate generator
 	Generate(request GenerationRequest) (*GenerationResult, error)
-	
+
 	// GenerateAll creates all supported document types
 	GenerateAll() ([]GenerationResult, error)
-	
+
 	// ScheduleGeneration sets up automatic document generation
 	ScheduleGeneration(docType DocumentType, schedule string) error
-	
+
 	// GetGenerationHistory returns recent generation results
 	GetGenerationHistory(limit int) ([]GenerationResult, error)
 }

@@ -1,0 +1,327 @@
+syntax = "proto3";
+
+package aionmcp.agent.v1;
+
+option go_package = "github.com/aionmcp/aionmcp/pkg/agent/proto;agentpb";
+
+// AgentService defines the gRPC interface for MCP agent integration
+service AgentService {
+  // RegisterAgent establishes a session for an agent
+  rpc RegisterAgent(RegisterAgentRequest) returns (RegisterAgentResponse);
+  
+  // UnregisterAgent terminates an agent session
+  rpc UnregisterAgent(UnregisterAgentRequest) returns (UnregisterAgentResponse);
+  
+  // ListTools returns available tools for the agent
+  rpc ListTools(ListToolsRequest) returns (ListToolsResponse);
+  
+  // GetTool returns detailed information about a specific tool
+  rpc GetTool(GetToolRequest) returns (GetToolResponse);
+  
+  // InvokeTool executes a tool with given parameters
+  rpc InvokeTool(InvokeToolRequest) returns (InvokeToolResponse);
+  
+  // StreamEvents provides real-time events to agents
+  rpc StreamEvents(StreamEventsRequest) returns (stream Event);
+  
+  // HeartBeat maintains agent session liveness
+  rpc HeartBeat(HeartBeatRequest) returns (HeartBeatResponse);
+  
+  // GetAgentStatus returns current agent session information
+  rpc GetAgentStatus(GetAgentStatusRequest) returns (GetAgentStatusResponse);
+}
+
+// Agent registration and session management
+message RegisterAgentRequest {
+  string agent_id = 1;
+  string agent_name = 2;
+  string agent_version = 3;
+  AgentCapabilities capabilities = 4;
+  map<string, string> metadata = 5;
+  int32 session_timeout_seconds = 6; // Default 300 seconds
+}
+
+message RegisterAgentResponse {
+  string session_id = 1;
+  int64 expires_at_unix = 2; // Unix timestamp
+  ServerInfo server_info = 3;
+  repeated ToolInfo available_tools = 4;
+}
+
+message UnregisterAgentRequest {
+  string session_id = 1;
+}
+
+message UnregisterAgentResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Tool discovery and information
+message ListToolsRequest {
+  string session_id = 1;
+  ToolFilter filter = 2;
+  PaginationOptions pagination = 3;
+}
+
+message ListToolsResponse {
+  repeated ToolInfo tools = 1;
+  PaginationMetadata pagination = 2;
+  int32 total_count = 3;
+}
+
+message GetToolRequest {
+  string session_id = 1;
+  string tool_name = 2;
+  bool include_schema = 3;
+}
+
+message GetToolResponse {
+  ToolInfo tool = 1;
+  string input_schema_json = 2; // JSON string representation
+  string output_schema_json = 3; // JSON string representation
+  repeated ToolExample examples = 4;
+}
+
+// Tool execution
+message InvokeToolRequest {
+  string session_id = 1;
+  string tool_name = 2;
+  string parameters_json = 3; // JSON string representation
+  ToolInvocationOptions options = 4;
+  string invocation_id = 5; // For tracking and correlation
+}
+
+message InvokeToolResponse {
+  string invocation_id = 1;
+  ToolInvocationStatus status = 2;
+  string result_json = 3; // JSON string representation
+  ToolError error = 4;
+  ToolMetrics metrics = 5;
+  int64 executed_at_unix = 6; // Unix timestamp
+}
+
+// Event streaming
+message StreamEventsRequest {
+  string session_id = 1;
+  repeated EventType event_types = 2;
+  bool include_history = 3; // Include recent events
+}
+
+message Event {
+  string event_id = 1;
+  EventType type = 2;
+  int64 timestamp_unix = 3; // Unix timestamp
+  string session_id = 4;
+  string data_json = 5; // JSON string representation
+}
+
+// Session management
+message HeartBeatRequest {
+  string session_id = 1;
+  AgentStatus status = 2;
+}
+
+message HeartBeatResponse {
+  bool session_valid = 1;
+  int64 next_heartbeat_at_unix = 2; // Unix timestamp
+  repeated string pending_notifications = 3;
+}
+
+message GetAgentStatusRequest {
+  string session_id = 1;
+}
+
+message GetAgentStatusResponse {
+  AgentSessionInfo session_info = 1;
+  AgentMetrics metrics = 2;
+  repeated ToolUsageInfo recent_tool_usage = 3;
+}
+
+// Data structures
+message AgentCapabilities {
+  repeated string supported_protocols = 1; // ["mcp/1.0", "mcp/2.0"]
+  repeated string supported_tool_types = 2; // ["openapi", "graphql", "function"]
+  bool supports_streaming = 3;
+  bool supports_async_invocation = 4;
+  int32 max_concurrent_tools = 5;
+  repeated string preferred_formats = 6; // ["json", "yaml", "xml"]
+}
+
+message ServerInfo {
+  string server_version = 1;
+  string protocol_version = 2;
+  repeated string supported_features = 3;
+  map<string, string> capabilities = 4;
+}
+
+message ToolInfo {
+  string name = 1;
+  string display_name = 2;
+  string description = 3;
+  string version = 4;
+  ToolType type = 5;
+  ToolStatus status = 6;
+  repeated string tags = 7;
+  map<string, string> metadata = 8;
+  int64 created_at_unix = 9; // Unix timestamp
+  int64 updated_at_unix = 10; // Unix timestamp
+  ToolSource source = 11;
+}
+
+message ToolFilter {
+  repeated ToolType types = 1;
+  repeated ToolStatus statuses = 2;
+  repeated string tags = 3;
+  string name_pattern = 4; // Regex pattern for tool name
+  int64 created_after_unix = 5; // Unix timestamp
+  int64 updated_after_unix = 6; // Unix timestamp
+}
+
+message PaginationOptions {
+  int32 page = 1; // 1-based page number
+  int32 page_size = 2; // Default 50, max 200
+  string sort_by = 3; // "name", "created_at", "updated_at"
+  bool sort_desc = 4;
+}
+
+message PaginationMetadata {
+  int32 current_page = 1;
+  int32 page_size = 2;
+  int32 total_pages = 3;
+  bool has_next = 4;
+  bool has_previous = 5;
+}
+
+message ToolExample {
+  string name = 1;
+  string description = 2;
+  string input_json = 3; // JSON string representation
+  string expected_output_json = 4; // JSON string representation
+}
+
+message ToolInvocationOptions {
+  int32 timeout_seconds = 1; // Per-invocation timeout
+  bool async = 2; // Execute asynchronously
+  map<string, string> context = 3; // Additional execution context
+  ToolRetryPolicy retry_policy = 4;
+}
+
+message ToolRetryPolicy {
+  int32 max_retries = 1;
+  int32 retry_delay_seconds = 2;
+  repeated int32 retryable_status_codes = 3;
+}
+
+message ToolError {
+  ErrorCode code = 1;
+  string message = 2;
+  string details = 3;
+  string metadata_json = 4; // JSON string representation
+  bool retryable = 5;
+}
+
+message ToolMetrics {
+  int64 execution_time_ms = 1;
+  int64 memory_used_bytes = 2;
+  int32 retry_count = 3;
+  map<string, double> custom_metrics = 4;
+}
+
+message ToolSource {
+  string spec_id = 1;
+  string spec_type = 2; // "openapi", "graphql", "asyncapi"
+  string spec_path = 3;
+  string operation_id = 4; // For OpenAPI operations
+  string query_name = 5; // For GraphQL queries/mutations
+}
+
+message AgentSessionInfo {
+  string session_id = 1;
+  string agent_id = 2;
+  string agent_name = 3;
+  string agent_version = 4;
+  int64 created_at_unix = 5; // Unix timestamp
+  int64 last_heartbeat_unix = 6; // Unix timestamp
+  int64 expires_at_unix = 7; // Unix timestamp
+  AgentStatus status = 8;
+  AgentCapabilities capabilities = 9;
+}
+
+message AgentMetrics {
+  int64 total_invocations = 1;
+  int64 successful_invocations = 2;
+  int64 failed_invocations = 3;
+  double average_response_time_ms = 4;
+  int64 last_invocation_unix = 5; // Unix timestamp
+  map<string, int64> tool_usage_count = 6;
+}
+
+message ToolUsageInfo {
+  string tool_name = 1;
+  int64 invoked_at_unix = 2; // Unix timestamp
+  ToolInvocationStatus status = 3;
+  int64 execution_time_ms = 4;
+  string error_message = 5;
+}
+
+// Enums
+enum ToolType {
+  TOOL_TYPE_UNSPECIFIED = 0;
+  TOOL_TYPE_OPENAPI = 1;
+  TOOL_TYPE_GRAPHQL = 2;
+  TOOL_TYPE_ASYNCAPI = 3;
+  TOOL_TYPE_FUNCTION = 4;
+  TOOL_TYPE_CUSTOM = 5;
+}
+
+enum ToolStatus {
+  TOOL_STATUS_UNSPECIFIED = 0;
+  TOOL_STATUS_AVAILABLE = 1;
+  TOOL_STATUS_UNAVAILABLE = 2;
+  TOOL_STATUS_DEPRECATED = 3;
+  TOOL_STATUS_MAINTENANCE = 4;
+}
+
+enum ToolInvocationStatus {
+  TOOL_INVOCATION_STATUS_UNSPECIFIED = 0;
+  TOOL_INVOCATION_STATUS_PENDING = 1;
+  TOOL_INVOCATION_STATUS_RUNNING = 2;
+  TOOL_INVOCATION_STATUS_SUCCESS = 3;
+  TOOL_INVOCATION_STATUS_FAILED = 4;
+  TOOL_INVOCATION_STATUS_TIMEOUT = 5;
+  TOOL_INVOCATION_STATUS_CANCELLED = 6;
+}
+
+enum ErrorCode {
+  ERROR_CODE_UNSPECIFIED = 0;
+  ERROR_CODE_INVALID_SESSION = 1;
+  ERROR_CODE_TOOL_NOT_FOUND = 2;
+  ERROR_CODE_INVALID_PARAMETERS = 3;
+  ERROR_CODE_EXECUTION_FAILED = 4;
+  ERROR_CODE_TIMEOUT = 5;
+  ERROR_CODE_RATE_LIMITED = 6;
+  ERROR_CODE_UNAUTHORIZED = 7;
+  ERROR_CODE_INTERNAL_ERROR = 8;
+}
+
+enum EventType {
+  EVENT_TYPE_UNSPECIFIED = 0;
+  EVENT_TYPE_TOOL_ADDED = 1;
+  EVENT_TYPE_TOOL_REMOVED = 2;
+  EVENT_TYPE_TOOL_UPDATED = 3;
+  EVENT_TYPE_TOOL_INVOCATION = 4;
+  EVENT_TYPE_AGENT_REGISTERED = 5;
+  EVENT_TYPE_AGENT_UNREGISTERED = 6;
+  EVENT_TYPE_SESSION_EXPIRED = 7;
+  EVENT_TYPE_SERVER_STATUS = 8;
+}
+
+enum AgentStatus {
+  AGENT_STATUS_UNSPECIFIED = 0;
+  AGENT_STATUS_ACTIVE = 1;
+  AGENT_STATUS_IDLE = 2;
+  AGENT_STATUS_BUSY = 3;
+  AGENT_STATUS_DISCONNECTED = 4;
+  AGENT_STATUS_ERROR = 5;
+}

@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aionmcp/aionmcp/pkg/agent"
+	agentpb "github.com/aionmcp/aionmcp/pkg/agent/proto"
 	"github.com/aionmcp/aionmcp/internal/selflearn"
 	"github.com/aionmcp/aionmcp/pkg/importer"
 	"github.com/gin-gonic/gin"
@@ -24,6 +26,8 @@ type Server struct {
 	toolRegistry    *ToolRegistry
 	importerManager *importer.ImporterManager
 	fileWatcher     *importer.FileWatcher
+	agentServer     *agent.AgentServer
+	agentAPI        *agent.AgentAPI
 	learningEngine  *selflearn.Engine
 	shutdown        chan struct{}
 	wg              sync.WaitGroup
@@ -38,7 +42,7 @@ func NewServer(logger *zap.Logger) (*Server, error) {
 
 	// Initialize importer manager
 	importerManager := importer.NewImporterManager(registry)
-	
+
 	// Register importers
 	importerManager.RegisterImporter(importer.NewOpenAPIImporter())
 	importerManager.RegisterImporter(importer.NewGraphQLImporter())
@@ -50,6 +54,9 @@ func NewServer(logger *zap.Logger) (*Server, error) {
 		return nil, fmt.Errorf("failed to create file watcher: %w", err)
 	}
 
+	// Initialize agent server and API
+	agentServer := agent.NewAgentServer(logger, registry)
+	agentAPI := agent.NewAgentAPI(logger, registry, agentServer)
 	// Initialize self-learning engine
 	learningConfig := selflearn.DefaultCollectionConfig()
 	learningConfig.Enabled = viper.GetBool("learning.enabled")
@@ -83,12 +90,12 @@ func NewServer(logger *zap.Logger) (*Server, error) {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 	router.Use(gin.Recovery())
-	
+
 	// Add request logging middleware
 	router.Use(func(c *gin.Context) {
 		start := time.Now()
 		c.Next()
-		
+
 		logger.Info("HTTP request",
 			zap.String("method", c.Request.Method),
 			zap.String("path", c.Request.URL.Path),
@@ -101,16 +108,16 @@ func NewServer(logger *zap.Logger) (*Server, error) {
 	serverCtx, cancelFunc := context.WithCancel(context.Background())
 
 	// Setup HTTP routes
-	setupHTTPRoutes(router, registry, importerManager, fileWatcher, learningEngine, logger, serverCtx)
+	setupHTTPRoutes(router, registry, importerManager, fileWatcher, agentAPI, learningEngine, logger, serverCtx)
 
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf(":%d", viper.GetInt("server.port")),
 		Handler: router,
 	}
 
-	// Create gRPC server
+	// Create gRPC server and register agent service
 	grpcServer := grpc.NewServer()
-	// TODO: Register gRPC services in iteration 4
+	agentpb.RegisterAgentServiceServer(grpcServer, agentServer)
 
 	return &Server{
 		logger:          logger,
@@ -119,6 +126,8 @@ func NewServer(logger *zap.Logger) (*Server, error) {
 		toolRegistry:    registry,
 		importerManager: importerManager,
 		fileWatcher:     fileWatcher,
+		agentServer:     agentServer,
+		agentAPI:        agentAPI,
 		learningEngine:  learningEngine,
 		shutdown:        make(chan struct{}),
 		serverCtx:       serverCtx,
@@ -145,7 +154,7 @@ func (s *Server) Run(ctx context.Context) error {
 	s.wg.Add(1)
 	go func() {
 		defer s.wg.Done()
-		
+
 		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", viper.GetInt("server.grpc_port")))
 		if err != nil {
 			s.logger.Error("Failed to listen on gRPC port", zap.Error(err))
@@ -188,22 +197,25 @@ func (s *Server) Run(ctx context.Context) error {
 }
 
 // setupHTTPRoutes configures HTTP API routes
-func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager *importer.ImporterManager, fileWatcher *importer.FileWatcher, learningEngine *selflearn.Engine, logger *zap.Logger, serverCtx context.Context) {
+func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager *importer.ImporterManager, fileWatcher *importer.FileWatcher, agentAPI *agent.AgentAPI, learningEngine *selflearn.Engine, logger *zap.Logger, serverCtx context.Context) {
 	api := router.Group("/api/v1")
-	
+
 	// Health check
 	api.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status":    "healthy",
 			"timestamp": time.Now().Unix(),
 			"version":   "0.1.0",
-			"iteration": "1",
+			"iteration": "4",
 		})
 	})
 
+	// Agent integration routes
+	agentAPI.RegisterRoutes(api)
+
 	// MCP endpoints
 	mcp := api.Group("/mcp")
-	
+
 	// List available tools
 	mcp.GET("/tools", func(c *gin.Context) {
 		tools := registry.ListTools()
@@ -283,7 +295,7 @@ func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager
 
 	// Importer management endpoints
 	specs := api.Group("/specs")
-	
+
 	// List specification sources
 	specs.GET("/", func(c *gin.Context) {
 		sources := importerManager.ListSources()
@@ -369,7 +381,7 @@ func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager
 	// Reload a specification
 	specs.POST("/:id/reload", func(c *gin.Context) {
 		sourceID := c.Param("id")
-		
+
 		result, err := importerManager.ReloadSpec(c.Request.Context(), sourceID)
 		if err != nil {
 			logger.Error("Failed to reload specification",
@@ -391,7 +403,7 @@ func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager
 	// Remove a specification
 	specs.DELETE("/:id", func(c *gin.Context) {
 		sourceID := c.Param("id")
-		
+
 		// Stop watching if enabled
 		if fileWatcher.IsWatching(sourceID) {
 			if err := fileWatcher.UnwatchSpec(sourceID); err != nil {
@@ -499,7 +511,6 @@ func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to analyze patterns"})
 			return
 		}
-
 		insights, err := learningEngine.GenerateInsights(c.Request.Context())
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate insights"})

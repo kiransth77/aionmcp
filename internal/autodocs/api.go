@@ -31,17 +31,17 @@ func (h *APIHandler) RegisterRoutes(router *gin.Engine) {
 		docs.POST("/generate/all", h.GenerateAllDocuments)
 		docs.POST("/generate/daily", h.GenerateDaily)
 		docs.POST("/generate/weekly", h.GenerateWeekly)
-		
+
 		// Generation history and status
 		docs.GET("/history", h.GetGenerationHistory)
 		docs.GET("/stats", h.GetStats)
-		
+
 		// Scheduled generation
 		docs.POST("/schedule", h.ScheduleGeneration)
 		docs.GET("/schedule", h.GetScheduledJobs)
 		docs.DELETE("/schedule/:jobId", h.CancelScheduledJob)
 		docs.POST("/schedule/process", h.ProcessScheduledJobs)
-		
+
 		// Health and status
 		docs.GET("/health", h.GetDocumentationHealth)
 		docs.GET("/types", h.GetSupportedTypes)
@@ -58,7 +58,7 @@ func (h *APIHandler) GenerateDocument(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// Validate the request
 	engine, ok := h.engine.(*Engine)
 	if ok {
@@ -70,7 +70,7 @@ func (h *APIHandler) GenerateDocument(c *gin.Context) {
 			return
 		}
 	}
-	
+
 	result, err := h.engine.Generate(request)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -79,7 +79,7 @@ func (h *APIHandler) GenerateDocument(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, gin.H{
 		"result": result,
 	})
@@ -95,7 +95,7 @@ func (h *APIHandler) GenerateAllDocuments(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// Count successes and failures
 	successCount := 0
 	failureCount := 0
@@ -106,7 +106,7 @@ func (h *APIHandler) GenerateAllDocuments(c *gin.Context) {
 			failureCount++
 		}
 	}
-	
+
 	c.JSON(http.StatusOK, gin.H{
 		"results":      results,
 		"total":        len(results),
@@ -126,7 +126,7 @@ func (h *APIHandler) GenerateDaily(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	results, err := engine.GenerateDaily()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -135,7 +135,7 @@ func (h *APIHandler) GenerateDaily(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, gin.H{
 		"results":      results,
 		"type":         "daily",
@@ -153,7 +153,7 @@ func (h *APIHandler) GenerateWeekly(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	results, err := engine.GenerateWeekly()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -162,7 +162,7 @@ func (h *APIHandler) GenerateWeekly(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, gin.H{
 		"results":      results,
 		"type":         "weekly",
@@ -177,7 +177,7 @@ func (h *APIHandler) GetGenerationHistory(c *gin.Context) {
 	if err != nil {
 		limit = 20
 	}
-	
+
 	history, err := h.engine.GetGenerationHistory(limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -186,7 +186,7 @@ func (h *APIHandler) GetGenerationHistory(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, gin.H{
 		"history": history,
 		"limit":   limit,
@@ -204,11 +204,11 @@ func (h *APIHandler) GetStats(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	stats := engine.GetStats()
-	
+
 	c.JSON(http.StatusOK, gin.H{
-		"stats":       stats,
+		"stats":      stats,
 		"updated_at": time.Now(),
 	})
 }
@@ -219,7 +219,7 @@ func (h *APIHandler) ScheduleGeneration(c *gin.Context) {
 		DocumentType DocumentType `json:"document_type" binding:"required"`
 		Schedule     string       `json:"schedule" binding:"required"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid request format",
@@ -227,7 +227,7 @@ func (h *APIHandler) ScheduleGeneration(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	err := h.engine.ScheduleGeneration(request.DocumentType, request.Schedule)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -236,7 +236,7 @@ func (h *APIHandler) ScheduleGeneration(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, gin.H{
 		"message":       "Generation scheduled successfully",
 		"document_type": request.DocumentType,
@@ -255,9 +255,9 @@ func (h *APIHandler) GetScheduledJobs(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	jobs := engine.GetScheduledJobs()
-	
+
 	c.JSON(http.StatusOK, gin.H{
 		"jobs":  jobs,
 		"count": len(jobs),
@@ -273,7 +273,7 @@ func (h *APIHandler) CancelScheduledJob(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// Cast to concrete type to access CancelScheduledJob method
 	engine, ok := h.engine.(*Engine)
 	if !ok {
@@ -282,7 +282,7 @@ func (h *APIHandler) CancelScheduledJob(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	err := engine.CancelScheduledJob(jobID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -291,10 +291,10 @@ func (h *APIHandler) CancelScheduledJob(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, gin.H{
-		"message":     "Job cancelled successfully",
-		"job_id":      jobID,
+		"message":      "Job cancelled successfully",
+		"job_id":       jobID,
 		"cancelled_at": time.Now(),
 	})
 }
@@ -309,7 +309,7 @@ func (h *APIHandler) ProcessScheduledJobs(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	err := engine.ProcessScheduledJobs()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -318,7 +318,7 @@ func (h *APIHandler) ProcessScheduledJobs(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, gin.H{
 		"message":      "Scheduled jobs processed successfully",
 		"processed_at": time.Now(),
@@ -335,37 +335,37 @@ func (h *APIHandler) GetDocumentationHealth(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	stats := engine.GetStats()
-	
+
 	// Determine health status
 	health := map[string]interface{}{
-		"status":     "healthy",
-		"timestamp":  time.Now(),
+		"status":    "healthy",
+		"timestamp": time.Now(),
 		"components": map[string]interface{}{
 			"generators": map[string]interface{}{
 				"status": "healthy",
 				"count":  stats["registered_generators"],
 			},
 			"history": map[string]interface{}{
-				"status":          "healthy",
+				"status":            "healthy",
 				"total_generations": stats["total_generations"],
-				"success_rate":     stats["success_rate"],
+				"success_rate":      stats["success_rate"],
 			},
 			"scheduler": map[string]interface{}{
-				"status":     "healthy",
+				"status":      "healthy",
 				"active_jobs": stats["active_scheduled_jobs"],
 			},
 		},
 	}
-	
+
 	// Check if success rate is below threshold
 	if successRate, ok := stats["success_rate"].(float64); ok && successRate < 0.9 {
 		health["status"] = "degraded"
 		health["components"].(map[string]interface{})["history"].(map[string]interface{})["status"] = "degraded"
 		health["message"] = "Documentation generation success rate is below 90%"
 	}
-	
+
 	c.JSON(http.StatusOK, health)
 }
 
@@ -377,7 +377,7 @@ func (h *APIHandler) GetSupportedTypes(c *gin.Context) {
 		DocumentTypeReadme,
 		DocumentTypeArchitecture,
 	}
-	
+
 	typeInfo := make(map[DocumentType]interface{})
 	for _, docType := range types {
 		typeInfo[docType] = map[string]interface{}{
@@ -386,7 +386,7 @@ func (h *APIHandler) GetSupportedTypes(c *gin.Context) {
 			"description":       h.getTypeDescription(docType),
 		}
 	}
-	
+
 	c.JSON(http.StatusOK, gin.H{
 		"supported_types": types,
 		"type_info":       typeInfo,
@@ -414,17 +414,17 @@ func (h *APIHandler) getTypeDescription(docType DocumentType) string {
 func (h *APIHandler) MiddlewareRequestLogging() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
-		
+
 		// Process request
 		c.Next()
-		
+
 		// Log request details
 		latency := time.Since(start)
 		clientIP := c.ClientIP()
 		method := c.Request.Method
 		path := c.Request.URL.Path
 		statusCode := c.Writer.Status()
-		
+
 		// Only log documentation API requests
 		if strings.HasPrefix(path, "/api/v1/docs") {
 			fmt.Printf("[DOCS-API] %s %s %d %v %s\n", 
@@ -440,14 +440,14 @@ func (h *APIHandler) WebhookHandler(c *gin.Context) {
 		Data   map[string]interface{} `json:"data"`
 		Source string                 `json:"source"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid webhook payload",
 		})
 		return
 	}
-	
+
 	// Handle different webhook events
 	switch payload.Event {
 	case "git.push":
@@ -486,7 +486,7 @@ func (h *APIHandler) handleGitPushWebhook(c *gin.Context, data map[string]interf
 			Format:      "markdown",
 		},
 	}
-	
+
 	var results []GenerationResult
 	for _, request := range requests {
 		result, err := h.engine.Generate(request)
@@ -500,7 +500,7 @@ func (h *APIHandler) handleGitPushWebhook(c *gin.Context, data map[string]interf
 			results = append(results, *result)
 		}
 	}
-	
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Git push webhook processed",
 		"results": results,
@@ -515,7 +515,7 @@ func (h *APIHandler) handleLearningInsightWebhook(c *gin.Context, data map[strin
 		IncludeData: true,
 		Format:      "markdown",
 	}
-	
+
 	result, err := h.engine.Generate(request)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -524,7 +524,7 @@ func (h *APIHandler) handleLearningInsightWebhook(c *gin.Context, data map[strin
 		})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Learning insight webhook processed",
 		"result":  result,
