@@ -23,13 +23,13 @@ AionMCP is an autonomous Go-based Model Context Protocol (MCP) server that dynam
 <!-- AUTO-GENERATED STATUS -->
 **Current Branch**: `copilot/sub-pr-6`
 
-**Latest Commit**: [`15fe886`](../../commit/15fe88627bc54a85f2440eea8068aa9c22fa6719)
+**Latest Commit**: [`c6d73fe`](../../commit/c6d73fec2483f20bcebc9d5fd305b13e38eb9f24)
 
 **System Health**: 99/100 (Excellent)
 
 **Active Tools**: 3
 
-**Commits (7 days)**: 3
+**Commits (7 days)**: 5
 
 *Status updated automatically*
 <!-- END AUTO-GENERATED STATUS -->
@@ -100,9 +100,11 @@ AionMCP follows Clean/Hexagonal Architecture principles:
 <!-- AUTO-GENERATED ACTIVITY -->
 ### Recent Commits
 
-- [`15fe886`](../../commit/15fe88627bc54a85f2440eea8068aa9c22fa6719) fix: Apply PR review feedback - improve API design and documentation *(0h ago)*
-- [`62b6699`](../../commit/62b6699c0a64df48fd1f518c76747c71d2d80187) Initial plan *(0h ago)*
-- [`5239982`](../../commit/523998216b7827d1c7273500e5b673622b79e15f) Merge pull request #12 from kiransth77/copilot/sub-pr-6 *(0h ago)*
+- [`c6d73fe`](../../commit/c6d73fec2483f20bcebc9d5fd305b13e38eb9f24) fix: Address PR review feedback - improve concurrency safety and test reliability *(0h ago)*
+- [`00f652e`](../../commit/00f652e7482387f43e4ae13d4070c8769df8c2d3) Update internal/core/registry.go *(0h ago)*
+- [`85d4dd5`](../../commit/85d4dd5894bced7e9e7694f6101a9aed1d29da9a) fix: Apply PR review feedback - implement handler removal and fix concurrency issues *(1d ago)*
+- [`0f89f83`](../../commit/0f89f83c3f120cf09cfb4976996649bf2cb5604d) Initial plan *(1d ago)*
+- [`2eb14b0`](../../commit/2eb14b0541675e6220eed92cbce29280463276bd) Merge pull request #14 from kiransth77/copilot/sub-pr-6 *(5d ago)*
 
 ### Active Insights
 
@@ -195,6 +197,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-*README last updated: 2025-11-02 06:58:31 UTC*
+*README last updated: 2025-11-07 12:15:01 UTC*
 
 *This README is automatically updated with current project status and metrics.*

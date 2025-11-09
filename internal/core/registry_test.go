@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -209,12 +210,19 @@ func TestToolRegistry_EventHandlers(t *testing.T) {
 	logger := zap.NewNop()
 	registry := NewToolRegistry(logger)
 
+	var mu sync.Mutex
 	var receivedEvents []ToolRegistryEvent
+	eventReceived := make(chan struct{}, 10) // Buffered channel for event notifications
+	
 	handler := func(event ToolRegistryEvent) {
+		mu.Lock()
+		defer mu.Unlock()
 		receivedEvents = append(receivedEvents, event)
+		eventReceived <- struct{}{} // Signal that an event was received
 	}
 
-	registry.AddEventHandler(handler)
+	handlerID := registry.AddEventHandler(handler)
+	assert.Greater(t, handlerID, 0)
 
 	// Register a tool
 	tool := &TestTool{
@@ -224,24 +232,66 @@ func TestToolRegistry_EventHandlers(t *testing.T) {
 
 	registry.Register(tool)
 
-	// Wait a bit for goroutine to execute
-	time.Sleep(10 * time.Millisecond)
+	// Wait for event with timeout
+	select {
+	case <-eventReceived:
+		// Event received successfully
+	case <-time.After(1 * time.Second):
+		t.Fatal("Timeout waiting for tool registration event")
+	}
 
 	// Verify event was received
+	mu.Lock()
 	assert.Len(t, receivedEvents, 1)
 	assert.Equal(t, ToolEventAdded, receivedEvents[0].Type)
 	assert.Equal(t, "event-tool", receivedEvents[0].ToolName)
+	mu.Unlock()
 
 	// Unregister the tool
 	registry.Unregister("event-tool")
 
-	// Wait a bit for goroutine to execute
-	time.Sleep(10 * time.Millisecond)
+	// Wait for event with timeout
+	select {
+	case <-eventReceived:
+		// Event received successfully
+	case <-time.After(1 * time.Second):
+		t.Fatal("Timeout waiting for tool unregistration event")
+	}
 
 	// Verify remove event was received
+	mu.Lock()
 	assert.Len(t, receivedEvents, 2)
 	assert.Equal(t, ToolEventRemoved, receivedEvents[1].Type)
 	assert.Equal(t, "event-tool", receivedEvents[1].ToolName)
+	mu.Unlock()
+	
+	// Test handler removal
+	removed := registry.RemoveEventHandler(handlerID)
+	assert.True(t, removed)
+	
+	// Register another tool - handler should not receive event
+	tool2 := &TestTool{
+		name:        "event-tool-2",
+		description: "Tool for testing removed handler",
+	}
+	registry.Register(tool2)
+	
+	// Wait a bit to ensure no event is received (with timeout)
+	select {
+	case <-eventReceived:
+		t.Fatal("Received unexpected event after handler removal")
+	case <-time.After(100 * time.Millisecond):
+		// Expected: no event should be received
+	}
+	
+	// Verify no new events were received (still 2)
+	mu.Lock()
+	assert.Len(t, receivedEvents, 2)
+	mu.Unlock()
+	
+	// Test removing non-existent handler
+	removed = registry.RemoveEventHandler(999)
+	assert.False(t, removed)
 }
 
 func TestToolRegistry_GetRegistryStats(t *testing.T) {
