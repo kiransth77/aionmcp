@@ -6,6 +6,7 @@
 ![Avg Latency](https://img.shields.io/badge/avg_latency-250ms-green)
 ![Go Version](https://img.shields.io/badge/go-1.21+-blue)
 ![License](https://img.shields.io/badge/license-MIT-blue)
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-red)](https://github.com/sponsors/kiransth77)
 <!-- END AUTO-GENERATED BADGES -->
 
 AionMCP is an autonomous Go-based Model Context Protocol (MCP) server that dynamically imports OpenAPI, GraphQL, and AsyncAPI specifications and exposes them as tools to agents. It features self-learning capabilities, context-awareness, and autonomous documentation using Clean/Hexagonal architecture.
@@ -108,6 +109,27 @@ The server will start on `http://localhost:8080` with learning enabled.
 
 *Statistics updated in real-time*
 <!-- END AUTO-GENERATED PERFORMANCE -->
+
+## 📋 Project Insights
+
+This section summarizes key findings and technical insights derived from ongoing development and testing of AionMCP. These observations inform system improvements and are maintained in parallel with project reflections and documentation.
+
+### Key Findings
+
+- **Self-Learning and Failure Recovery**: Analysis of reflection records in the learning engine (`docs/reflections/`) indicates recurring parameter validation errors in OpenAPI tool executions. Adaptive retry mechanisms and enhanced validation feedback have been implemented in the importer module to address these issues.
+  
+- **Hot-Reload Stability**: Hot-reload functionality demonstrates reliability for OpenAPI and GraphQL specifications. However, AsyncAPI event streams use a simple 500ms debounce mechanism in the watcher implementation (`pkg/importer/watcher.go`) to mitigate excessive reloads in high-frequency scenarios.
+
+- **Documentation Automation**: The autodocs generators (`internal/autodocs/`) now correlate changelog and reflection outputs with tool confidence scores, facilitating efficient identification and resolution of unreliable tools.
+
+- **Example Specifications**: Provided sample specifications (`examples/specs/petstore.yaml`, `examples/specs/blog.graphql`, `examples/specs/user-events.yaml`) support integration testing and developer onboarding.
+
+### Future Enhancements
+
+- Incorporate additional sample specifications to validate authentication workflows and large-scale schemas.
+- Implement a health-check endpoint for the watcher subsystem to monitor reload backoff status.
+- Integrate release automation for cross-platform binary artifacts upon version tagging (see `.github/workflows/release.yml`).
+
 
 ## 📦 Installation
 
