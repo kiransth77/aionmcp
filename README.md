@@ -134,7 +134,7 @@ This section summarizes key findings and technical insights derived from ongoing
 
 - **Self-Learning and Failure Recovery**: Analysis of reflection records in the learning engine (`docs/reflections/`) indicates recurring parameter validation errors in OpenAPI tool executions. Adaptive retry mechanisms and enhanced validation feedback have been implemented in the importer module to address these issues.
   
-- **Hot-Reload Stability**: Hot-reload functionality demonstrates reliability for OpenAPI and GraphQL specifications. However, AsyncAPI event streams require optimized watcher backoff strategies to mitigate excessive reloads in high-frequency scenarios (refer to `pkg/importer/watcher.go`).
+- **Hot-Reload Stability**: Hot-reload functionality demonstrates reliability for OpenAPI and GraphQL specifications. However, AsyncAPI event streams use a simple 500ms debounce mechanism in the watcher implementation (`pkg/importer/watcher.go`) to mitigate excessive reloads in high-frequency scenarios.
 
 - **Documentation Automation**: The autodocs generators (`internal/autodocs/`) now correlate changelog and reflection outputs with tool confidence scores, facilitating efficient identification and resolution of unreliable tools.
 
@@ -147,7 +147,7 @@ This section summarizes key findings and technical insights derived from ongoing
 - Integrate release automation for cross-platform binary artifacts upon version tagging (see `.github/workflows/release.yml`).
 
 
-## �📦 Installation
+## 📦 Installation
 
 ### Prerequisites
 
