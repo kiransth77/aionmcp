@@ -28,7 +28,7 @@ jobs:
         with:
           path: |
             ~/.cache/go-build
-            ${{ github.workspace }}/pkg/mod
+            ${{ env.GOMODCACHE }}
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
@@ -57,13 +57,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload release assets
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref_name }}
-          files: out/*
+          files: out/**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
