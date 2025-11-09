@@ -22,9 +22,6 @@ AionMCP is an autonomous Go-based Model Context Protocol (MCP) server that dynam
 ## 📊 Project Status
 
 <!-- AUTO-GENERATED STATUS -->
-**Current Branch**: `copilot/sub-pr-6-again`
-
-**Latest Commit**: [`7a263d0`](../../commit/7a263d0a020055f3f5b82c96b95497beca602a35)
 
 **System Health**: 99/100 (Excellent)
 
