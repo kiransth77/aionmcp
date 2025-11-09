@@ -47,6 +47,9 @@ config/development.yaml
 *.tmp
 *.temp
 
+# Test output files (auto-generated documentation)
+internal/autodocs/test_output/
+
 # Node.js dependencies and build artifacts for VS Code extension
 node_modules/
 npm-debug.log*
