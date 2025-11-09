@@ -108,8 +108,7 @@ func NewServer(logger *zap.Logger) (*Server, error) {
 	serverCtx, cancelFunc := context.WithCancel(context.Background())
 
 	// Setup HTTP routes
-	setupHTTPRoutes(router, registry, importerManager, fileWatcher, agentAPI, logger)
-	setupHTTPRoutes(router, registry, importerManager, fileWatcher, learningEngine, logger, serverCtx)
+	setupHTTPRoutes(router, registry, importerManager, fileWatcher, agentAPI, learningEngine, logger, serverCtx)
 
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf(":%d", viper.GetInt("server.port")),
@@ -198,7 +197,7 @@ func (s *Server) Run(ctx context.Context) error {
 }
 
 // setupHTTPRoutes configures HTTP API routes
-func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager *importer.ImporterManager, fileWatcher *importer.FileWatcher, learningEngine *selflearn.Engine, logger *zap.Logger, serverCtx context.Context) {
+func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager *importer.ImporterManager, fileWatcher *importer.FileWatcher, agentAPI *agent.AgentAPI, learningEngine *selflearn.Engine, logger *zap.Logger, serverCtx context.Context) {
 	api := router.Group("/api/v1")
 
 	// Health check

@@ -2,6 +2,8 @@ package autodocs
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
