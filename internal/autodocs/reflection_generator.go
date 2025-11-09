@@ -2,8 +2,6 @@ package autodocs
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 )
@@ -75,7 +73,7 @@ func (r *ReflectionGenerator) Generate(request GenerationRequest) (*GenerationRe
 	}
 
 	// Write to file
-	if err := r.writeToFile(request.OutputPath, content); err != nil {
+	if err := WriteToFile(request.OutputPath, content); err != nil {
 		return &GenerationResult{
 			Type:    request.Type,
 			Success: false,
@@ -189,9 +187,9 @@ func (r *ReflectionGenerator) generateExecutiveSummary(content *strings.Builder,
 	content.WriteString(fmt.Sprintf("- **Patterns Detected**: %d\n\n", len(learning.RecentPatterns)))
 
 	// Overall health assessment
-	healthScore := r.calculateHealthScore(learning)
-	healthStatus := r.getHealthStatus(healthScore)
-
+	healthScore := CalculateHealthScore(learning)
+	healthStatus := GetHealthStatus(healthScore)
+	
 	content.WriteString("### System Health\n\n")
 	content.WriteString(fmt.Sprintf("**Overall Health Score**: %d/100 (%s)\n\n", healthScore, healthStatus))
 

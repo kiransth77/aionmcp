@@ -50,7 +50,6 @@ AionMCP is an autonomous Go-based Model Context Protocol (MCP) server that dynam
 - **OpenAPI 3.0+**: REST API specifications with full schema support
 - **GraphQL**: Query and mutation support with type introspection
 - **AsyncAPI**: Event-driven API specifications
-
 ## 🚀 Quick Start
 
 ```bash
@@ -141,7 +140,6 @@ cd aionmcp
 go mod download
 go build -o bin/aionmcp cmd/server/main.go
 ```
-
 ## 📚 Usage
 
 ### Basic Usage
@@ -163,7 +161,6 @@ AIONMCP_LOG_LEVEL=debug ./bin/aionmcp
 - `POST /api/v1/tools/{tool}/execute` - Execute a tool
 - `GET /api/v1/learning/stats` - Learning statistics
 - `GET /api/v1/learning/insights` - System insights
-
 ## 🛠️ Development
 
 ### Local Development
@@ -178,10 +175,7 @@ go run cmd/server/main.go
 # Build for production
 go build -ldflags "-s -w" -o bin/aionmcp cmd/server/main.go
 ```
-
 ## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
 
 ### Development Process
 
@@ -190,7 +184,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 3. Make your changes
 4. Add tests
 5. Submit a pull request
-
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

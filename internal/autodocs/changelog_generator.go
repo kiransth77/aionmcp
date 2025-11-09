@@ -2,22 +2,38 @@ package autodocs
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 	"time"
 )
 
+const (
+	// DefaultMaxCommitBodyLength is the default maximum length of commit body to include in changelog.
+	// Rationale: 200 characters provides a good balance between detail and readability,
+	// ensuring concise summaries without excessive verbosity in generated changelogs.
+	DefaultMaxCommitBodyLength = 200
+)
+
 // ChangelogGenerator generates changelog documents from git history
 type ChangelogGenerator struct {
-	dataSource DataSource
+	dataSource          DataSource
+	maxCommitBodyLength int
 }
 
-// NewChangelogGenerator creates a new changelog generator
+// NewChangelogGenerator creates a new changelog generator with default settings
 func NewChangelogGenerator(dataSource DataSource) *ChangelogGenerator {
+	return NewChangelogGeneratorWithConfig(dataSource, DefaultMaxCommitBodyLength)
+}
+
+// NewChangelogGeneratorWithConfig creates a new changelog generator with custom configuration.
+// If maxCommitBodyLength is <= 0, DefaultMaxCommitBodyLength is used.
+func NewChangelogGeneratorWithConfig(dataSource DataSource, maxCommitBodyLength int) *ChangelogGenerator {
+	if maxCommitBodyLength <= 0 {
+		maxCommitBodyLength = DefaultMaxCommitBodyLength
+	}
 	return &ChangelogGenerator{
-		dataSource: dataSource,
+		dataSource:          dataSource,
+		maxCommitBodyLength: maxCommitBodyLength,
 	}
 }
 
@@ -67,7 +83,7 @@ func (c *ChangelogGenerator) Generate(request GenerationRequest) (*GenerationRes
 	}
 
 	// Write to file
-	if err := c.writeToFile(request.OutputPath, content); err != nil {
+	if err := WriteToFile(request.OutputPath, content); err != nil {
 		return &GenerationResult{
 			Type:    request.Type,
 			Success: false,
@@ -190,9 +206,9 @@ func (c *ChangelogGenerator) generateDayEntry(content *strings.Builder, date str
 	if err != nil {
 		parsedDate = time.Now()
 	}
-
-	content.WriteString(fmt.Sprintf("## %s\n\n", parsedDate.Format("2006-01-02 (Monday)")))
-
+	
+	content.WriteString(fmt.Sprintf("## %s (%s)\n\n", parsedDate.Format("2006-01-02"), parsedDate.Weekday().String()))
+	
 	// Categorize commits
 	categories := c.categorizeCommits(commits)
 
@@ -301,7 +317,7 @@ func (c *ChangelogGenerator) writeCommitEntry(content *strings.Builder, commit G
 	content.WriteString("\n")
 
 	// Add body if it contains important information and is not too long
-	if len(commit.Body) > 0 && len(commit.Body) < 200 && !strings.Contains(strings.ToLower(commit.Body), "signed-off-by") {
+	if len(commit.Body) > 0 && len(commit.Body) < c.maxCommitBodyLength && !strings.Contains(strings.ToLower(commit.Body), "signed-off-by") {
 		// Format body as indented text
 		bodyLines := strings.Split(strings.TrimSpace(commit.Body), "\n")
 		for _, line := range bodyLines {

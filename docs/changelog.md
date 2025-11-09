@@ -32,6 +32,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ✨ Features
 
 - fix: Apply PR review feedback - implement handler removal and fix concurrency issues ([`85d4dd5`](../../commit/85d4dd5894bced7e9e7694f6101a9aed1d29da9a)) by copilot-swe-agent[bot] (10 files, +325/-92 lines)
+*This changelog was automatically generated on 2025-11-02 11:10:32*
+
+## 2025-11-02 (Sunday)
+
+### ♻️ Code Refactoring
+
+- refactor: Extract magic numbers to constants and simplify code structure ([`7724811`](../../commit/772481134d3b465bc56a0547288e8dfd5cc6d611)) by copilot-swe-agent[bot] (10 files, +86/-93 lines)
+  - Add health score deduction constants to utils.go
+- refactor: Extract duplicated logic and add missing constants ([`cd486cf`](../../commit/cd486cfe4f821fe30f18bfba9d3c5aacf23ace34)) by copilot-swe-agent[bot] (12 files, +220/-166 lines)
   Co-authored-by: kiransth77 <23469105+kiransth77@users.noreply.github.com>
 
 ### 📦 Other
@@ -45,6 +54,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: Apply PR review feedback - improve API design and documentation ([`15fe886`](../../commit/15fe88627bc54a85f2440eea8068aa9c22fa6719)) by copilot-swe-agent[bot] (9 files, +213/-74 lines)
   Co-authored-by: kiransth77 <23469105+kiransth77@users.noreply.github.com>
 - fix: Apply PR review feedback - fix JSON parsing and serialization issues ([`ef4d6c8`](../../commit/ef4d6c871b1b129e374810f6faf3b2063cfdf208)) by copilot-swe-agent[bot] (3 files, +46/-21 lines)
+- Initial plan ([`4211070`](../../commit/42110703db96b228d6fadbaf2ccc633768e1c849)) by copilot-swe-agent[bot]
+- Initial plan ([`ed72de9`](../../commit/ed72de972116228d3cb6e1c3a258e2d61e087f62)) by copilot-swe-agent[bot]
+- Initial plan ([`e8a2a4b`](../../commit/e8a2a4bb652a2477bac85a073e25e16821385931)) by copilot-swe-agent[bot]
+
+## 2025-10-29 (Wednesday)
+
+### 🐛 Bug Fixes
+
+- fix: Address code review comments - constants, date format, regex patterns ([`8d53b46`](../../commit/8d53b468520415da7ea89bfce4cc2040f1854278)) by copilot-swe-agent[bot] (11 files, +211/-70 lines)
   Co-authored-by: kiransth77 <23469105+kiransth77@users.noreply.github.com>
 
 ### ♻️ Code Refactoring
@@ -67,6 +85,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 📦 Other
 
 - Initial plan ([`d5fc429`](../../commit/d5fc42934a34e6d0586b56b5b043a1719f67f482)) by copilot-swe-agent[bot]
+- refactor: Extract duplicated methods and add configuration options ([`7588b7c`](../../commit/7588b7ccfaf34e42a5d8dc1f59c78632ebe34ebf)) by copilot-swe-agent[bot] (12 files, +156/-131 lines)
+  - Extract getHealthStatus and writeToFile to shared utils.go
+
+### 📦 Other
+
+- Initial plan ([`f919146`](../../commit/f9191460ce1dbd298c49495de9c2a59b47aad58c)) by copilot-swe-agent[bot]
+- Initial plan ([`ea588b7`](../../commit/ea588b75afdad2cba4fd5a0ce9cde721ee25601d)) by copilot-swe-agent[bot]
 
 ## 2025-10-26 (Sunday)
 

@@ -8,6 +8,13 @@ import (
 	"time"
 )
 
+const (
+	// DefaultLearningAPITimeout is the default timeout for learning API HTTP requests.
+	// Set to 30 seconds to allow for potentially longer-running learning system queries
+	// that may need to aggregate data or perform complex analysis.
+	DefaultLearningAPITimeout = 30 * time.Second
+)
+
 // LearningDataSource implements DataSource interface by integrating with the learning system
 type LearningDataSource struct {
 	gitDataSource  *GitDataSource
@@ -15,13 +22,18 @@ type LearningDataSource struct {
 	httpClient     *http.Client
 }
 
-// NewLearningDataSource creates a new learning-integrated data source
+// NewLearningDataSource creates a new learning-integrated data source with default timeout
 func NewLearningDataSource(repoPath, learningAPIURL string) *LearningDataSource {
+	return NewLearningDataSourceWithTimeout(repoPath, learningAPIURL, DefaultLearningAPITimeout)
+}
+
+// NewLearningDataSourceWithTimeout creates a new learning-integrated data source with custom timeout
+func NewLearningDataSourceWithTimeout(repoPath, learningAPIURL string, timeout time.Duration) *LearningDataSource {
 	return &LearningDataSource{
 		gitDataSource:  NewGitDataSource(repoPath),
 		learningAPIURL: learningAPIURL,
 		httpClient: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout: timeout,
 		},
 	}
 }
@@ -51,7 +63,7 @@ func (l *LearningDataSource) GetLearningSnapshot() (*LearningSnapshot, error) {
 
 // fetchLearningData retrieves data from the learning system API
 func (l *LearningDataSource) fetchLearningData() (*LearningSnapshot, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), l.httpClient.Timeout)
 	defer cancel()
 
 	// Get learning statistics
@@ -182,8 +194,8 @@ func (l *LearningDataSource) GetDetailedInsights() ([]InsightSummary, error) {
 	if l.learningAPIURL == "" {
 		return l.getMockLearningSnapshot().ActiveInsights, nil
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	
+	ctx, cancel := context.WithTimeout(context.Background(), l.httpClient.Timeout)
 	defer cancel()
 
 	insightsURL := fmt.Sprintf("%s/api/v1/learning/insights", l.learningAPIURL)
@@ -218,8 +230,8 @@ func (l *LearningDataSource) GetPatterns() ([]PatternSummary, error) {
 	if l.learningAPIURL == "" {
 		return l.getMockLearningSnapshot().RecentPatterns, nil
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	
+	ctx, cancel := context.WithTimeout(context.Background(), l.httpClient.Timeout)
 	defer cancel()
 
 	patternsURL := fmt.Sprintf("%s/api/v1/learning/patterns", l.learningAPIURL)
@@ -254,8 +266,8 @@ func (l *LearningDataSource) TriggerAnalysis() error {
 	if l.learningAPIURL == "" {
 		return nil // No-op if learning system not available
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	
+	ctx, cancel := context.WithTimeout(context.Background(), l.httpClient.Timeout)
 	defer cancel()
 
 	analyzeURL := fmt.Sprintf("%s/api/v1/learning/analyze", l.learningAPIURL)
@@ -283,38 +295,10 @@ func (l *LearningDataSource) GetHealthStatus() (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// Calculate health score
-	healthScore := 100
-
-	// Deduct for low success rate
-	if snapshot.SuccessRate < 1.0 {
-		healthScore -= int((1.0 - snapshot.SuccessRate) * 50)
-	}
-
-	// Deduct for high latency
-	if snapshot.AvgLatency > 0 {
-		latencyMs := float64(snapshot.AvgLatency) / float64(time.Millisecond)
-		if latencyMs > 1000 {
-			healthScore -= 20
-		} else if latencyMs > 500 {
-			healthScore -= 10
-		}
-	}
-
-	// Deduct for critical insights
-	for _, insight := range snapshot.ActiveInsights {
-		if insight.Priority == "critical" {
-			healthScore -= 15
-		} else if insight.Priority == "high" {
-			healthScore -= 5
-		}
-	}
-
-	if healthScore < 0 {
-		healthScore = 0
-	}
-
+	
+	// Calculate health score using shared utility
+	healthScore := CalculateHealthScore(snapshot)
+	
 	// Determine status
 	var status string
 	if healthScore >= 90 {

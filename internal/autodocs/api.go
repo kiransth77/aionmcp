@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -425,8 +426,8 @@ func (h *APIHandler) MiddlewareRequestLogging() gin.HandlerFunc {
 		statusCode := c.Writer.Status()
 
 		// Only log documentation API requests
-		if len(path) > 12 && path[:12] == "/api/v1/docs" {
-			fmt.Printf("[DOCS-API] %s %s %d %v %s\n",
+		if strings.HasPrefix(path, "/api/v1/docs") {
+			fmt.Printf("[DOCS-API] %s %s %d %v %s\n", 
 				method, path, statusCode, latency, clientIP)
 		}
 	}
