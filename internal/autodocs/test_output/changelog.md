@@ -5,12 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-*This changelog was automatically generated on 2025-11-10 09:45:41*
+*This changelog was automatically generated on 2025-11-10 09:49:38*
 
 ## 2025-11-10 (Monday)
 
 ### 📚 Documentation
 
+- Add mobile platform section to README with documentation links ([`f61a487`](../../commit/f61a4879d0fa2ca5857f51e2e68e77a9e035c3c3)) by copilot-swe-agent[bot] (6 files, +44/-32 lines)
+  Co-authored-by: kiransth77 <23469105+kiransth77@users.noreply.github.com>
 - Add comprehensive mobile platform support documentation and examples ([`9ef32db`](../../commit/9ef32db05a211c58164728d045d91bc2098ebe40)) by copilot-swe-agent[bot] (18 files, +3495/-31 lines)
   Co-authored-by: kiransth77 <23469105+kiransth77@users.noreply.github.com>
 
@@ -31,21 +33,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Period:** 2025-11-03 to 2025-11-10
 
-**Total commits:** 4
+**Total commits:** 5
 
 **Changes by type:**
 
-- Documentation: 2
 - Other: 2
+- Documentation: 3
 
 **Contributors:** 2
 
-- copilot-swe-agent[bot]: 3 commits
+- copilot-swe-agent[bot]: 4 commits
 - Kiran Shrestha: 1 commits
 
 **Code changes:**
-- Files changed: 14340
-- Lines added: +1773585
-- Lines removed: -300
-- Net change: +1773285 lines
+- Files changed: 14346
+- Lines added: +1773629
+- Lines removed: -332
+- Net change: +1773297 lines
 

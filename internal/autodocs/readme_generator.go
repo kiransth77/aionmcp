@@ -192,6 +192,15 @@ func (r *ReadmeGenerator) generateReadme(projectInfo map[string]interface{}, lea
 		r.generateUsage(&content)
 	}
 
+	// Mobile section (preserve manual content)
+	if preserved, exists := preservedSections["mobile"]; exists {
+		content.WriteString("## 📱 Mobile Platform Support\n\n")
+		content.WriteString(preserved)
+		content.WriteString("\n")
+	} else {
+		r.generateMobile(&content)
+	}
+
 	// Development section (preserve manual content)
 	if preserved, exists := preservedSections["development"]; exists {
 		content.WriteString("## 🛠️ Development\n\n")
@@ -248,7 +257,7 @@ func (r *ReadmeGenerator) extractPreservedSections(content string) map[string]st
 	// Define sections to preserve (manual content)
 	preserveSections := []string{
 		"features", "quick-start", "architecture", "installation",
-		"usage", "development", "contributing", "license",
+		"usage", "mobile", "development", "contributing", "license",
 	}
 
 	for _, section := range preserveSections {
@@ -588,6 +597,22 @@ func (r *ReadmeGenerator) generateUsage(content *strings.Builder) {
 	content.WriteString("- `POST /api/v1/tools/{tool}/execute` - Execute a tool\n")
 	content.WriteString("- `GET /api/v1/learning/stats` - Learning statistics\n")
 	content.WriteString("- `GET /api/v1/learning/insights` - System insights\n\n")
+}
+
+// generateMobile creates mobile platform support section (fallback)
+func (r *ReadmeGenerator) generateMobile(content *strings.Builder) {
+	content.WriteString("## 📱 Mobile Platform Support\n\n")
+	content.WriteString("AionMCP provides full support for Android and iOS mobile applications through REST API and gRPC interfaces.\n\n")
+	content.WriteString("### Platform Support\n\n")
+	content.WriteString("- **Android**: Kotlin/Java integration with Retrofit and gRPC\n")
+	content.WriteString("- **iOS**: Swift integration with Alamofire and gRPC-Swift\n")
+	content.WriteString("- **Cross-Platform**: REST API compatible with React Native, Flutter, and other frameworks\n\n")
+	content.WriteString("### Documentation\n\n")
+	content.WriteString("- 📖 [Complete Mobile Integration Guide](docs/mobile_integration.md)\n")
+	content.WriteString("- 🤖 [Android Examples](examples/mobile/android/)\n")
+	content.WriteString("- 🍎 [iOS Examples](examples/mobile/ios/)\n")
+	content.WriteString("- 🚀 [Mobile Deployment Guide](docs/mobile_deployment.md)\n\n")
+	content.WriteString("For detailed implementation guides, see [Mobile Integration Documentation](docs/mobile_integration.md).\n\n")
 }
 
 // generateDevelopment creates development section (fallback)

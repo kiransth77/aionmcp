@@ -23,13 +23,13 @@ AionMCP is an autonomous Go-based Model Context Protocol (MCP) server that dynam
 <!-- AUTO-GENERATED STATUS -->
 **Current Branch**: `copilot/implement-tool-for-mobile`
 
-**Latest Commit**: [`9ef32db`](../../commit/9ef32db05a211c58164728d045d91bc2098ebe40)
+**Latest Commit**: [`f61a487`](../../commit/f61a4879d0fa2ca5857f51e2e68e77a9e035c3c3)
 
 **System Health**: 99/100 (Excellent)
 
 **Active Tools**: 3
 
-**Commits (7 days)**: 4
+**Commits (7 days)**: 5
 
 *Status updated automatically*
 <!-- END AUTO-GENERATED STATUS -->
@@ -99,6 +99,7 @@ AionMCP follows Clean/Hexagonal Architecture principles:
 <!-- AUTO-GENERATED ACTIVITY -->
 ### Recent Commits
 
+- [`f61a487`](../../commit/f61a4879d0fa2ca5857f51e2e68e77a9e035c3c3) Add mobile platform section to README with documentation links *(0h ago)*
 - [`9ef32db`](../../commit/9ef32db05a211c58164728d045d91bc2098ebe40) Add comprehensive mobile platform support documentation and examples *(0h ago)*
 - [`6955631`](../../commit/6955631cbf55d022fde4f957ca72029a208eb4be) Initial plan for mobile platform support *(0h ago)*
 - [`ea4cf1d`](../../commit/ea4cf1d670e231aafe86633b5f16fbe6615e0878) Initial plan *(0h ago)*
@@ -160,6 +161,24 @@ AIONMCP_LOG_LEVEL=debug ./bin/aionmcp
 - `POST /api/v1/tools/{tool}/execute` - Execute a tool
 - `GET /api/v1/learning/stats` - Learning statistics
 - `GET /api/v1/learning/insights` - System insights
+## 📱 Mobile Platform Support
+
+## ✨ Features
+
+### Core Capabilities
+
+- **Multi-Spec Import**: Automatically imports and converts API specifications
+- **Dynamic Tool Registry**: Hot-reload tools without service restart
+- **Self-Learning Engine**: Analyzes patterns and generates insights
+- **Autonomous Documentation**: Auto-generates changelogs and reflections
+- **Performance Monitoring**: Real-time execution metrics and optimization
+- **Error Recovery**: Intelligent error handling and pattern detection
+
+### API Support
+
+- **OpenAPI 3.0+**: REST API specifications with full schema support
+- **GraphQL**: Query and mutation support with type introspection
+- **AsyncAPI**: Event-driven API specifications
 ## 🛠️ Development
 
 ### Key Findings
@@ -192,6 +211,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-*README last updated: 2025-11-10 09:45:43 UTC*
+*README last updated: 2025-11-10 09:49:40 UTC*
 
 *This README is automatically updated with current project status and metrics.*
