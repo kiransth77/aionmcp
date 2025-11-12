@@ -73,10 +73,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Make gradlew executable
-        working-directory: examples/mobile/android-app
-        run: chmod +x gradlew
-
       - name: Build Release APK
         working-directory: examples/mobile/android-app
         run: ./gradlew assembleRelease
@@ -85,8 +81,7 @@ jobs:
         working-directory: examples/mobile/android-app
         run: |
           mkdir -p out
-          cp app/build/outputs/apk/release/app-release-unsigned.apk out/aionmcp-android-${{ github.ref_name }}.apk || \
-          cp app/build/outputs/apk/release/app-release.apk out/aionmcp-android-${{ github.ref_name }}.apk
+          cp app/build/outputs/apk/release/app-release-unsigned.apk out/aionmcp-android-${{ github.ref_name }}.apk
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
@@ -109,9 +104,7 @@ jobs:
 
       - name: Install Swift dependencies
         working-directory: examples/mobile/ios-app
-        run: |
-          swift package resolve
-          swift build
+        run: swift package resolve
 
       - name: Create iOS Build Info
         run: |
@@ -152,6 +145,23 @@ jobs:
                -exportPath build \
                -exportOptionsPlist ExportOptions.plist
              ```
+          
+          5. **Create ExportOptions.plist:**
+             Create a file named `ExportOptions.plist` with the following content:
+             ```xml
+             <?xml version="1.0" encoding="UTF-8"?>
+             <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+             <plist version="1.0">
+             <dict>
+                 <key>method</key>
+                 <string>development</string>
+                 <key>teamID</key>
+                 <string>YOUR_TEAM_ID</string>
+             </dict>
+             </plist>
+             ```
+             Replace `YOUR_TEAM_ID` with your Apple Developer Team ID.
+             For App Store distribution, use `<string>app-store</string>` instead of `development`.
           
           ## Automatic Builds
           
