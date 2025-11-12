@@ -6,6 +6,7 @@
 ![Avg Latency](https://img.shields.io/badge/avg_latency-250ms-green)
 ![Go Version](https://img.shields.io/badge/go-1.21+-blue)
 ![License](https://img.shields.io/badge/license-MIT-blue)
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-red)](https://github.com/sponsors/kiransth77)
 <!-- END AUTO-GENERATED BADGES -->
 
 AionMCP is an autonomous Go-based Model Context Protocol (MCP) server that dynamically imports OpenAPI, GraphQL, and AsyncAPI specifications and exposes them as tools to agents. It features self-learning capabilities, context-awareness, and autonomous documentation using Clean/Hexagonal architecture.
