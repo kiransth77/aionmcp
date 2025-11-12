@@ -163,6 +163,53 @@ AIONMCP_LOG_LEVEL=debug ./bin/aionmcp
 - `GET /api/v1/learning/insights` - System insights
 ## 📱 Mobile Platform Support
 
+AionMCP provides full support for Android and iOS mobile applications through REST API and gRPC interfaces.
+
+### 🎉 Demo Apps Available!
+
+Download complete, ready-to-use mobile applications:
+
+- **Android**: [Download APK](https://github.com/kiransth77/aionmcp/releases) | [Source Code](examples/mobile/android-app/)
+- **iOS**: TestFlight Beta (Coming Soon) | [Source Code](examples/mobile/ios-app/)
+
+See [Demo Apps Guide](examples/mobile/README.md) for installation and usage.
+
+### Platform Support
+
+- **Android**: Kotlin/Java integration with Retrofit and gRPC
+- **iOS**: Swift integration with Alamofire and gRPC-Swift
+- **Cross-Platform**: REST API compatible with React Native, Flutter, and other frameworks
+
+### Quick Start
+
+**Try the Demo Apps:**
+1. Download for [Android](https://github.com/kiransth77/aionmcp/releases) or iOS (Coming Soon)
+2. Install and open the app
+3. Configure your AionMCP server URL in Settings
+4. Start exploring tools!
+
+**Build Your Own:**
+
+*Android (Kotlin)*:
+```kotlin
+val client = AionMCPClient("https://your-server.com")
+val tools = client.api.listTools()
+```
+
+*iOS (Swift)*:
+```swift
+let client = AionMCPClient(baseURL: "https://your-server.com")
+let tools = try await client.listTools()
+```
+
+### Documentation
+
+- 📖 [Complete Mobile Integration Guide](docs/mobile_integration.md)
+- 📱 [Demo Applications Guide](examples/mobile/README.md)
+- 🤖 [Android Code Examples](examples/mobile/android/)
+- 🍎 [iOS Code Examples](examples/mobile/ios/)
+- 🚀 [Mobile Deployment Guide](docs/mobile_deployment.md)
+
 ## ✨ Features
 
 ### Core Capabilities
