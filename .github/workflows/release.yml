@@ -69,10 +69,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Setup Gradle Wrapper
-        working-directory: examples/mobile/android-app
-        run: gradle wrapper
-
       - name: Make gradlew executable
         working-directory: examples/mobile/android-app
         run: chmod +x gradlew
