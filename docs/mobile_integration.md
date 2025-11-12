@@ -9,7 +9,7 @@ AionMCP can be integrated into Android and iOS mobile applications through its R
 Want to see AionMCP in action? Download our complete demo apps:
 
 - **Android Demo App**: [Download APK](https://github.com/kiransth77/aionmcp/releases) | [Source Code](../examples/mobile/android-app/)
-- **iOS Demo App**: [TestFlight Beta](https://testflight.apple.com/join/XXXXXXXX) | [Source Code](../examples/mobile/ios-app/)
+- **iOS Demo App**: TestFlight Beta (Coming Soon) | [Source Code](../examples/mobile/ios-app/)
 
 These fully-functional apps demonstrate all the integration patterns described in this guide. See [Demo Apps README](../examples/mobile/README.md) for details.
 

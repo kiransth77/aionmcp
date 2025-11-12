@@ -15,7 +15,7 @@ Complete, downloadable mobile applications demonstrating AionMCP integration.
 - **Location**: `ios-app/`
 - **Platform**: iOS 16.0+
 - **Technology**: Swift, SwiftUI, Alamofire
-- **Download**: [TestFlight Beta](https://testflight.apple.com/join/XXXXXXXX) | App Store (Coming Soon)
+- **Download**: TestFlight Beta (Coming Soon) | App Store (Coming Soon)
 - **Source**: Full Xcode project
 
 ## 🚀 Quick Start
@@ -29,10 +29,14 @@ Complete, downloadable mobile applications demonstrating AionMCP integration.
 4. Start exploring AionMCP tools!
 
 #### iOS
-1. Join [TestFlight Beta Program](https://testflight.apple.com/join/XXXXXXXX)
-2. Install via TestFlight
-3. Open app and configure server URL in Settings
-4. Start exploring AionMCP tools!
+**Note:** iOS app is currently available as source code only. TestFlight beta coming soon.
+
+To build from source:
+```bash
+cd ios-app
+open AionMCPDemo.xcodeproj
+# Build and run in Xcode (Cmd+R)
+```
 
 ### For Developers (Building from Source)
 
@@ -57,7 +61,7 @@ open AionMCPDemo.xcodeproj
 Visit [Releases Page](https://github.com/kiransth77/aionmcp/releases) to download:
 
 - **Android**: `aionmcp-demo-android-v1.0.0.apk` (~8 MB)
-- **iOS**: Available via TestFlight or App Store
+- **iOS**: TestFlight Beta (Coming Soon) | App Store (Coming Soon)
 
 ### Release Schedule
 

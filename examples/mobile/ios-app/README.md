@@ -33,7 +33,7 @@ The app will be available on the App Store.
 
 ### 2. Install via TestFlight (Beta)
 
-Join the beta program: [TestFlight Link](https://testflight.apple.com/join/XXXXXXXX)
+**Coming Soon**: TestFlight beta will be available in the future. For now, please build from source.
 
 ### 3. Build from Source
 

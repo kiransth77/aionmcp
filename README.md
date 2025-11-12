@@ -23,13 +23,13 @@ AionMCP is an autonomous Go-based Model Context Protocol (MCP) server that dynam
 <!-- AUTO-GENERATED STATUS -->
 **Current Branch**: `copilot/implement-tool-for-mobile`
 
-**Latest Commit**: [`835449a`](../../commit/835449aceeb0a53910b0605a45d4268d5ebd1d75)
+**Latest Commit**: [`63682e2`](../../commit/63682e2af452c91e8d8b33014180ee8082ae1d72)
 
 **System Health**: 99/100 (Excellent)
 
 **Active Tools**: 3
 
-**Commits (7 days)**: 7
+**Commits (7 days)**: 8
 
 *Status updated automatically*
 <!-- END AUTO-GENERATED STATUS -->
@@ -99,11 +99,11 @@ AionMCP follows Clean/Hexagonal Architecture principles:
 <!-- AUTO-GENERATED ACTIVITY -->
 ### Recent Commits
 
-- [`835449a`](../../commit/835449aceeb0a53910b0605a45d4268d5ebd1d75) Final: Add complete mobile platform section content to README *(0h ago)*
-- [`f1ed5da`](../../commit/f1ed5da50ed49e42ba634fd973dc859f1566a27b) Update README generator to preserve mobile platform section *(0h ago)*
-- [`f61a487`](../../commit/f61a4879d0fa2ca5857f51e2e68e77a9e035c3c3) Add mobile platform section to README with documentation links *(0h ago)*
-- [`9ef32db`](../../commit/9ef32db05a211c58164728d045d91bc2098ebe40) Add comprehensive mobile platform support documentation and examples *(0h ago)*
-- [`6955631`](../../commit/6955631cbf55d022fde4f957ca72029a208eb4be) Initial plan for mobile platform support *(0h ago)*
+- [`63682e2`](../../commit/63682e2af452c91e8d8b33014180ee8082ae1d72) Add downloadable demo applications for Android and iOS *(2d ago)*
+- [`835449a`](../../commit/835449aceeb0a53910b0605a45d4268d5ebd1d75) Final: Add complete mobile platform section content to README *(2d ago)*
+- [`f1ed5da`](../../commit/f1ed5da50ed49e42ba634fd973dc859f1566a27b) Update README generator to preserve mobile platform section *(2d ago)*
+- [`f61a487`](../../commit/f61a4879d0fa2ca5857f51e2e68e77a9e035c3c3) Add mobile platform section to README with documentation links *(2d ago)*
+- [`9ef32db`](../../commit/9ef32db05a211c58164728d045d91bc2098ebe40) Add comprehensive mobile platform support documentation and examples *(2d ago)*
 
 ### Active Insights
 
@@ -181,21 +181,18 @@ AIONMCP_LOG_LEVEL=debug ./bin/aionmcp
 - **AsyncAPI**: Event-driven API specifications
 ## 🛠️ Development
 
-### Key Findings
+### Local Development
 
-- **Self-Learning and Failure Recovery**: Analysis of reflection records in the learning engine (`docs/reflections/`) indicates recurring parameter validation errors in OpenAPI tool executions. Adaptive retry mechanisms and enhanced validation feedback have been implemented in the importer module to address these issues.
-  
-- **Hot-Reload Stability**: Hot-reload functionality demonstrates reliability for OpenAPI and GraphQL specifications. However, AsyncAPI event streams use a simple 500ms debounce mechanism in the watcher implementation (`pkg/importer/watcher.go`) to mitigate excessive reloads in high-frequency scenarios.
+```bash
+# Run tests
+go test ./...
 
-- **Documentation Automation**: The autodocs generators (`internal/autodocs/`) now correlate changelog and reflection outputs with tool confidence scores, facilitating efficient identification and resolution of unreliable tools.
+# Run with hot reload
+go run cmd/server/main.go
 
-- **Example Specifications**: Provided sample specifications (`examples/specs/petstore.yaml`, `examples/specs/blog.graphql`, `examples/specs/user-events.yaml`) support integration testing and developer onboarding.
-
-### Future Enhancements
-
-- Incorporate additional sample specifications to validate authentication workflows and large-scale schemas.
-- Implement a health-check endpoint for the watcher subsystem to monitor reload backoff status.
-- Integrate release automation for cross-platform binary artifacts upon version tagging (see `.github/workflows/release.yml`).
+# Build for production
+go build -ldflags "-s -w" -o bin/aionmcp cmd/server/main.go
+```
 ## 🤝 Contributing
 
 ### Development Process
@@ -211,6 +208,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-*README last updated: 2025-11-10 10:04:05 UTC*
+*README last updated: 2025-11-12 11:41:30 UTC*
 
 *This README is automatically updated with current project status and metrics.*
