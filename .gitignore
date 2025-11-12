@@ -67,3 +67,36 @@ dist/
 # TypeScript build output
 *.tsbuildinfo
 
+# Android build artifacts
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+.gradle/
+local.properties
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+
+# iOS build artifacts
+*.ipa
+*.dSYM.zip
+*.dSYM
+xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+.build/
+Package.resolved
+
