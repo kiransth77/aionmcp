@@ -107,19 +107,68 @@ jobs:
           swift package resolve
           swift build
 
-      - name: Create iOS Archive (Info)
+      - name: Create iOS Build Info
         run: |
-          echo "Note: iOS IPA build requires Xcode project with proper code signing."
-          echo "Current setup uses Swift Package Manager without Xcode project."
-          echo "To enable iOS builds, an Xcode project with signing configuration is needed."
           mkdir -p out
-          echo "iOS build requires Xcode project setup" > out/ios-build-info.txt
+          cat > out/ios-build-instructions.md << 'EOF'
+          # iOS IPA Build Instructions
+          
+          ## Current Status
+          The iOS app uses Swift Package Manager and requires an Xcode project for IPA distribution.
+          
+          ## Building IPA Locally
+          
+          To build an IPA file for distribution:
+          
+          1. **Convert to Xcode Project:**
+             ```bash
+             cd examples/mobile/ios-app
+             # Restructure to standard SPM layout or create Xcode project manually
+             ```
+          
+          2. **Configure Code Signing:**
+             - Open the project in Xcode
+             - Select your development team
+             - Configure signing certificates and provisioning profiles
+          
+          3. **Build Archive:**
+             ```bash
+             xcodebuild -scheme AionMCPDemo \
+               -configuration Release \
+               -archivePath build/AionMCPDemo.xcarchive \
+               archive
+             ```
+          
+          4. **Export IPA:**
+             ```bash
+             xcodebuild -exportArchive \
+               -archivePath build/AionMCPDemo.xcarchive \
+               -exportPath build \
+               -exportOptionsPlist ExportOptions.plist
+             ```
+          
+          ## Automatic Builds
+          
+          To enable automatic IPA builds in CI/CD, you need to:
+          - Create a proper Xcode project structure
+          - Add code signing secrets to GitHub repository
+          - Use Fastlane or similar tools for automated signing
+          
+          ## Alternative: TestFlight Distribution
+          
+          Consider using TestFlight for beta distribution:
+          1. Create an App Store Connect app
+          2. Use Fastlane or similar tools
+          3. Upload builds directly to TestFlight
+          
+          For more information, see [iOS Developer Documentation](https://developer.apple.com/documentation/xcode/distributing-your-app-for-beta-testing-and-releases)
+          EOF
 
-      - name: Upload iOS Info
+      - name: Upload iOS Build Instructions
         uses: actions/upload-artifact@v4
         with:
-          name: aionmcp-ios
-          path: out/ios-build-info.txt
+          name: aionmcp-ios-instructions
+          path: out/ios-build-instructions.md
 
   create-release:
     needs: [build-and-release, build-android, build-ios]
