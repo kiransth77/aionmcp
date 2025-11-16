@@ -73,19 +73,28 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Build Release APK
+      - name: Build Debug APK
         working-directory: examples/mobile/android-app
         run: |
           ./gradlew clean
-          ./gradlew assembleRelease
+          ./gradlew assembleDebug
 
-      - name: Rename APK
+      - name: Rename Debug APK
         working-directory: examples/mobile/android-app
         run: |
           mkdir -p out
-          cp app/build/outputs/apk/release/app-release-unsigned.apk out/aionmcp-android-${{ github.ref_name }}.apk
+          cp app/build/outputs/apk/debug/app-debug.apk out/aionmcp-android-debug-${{ github.ref_name }}.apk
 
-      - name: Upload Android APK
+      - name: Build Release APK
+        working-directory: examples/mobile/android-app
+        run: ./gradlew assembleRelease
+
+      - name: Rename Release APK
+        working-directory: examples/mobile/android-app
+        run: |
+          cp app/build/outputs/apk/release/app-release-unsigned.apk out/aionmcp-android-release-${{ github.ref_name }}.apk
+
+      - name: Upload Android APKs
         uses: actions/upload-artifact@v4
         with:
           name: aionmcp-android
