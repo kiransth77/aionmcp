@@ -69,13 +69,15 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'examples/mobile/android-app/app/src/main/**/*.xml') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
 
       - name: Build Release APK
         working-directory: examples/mobile/android-app
-        run: ./gradlew assembleRelease
+        run: |
+          ./gradlew clean
+          ./gradlew assembleRelease
 
       - name: Rename APK
         working-directory: examples/mobile/android-app
