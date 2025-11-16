@@ -69,7 +69,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'examples/mobile/android-app/app/src/main/**/*.xml') }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'examples/mobile/android-app/app/src/main/**/*.xml', 'examples/mobile/android-app/gradle.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
 
