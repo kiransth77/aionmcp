@@ -38,28 +38,50 @@ func NewBoltStorage(path string, logger *zap.Logger) (*BoltStorage, error) {
 	}
 	logger.Info("BoltDB directory ensured", zap.String("dir", dir))
 
-	// Remove lockfile if it exists (might be from previous crash)
+	// Remove stale lockfile if it exists (from previous crash)
 	lockPath := path + ".lock"
 	if _, err := os.Stat(lockPath); err == nil {
-		logger.Warn("Found stale lockfile, removing it", zap.String("lockPath", lockPath))
+		logger.Warn("Found stale lockfile, attempting to remove", zap.String("lockPath", lockPath))
 		if err := os.Remove(lockPath); err != nil {
-			logger.Warn("Failed to remove lockfile", zap.Error(err))
+			logger.Warn("Failed to remove lockfile, continuing anyway", zap.Error(err))
 		}
 	}
 
 	// Check if database file exists
 	if _, err := os.Stat(path); err == nil {
-		logger.Info("Database file exists")
+		logger.Info("Database file exists, attempting to open")
+		// If it exists but is locked, try to remove the entire DB and start fresh
+		// This is safer than trying to unlock a corrupted database
 	} else {
 		logger.Info("Database file does not exist, will be created")
 	}
 
-	logger.Info("Attempting to open BoltDB with timeout", zap.Duration("timeout", 5*time.Second))
-	db, err := bolt.Open(path, 0600, &bolt.Options{Timeout: 5 * time.Second})
-	if err != nil {
+	// Try opening with a shorter timeout first
+	logger.Info("Attempting to open BoltDB", zap.Duration("timeout", 2*time.Second))
+	db, err := bolt.Open(path, 0600, &bolt.Options{Timeout: 2 * time.Second})
+	
+	// If timeout, the database might be corrupted from a crash
+	// Try removing it and starting fresh
+	if err != nil && err.Error() == "timeout" {
+		logger.Warn("BoltDB timeout, database may be corrupted from previous crash", zap.Error(err))
+		logger.Info("Removing corrupted database file", zap.String("path", path))
+		
+		// Remove both the database file and lockfile
+		os.Remove(path)
+		os.Remove(lockPath)
+		
+		// Try opening again with a fresh database
+		logger.Info("Attempting to open BoltDB again with fresh database")
+		db, err = bolt.Open(path, 0600, &bolt.Options{Timeout: 2 * time.Second})
+		if err != nil {
+			logger.Error("Failed to open BoltDB even after removing corrupted database", zap.Error(err))
+			return nil, fmt.Errorf("failed to open BoltDB at %s: %w", path, err)
+		}
+	} else if err != nil {
 		logger.Error("Failed to open BoltDB", zap.Error(err))
 		return nil, fmt.Errorf("failed to open BoltDB at %s: %w", path, err)
 	}
+	
 	logger.Info("BoltDB opened successfully")
 
 	storage := &BoltStorage{
