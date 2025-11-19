@@ -41,268 +41,265 @@ const vscode = __importStar(require("vscode"));
 const cp = __importStar(require("child_process"));
 const path = __importStar(require("path"));
 const axios_1 = __importDefault(require("axios"));
+const util_1 = require("util");
+const fs = __importStar(require("fs"));
+const exec = (0, util_1.promisify)(cp.exec);
 class ServerManager {
     context;
     serverProcess = null;
     isRunning = false;
-    config;
     outputChannel;
     stateChangeEmitter = new vscode.EventEmitter();
     onServerStateChanged = this.stateChangeEmitter.event;
     constructor(context) {
         this.context = context;
-        this.config = vscode.workspace.getConfiguration('aionmcp');
         this.outputChannel = vscode.window.createOutputChannel('AionMCP Server');
-        this.context.subscriptions.push(this.outputChannel);
+        this.context.subscriptions.push(this.outputChannel, this);
+    }
+    getWorkspaceRoot() {
+        return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    }
+    getConfig(key, defaultValue) {
+        return vscode.workspace.getConfiguration('aionmcp').get(key, defaultValue);
+    }
+    async isGoProject(workspaceRoot) {
+        try {
+            await fs.promises.stat(path.join(workspaceRoot, 'go.mod'));
+            return true;
+        }
+        catch {
+            return false;
+        }
     }
     async startServer() {
         if (this.isRunning) {
-            throw new Error('Server is already running');
+            vscode.window.showInformationMessage('AionMCP server is already running.');
+            return;
         }
-        const serverPath = this.getServerPath();
         const workspaceRoot = this.getWorkspaceRoot();
-        if (!serverPath) {
-            throw new Error('AionMCP server path not configured');
+        if (!workspaceRoot) {
+            throw new Error('No workspace folder is open.');
         }
-        this.outputChannel.appendLine(`Starting AionMCP server: ${serverPath}`);
+        if (!await this.isGoProject(workspaceRoot)) {
+            throw new Error('The current workspace does not appear to be a Go project (go.mod not found).');
+        }
+        this.outputChannel.clear();
         this.outputChannel.show();
-        return new Promise((resolve, reject) => {
-            const env = {
-                ...process.env,
-                AIONMCP_LOG_LEVEL: this.config.get('logLevel', 'info'),
-                AIONMCP_HTTP_PORT: this.config.get('serverPort', 8080).toString(),
-                AIONMCP_GRPC_PORT: this.config.get('grpcPort', 50051).toString()
-            };
-            this.serverProcess = cp.spawn(serverPath, [], {
-                cwd: workspaceRoot,
-                env,
-                stdio: ['pipe', 'pipe', 'pipe']
-            });
-            this.serverProcess.stdout?.on('data', (data) => {
-                this.outputChannel.appendLine(data.toString());
-            });
-            this.serverProcess.stderr?.on('data', (data) => {
-                this.outputChannel.appendLine(`ERROR: ${data.toString()}`);
-            });
-            this.serverProcess.on('error', (error) => {
-                this.outputChannel.appendLine(`Failed to start server: ${error.message}`);
+        this.outputChannel.appendLine('Starting AionMCP server...');
+        const serverPort = this.getConfig('serverPort', 8080);
+        const grpcPort = this.getConfig('grpcPort', 50051);
+        const logLevel = this.getConfig('logLevel', 'info');
+        const env = {
+            ...process.env,
+            AIONMCP_HTTP_PORT: String(serverPort),
+            AIONMCP_GRPC_PORT: String(grpcPort),
+            AIONMCP_LOG_LEVEL: logLevel,
+        };
+        this.outputChannel.appendLine(`Workspace: ${workspaceRoot}`);
+        this.outputChannel.appendLine(`Command: go run cmd/server/main.go`);
+        this.outputChannel.appendLine(`Environment: HTTP_PORT=${env.AIONMCP_HTTP_PORT}, GRPC_PORT=${env.AIONMCP_GRPC_PORT}, LOG_LEVEL=${env.AIONMCP_LOG_LEVEL}`);
+        this.serverProcess = cp.spawn('go', ['run', 'cmd/server/main.go'], {
+            cwd: workspaceRoot,
+            env,
+        });
+        this.serverProcess.stdout?.on('data', (data) => this.outputChannel.append(data.toString()));
+        this.serverProcess.stderr?.on('data', (data) => this.outputChannel.append(data.toString()));
+        this.serverProcess.on('error', (err) => {
+            this.handleServerError(new Error(`Failed to start server process: ${err.message}`));
+        });
+        this.serverProcess.on('exit', (code) => {
+            if (this.isRunning) { // If it was running, this is an unexpected exit
+                this.handleServerError(new Error(`Server process exited unexpectedly with code ${code}.`));
+            }
+            else { // Normal exit
+                this.outputChannel.appendLine(`Server process stopped with code ${code}.`);
+            }
+        });
+        try {
+            await this.waitForServerReady(serverPort);
+            this.isRunning = true;
+            this.stateChangeEmitter.fire(true);
+            this.outputChannel.appendLine('[SUCCESS] AionMCP server is running and connected.');
+            vscode.window.showInformationMessage('AionMCP server started successfully.');
+        }
+        catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.handleServerError(new Error(`Server failed to become ready: ${errorMessage}`));
+            this.stopServerProcess();
+            throw error; // Re-throw to notify the caller
+        }
+    }
+    handleServerError(error) {
+        this.outputChannel.appendLine(`[ERROR] ${error.message}`);
+        vscode.window.showErrorMessage(`AionMCP Server Error: ${error.message}`);
+        this.isRunning = false;
+        this.stateChangeEmitter.fire(false);
+    }
+    async waitForServerReady(port, timeout = 15000) {
+        this.outputChannel.appendLine(`[HEALTH] Waiting for server to be ready on port ${port}...`);
+        const startTime = Date.now();
+        while (Date.now() - startTime < timeout) {
+            try {
+                // The server might not have a dedicated health endpoint yet, so we check the base URL.
+                await axios_1.default.get(`http://localhost:${port}/`, { timeout: 1000 });
+                this.outputChannel.appendLine('[HEALTH] Server is responsive.');
+                return;
+            }
+            catch (error) {
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait before retrying
+            }
+        }
+        throw new Error(`Server did not respond on port ${port} within ${timeout / 1000} seconds.`);
+    }
+    async stopServer() {
+        if (!this.isRunning) {
+            vscode.window.showInformationMessage('AionMCP server is not running.');
+            return;
+        }
+        this.outputChannel.appendLine('Stopping AionMCP server...');
+        await this.stopServerProcess();
+        vscode.window.showInformationMessage('AionMCP server stopped.');
+    }
+    stopServerProcess() {
+        return new Promise((resolve) => {
+            if (!this.serverProcess) {
                 this.isRunning = false;
                 this.stateChangeEmitter.fire(false);
-                reject(error);
-            });
-            this.serverProcess.on('exit', (code) => {
-                this.outputChannel.appendLine(`Server exited with code: ${code}`);
+                return resolve();
+            }
+            this.serverProcess.once('exit', () => {
                 this.isRunning = false;
                 this.serverProcess = null;
                 this.stateChangeEmitter.fire(false);
+                this.outputChannel.appendLine('Server process terminated.');
+                resolve();
             });
-            // Wait for server to be ready
-            this.waitForServer().then(() => {
-                this.isRunning = true;
-                this.stateChangeEmitter.fire(true);
-                this.outputChannel.appendLine('Server is ready and accepting connections');
-                resolve();
-            }).catch(reject);
-        });
-    }
-    async stopServer() {
-        if (!this.isRunning || !this.serverProcess) {
-            throw new Error('Server is not running');
-        }
-        this.outputChannel.appendLine('Stopping AionMCP server...');
-        return new Promise((resolve) => {
-            if (this.serverProcess) {
-                this.serverProcess.on('exit', () => {
-                    this.outputChannel.appendLine('Server stopped');
-                    resolve();
-                });
-                // Try graceful shutdown first
-                this.serverProcess.kill('SIGTERM');
-                // Force kill after 5 seconds
-                setTimeout(() => {
-                    if (this.serverProcess && !this.serverProcess.killed) {
-                        this.serverProcess.kill('SIGKILL');
-                    }
-                }, 5000);
-            }
-            else {
-                resolve();
-            }
+            this.serverProcess.kill('SIGTERM');
+            // Failsafe
+            setTimeout(() => {
+                if (this.serverProcess) {
+                    this.outputChannel.appendLine('Server did not respond to SIGTERM, forcing shutdown with SIGKILL.');
+                    this.serverProcess.kill('SIGKILL');
+                }
+            }, 3000);
         });
     }
     async restartServer() {
+        this.outputChannel.appendLine('Restarting AionMCP server...');
         if (this.isRunning) {
-            await this.stopServer();
-            // Wait a bit before restarting
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await this.stopServerProcess();
         }
         await this.startServer();
+    }
+    getApiUrl() {
+        const port = this.getConfig('serverPort', 8080);
+        return `http://localhost:${port}/api/v1`;
+    }
+    isServerRunning() {
+        return this.isRunning;
+    }
+    getServerStatus() {
+        return {
+            isRunning: this.isRunning,
+            port: this.getConfig('serverPort', 8080),
+            grpcPort: this.getConfig('grpcPort', 50051)
+        };
+    }
+    async getDashboardData() {
+        if (!this.isRunning) {
+            throw new Error('Server is not running.');
+        }
+        const port = this.getConfig('serverPort', 8080);
+        try {
+            const response = await axios_1.default.get(`http://localhost:${port}/api/v1/stats`);
+            return response.data;
+        }
+        catch (error) {
+            if (axios_1.default.isAxiosError(error)) {
+                throw new Error(`Failed to fetch dashboard data from server: ${error.message}`);
+            }
+            throw error;
+        }
     }
     async getTools() {
         if (!this.isRunning) {
             return [];
         }
+        const port = this.getConfig('serverPort', 8080);
         try {
-            const response = await axios_1.default.get(`http://localhost:${this.getServerPort()}/api/tools`);
+            const response = await axios_1.default.get(`http://localhost:${port}/api/v1/tools`);
             return response.data.tools || [];
         }
         catch (error) {
-            console.error('Failed to fetch tools:', error);
+            console.error('Failed to get tools:', error);
             return [];
         }
     }
-    async getTool(name) {
+    async getTool(toolName) {
         if (!this.isRunning) {
-            return null;
+            return undefined;
         }
+        const port = this.getConfig('serverPort', 8080);
         try {
-            const response = await axios_1.default.get(`http://localhost:${this.getServerPort()}/api/tools/${encodeURIComponent(name)}`);
+            const response = await axios_1.default.get(`http://localhost:${port}/api/v1/tools/${toolName}`);
             return response.data;
         }
         catch (error) {
-            console.error(`Failed to fetch tool ${name}:`, error);
-            return null;
-        }
-    }
-    async executeTool(toolName, args, context) {
-        if (!this.isRunning) {
-            throw new Error('Server is not running');
-        }
-        try {
-            const response = await axios_1.default.post(`http://localhost:${this.getServerPort()}/api/tools/${encodeURIComponent(toolName)}/invoke`, {
-                args,
-                context: context || {}
-            });
-            return response.data;
-        }
-        catch (error) {
-            throw new Error(`Tool execution failed: ${error.response?.data?.message || error.message}`);
+            console.error(`Failed to get tool ${toolName}:`, error);
+            return undefined;
         }
     }
     async getAgents() {
         if (!this.isRunning) {
             return [];
         }
+        const port = this.getConfig('serverPort', 8080);
         try {
-            const response = await axios_1.default.get(`http://localhost:${this.getServerPort()}/api/agents`);
+            const response = await axios_1.default.get(`http://localhost:${port}/api/v1/agents`);
             return response.data.agents || [];
         }
         catch (error) {
-            console.error('Failed to fetch agents:', error);
+            console.error('Failed to get agents:', error);
             return [];
         }
     }
-    async getServerStats() {
-        if (!this.isRunning) {
-            return null;
-        }
+    async executeTool(toolName, parameters) {
+        if (!this.isRunning)
+            throw new Error('Server is not running.');
         try {
-            const response = await axios_1.default.get(`http://localhost:${this.getServerPort()}/api/admin/stats`);
+            const response = await axios_1.default.post(`${this.getApiUrl()}/tools/${toolName}/execute`, { args: parameters });
             return response.data;
         }
         catch (error) {
-            console.error('Failed to fetch server stats:', error);
+            this.handleApiError(`Execution of tool '${toolName}' failed`, error);
+            throw error;
+        }
+    }
+    async getServerStats() {
+        if (!this.isRunning)
+            return null;
+        try {
+            const response = await axios_1.default.get(`${this.getApiUrl()}/stats`);
+            return response.data;
+        }
+        catch (error) {
+            this.handleApiError('Failed to fetch server stats', error);
             return null;
         }
     }
-    async importApiSpec(filePath) {
-        if (!this.isRunning) {
-            throw new Error('Server is not running');
-        }
-        try {
-            // For now, just copy the file to the specs directory
-            // In a real implementation, you'd POST the spec to the server
-            const specDirs = this.config.get('specDirectories', ['./examples/specs']);
-            const targetDir = path.resolve(this.getWorkspaceRoot(), specDirs[0]);
-            const fileName = path.basename(filePath);
-            const targetPath = path.join(targetDir, fileName);
-            const fs = require('fs');
-            if (!fs.existsSync(targetDir)) {
-                fs.mkdirSync(targetDir, { recursive: true });
-            }
-            fs.copyFileSync(filePath, targetPath);
-            this.outputChannel.appendLine(`Imported API spec: ${fileName}`);
-            // Trigger server reload if it supports hot reload
-            await this.refreshSpecs();
-        }
-        catch (error) {
-            throw new Error(`Failed to import API spec: ${error.message}`);
-        }
+    handleApiError(message, error) {
+        const errorMessage = axios_1.default.isAxiosError(error) && error.response?.data?.error
+            ? error.response.data.error
+            : error.message;
+        vscode.window.showErrorMessage(`${message}: ${errorMessage}`);
+        this.outputChannel.appendLine(`[API ERROR] ${message}: ${errorMessage}`);
     }
-    async refreshSpecs() {
-        if (!this.isRunning) {
-            return;
-        }
-        try {
-            await axios_1.default.post(`http://localhost:${this.getServerPort()}/api/admin/reload-specs`);
-        }
-        catch (error) {
-            // Ignore if endpoint doesn't exist yet
-            console.log('Spec reload endpoint not available');
-        }
-    }
-    getServerStatus() {
-        return {
-            isRunning: this.isRunning,
-            port: this.getServerPort(),
-            grpcPort: this.getGrpcPort()
-        };
-    }
-    async waitForServer(maxRetries = 30, delayMs = 1000) {
-        for (let i = 0; i < maxRetries; i++) {
-            try {
-                await axios_1.default.get(`http://localhost:${this.getServerPort()}/api/health`, {
-                    timeout: 2000
-                });
-                return; // Server is ready
-            }
-            catch (error) {
-                if (i === maxRetries - 1) {
-                    throw new Error('Server failed to start within timeout period');
-                }
-                await new Promise(resolve => setTimeout(resolve, delayMs));
-            }
-        }
-    }
-    getServerPath() {
-        const configured = this.config.get('serverPath');
-        if (configured && configured.trim()) {
-            if (path.isAbsolute(configured)) {
-                return configured;
-            }
-            return path.resolve(this.getWorkspaceRoot(), configured);
-        }
-        // Use bundled binary from extension
-        const platform = process.platform;
-        const extension = platform === 'win32' ? '.exe' : '';
-        const binaryName = `aionmcp${extension}`;
-        // Try extension's bundled binary first
-        const bundledPath = path.join(this.context.extensionPath, 'bin', binaryName);
-        const fs = require('fs');
-        if (fs.existsSync(bundledPath)) {
-            return bundledPath;
-        }
-        // Fallback to workspace bin directory
-        const workspaceRoot = this.getWorkspaceRoot();
-        return path.join(workspaceRoot, 'bin', binaryName);
-    }
-    getWorkspaceRoot() {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (workspaceFolders && workspaceFolders.length > 0) {
-            return workspaceFolders[0].uri.fsPath;
-        }
-        return process.cwd();
-    }
-    getServerPort() {
-        return this.config.get('serverPort', 8080);
-    }
-    getGrpcPort() {
-        return this.config.get('grpcPort', 50051);
+    showOutputChannel() {
+        this.outputChannel.show();
     }
     dispose() {
-        if (this.isRunning && this.serverProcess) {
-            this.serverProcess.kill();
-        }
+        this.stopServerProcess();
+        this.outputChannel.dispose();
         this.stateChangeEmitter.dispose();
     }
 }

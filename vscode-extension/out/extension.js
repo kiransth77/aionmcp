@@ -50,6 +50,7 @@ let serverStatusProvider;
 let logOutputProvider;
 function activate(context) {
     console.log('AionMCP extension is now active!');
+    vscode.window.showInformationMessage('AionMCP extension activated successfully!');
     // Initialize providers
     serverManager = new serverManager_1.ServerManager(context);
     toolTreeProvider = new toolTreeProvider_1.ToolTreeProvider(serverManager);
@@ -60,10 +61,6 @@ function activate(context) {
     vscode.window.registerTreeDataProvider('aionmcp.toolsView', toolTreeProvider);
     vscode.window.registerTreeDataProvider('aionmcp.agentsView', agentTreeProvider);
     vscode.window.registerTreeDataProvider('aionmcp.serverView', serverStatusProvider);
-    // Register webview providers
-    const toolExecutorProvider = new toolExecutorWebview_1.ToolExecutorWebviewProvider(context.extensionUri, serverManager);
-    const dashboardProvider = new dashboardWebview_1.DashboardWebviewProvider(context.extensionUri, serverManager);
-    context.subscriptions.push(vscode.window.registerWebviewViewProvider('aionmcp.toolExecutor', toolExecutorProvider));
     // Register commands
     registerCommands(context);
     // Set extension as active
@@ -89,97 +86,69 @@ function activate(context) {
         statusBarItem.color = isRunning ? undefined : new vscode.ThemeColor('statusBarItem.errorForeground');
     });
 }
+// In extension.ts or a dedicated command registration file
 function registerCommands(context) {
-    // Server management commands
-    context.subscriptions.push(vscode.commands.registerCommand('aionmcp.startServer', async () => {
-        try {
-            await serverManager.startServer();
-            vscode.window.showInformationMessage('AionMCP server started successfully');
-        }
-        catch (error) {
-            vscode.window.showErrorMessage(`Failed to start server: ${error}`);
-        }
-    }));
-    context.subscriptions.push(vscode.commands.registerCommand('aionmcp.stopServer', async () => {
-        try {
-            await serverManager.stopServer();
-            vscode.window.showInformationMessage('AionMCP server stopped');
-        }
-        catch (error) {
-            vscode.window.showErrorMessage(`Failed to stop server: ${error}`);
-        }
-    }));
-    context.subscriptions.push(vscode.commands.registerCommand('aionmcp.restartServer', async () => {
-        try {
-            await serverManager.restartServer();
-            vscode.window.showInformationMessage('AionMCP server restarted');
-        }
-        catch (error) {
-            vscode.window.showErrorMessage(`Failed to restart server: ${error}`);
-        }
-    }));
-    // Tool management commands
-    context.subscriptions.push(vscode.commands.registerCommand('aionmcp.refreshTools', () => {
-        toolTreeProvider.refresh();
-    }));
-    context.subscriptions.push(vscode.commands.registerCommand('aionmcp.executeTool', async (toolItem) => {
-        if (!toolItem) {
-            vscode.window.showErrorMessage('No tool selected');
-            return;
-        }
-        try {
-            // Open quick tool execution
-            const result = await executeToolQuick(toolItem);
-            if (result) {
-                vscode.window.showInformationMessage(`Tool executed successfully: ${toolItem.tool.name}`);
-            }
-        }
-        catch (error) {
-            vscode.window.showErrorMessage(`Tool execution failed: ${error}`);
-        }
-    }));
-    context.subscriptions.push(vscode.commands.registerCommand('aionmcp.openToolExecutor', async (toolItem) => {
-        // Open detailed tool executor webview
-        const panel = vscode.window.createWebviewPanel('aionmcp.toolExecutor', `Execute: ${toolItem ? toolItem.tool.name : 'Tool Executor'}`, vscode.ViewColumn.One, {
-            enableScripts: true,
-            retainContextWhenHidden: true
-        });
-        const provider = new toolExecutorWebview_1.ToolExecutorWebviewProvider(context.extensionUri, serverManager);
-        provider.setWebviewContent(panel.webview, toolItem?.tool);
-    }));
-    // API Spec import
-    context.subscriptions.push(vscode.commands.registerCommand('aionmcp.importApiSpec', async () => {
-        const fileUri = await vscode.window.showOpenDialog({
-            canSelectFiles: true,
-            canSelectFolders: false,
-            canSelectMany: false,
-            filters: {
-                'API Specifications': ['json', 'yaml', 'yml', 'graphql']
-            },
-            openLabel: 'Import API Specification'
-        });
-        if (fileUri && fileUri[0]) {
+    const commands = {
+        'aionmcp.startServer': async () => {
             try {
-                await serverManager.importApiSpec(fileUri[0].fsPath);
-                vscode.window.showInformationMessage('API specification imported successfully');
-                toolTreeProvider.refresh();
+                await serverManager.startServer();
             }
             catch (error) {
-                vscode.window.showErrorMessage(`Failed to import API spec: ${error}`);
+                const message = error instanceof Error ? error.message : String(error);
+                vscode.window.showErrorMessage(`Failed to start AionMCP server: ${message}`);
             }
+        },
+        'aionmcp.stopServer': async () => {
+            try {
+                await serverManager.stopServer();
+            }
+            catch (error) {
+                const message = error instanceof Error ? error.message : String(error);
+                vscode.window.showErrorMessage(`Failed to stop AionMCP server: ${message}`);
+            }
+        },
+        'aionmcp.restartServer': async () => {
+            try {
+                await serverManager.restartServer();
+            }
+            catch (error) {
+                const message = error instanceof Error ? error.message : String(error);
+                vscode.window.showErrorMessage(`Failed to restart AionMCP server: ${message}`);
+            }
+        },
+        'aionmcp.refreshAll': () => {
+            toolTreeProvider.refresh();
+            agentTreeProvider.refresh();
+            serverStatusProvider.refresh();
+        },
+        'aionmcp.executeTool': (item) => {
+            if (item?.tool) {
+                vscode.commands.executeCommand('aionmcp.openToolExecutor', item);
+            }
+            else {
+                vscode.window.showWarningMessage('No tool selected to execute.');
+            }
+        },
+        'aionmcp.openToolExecutor': (item) => {
+            toolExecutorWebview_1.ToolExecutorWebviewProvider.createOrShow(context.extensionUri, serverManager, item?.tool);
+        },
+        'aionmcp.showDashboard': () => {
+            dashboardWebview_1.DashboardWebviewProvider.createOrShow(context.extensionUri, serverManager);
+        },
+        'aionmcp.viewLogs': () => {
+            // This command is now handled by focusing the output channel, see below
+            vscode.commands.executeCommand('aionmcp.output.focus');
         }
-    }));
-    // Logging and monitoring
-    context.subscriptions.push(vscode.commands.registerCommand('aionmcp.viewLogs', () => {
-        logOutputProvider.show();
-    }));
-    context.subscriptions.push(vscode.commands.registerCommand('aionmcp.showDashboard', () => {
-        const panel = vscode.window.createWebviewPanel('aionmcp.dashboard', 'AionMCP Dashboard', vscode.ViewColumn.One, {
-            enableScripts: true,
-            retainContextWhenHidden: true
-        });
-        const provider = new dashboardWebview_1.DashboardWebviewProvider(context.extensionUri, serverManager);
-        provider.setWebviewContent(panel.webview);
+    };
+    for (const [command, handler] of Object.entries(commands)) {
+        context.subscriptions.push(vscode.commands.registerCommand(command, handler));
+    }
+    // Special handling for the output channel focus
+    context.subscriptions.push(vscode.commands.registerCommand('aionmcp.output.focus', () => {
+        // The ServerManager now creates and manages the output channel.
+        // We can ask it to show the channel.
+        // This requires a new method in ServerManager: `showOutputChannel()`
+        serverManager.showOutputChannel();
     }));
 }
 async function executeToolQuick(toolItem) {

@@ -2,13 +2,37 @@ import * as vscode from 'vscode';
 import { ServerManager, Tool } from '../providers/serverManager';
 
 export class ToolExecutorWebviewProvider implements vscode.WebviewViewProvider {
+    public static readonly viewType = 'aionmcp.toolExecutor';
+
     private _view?: vscode.WebviewView;
-    
-    constructor(
-        private readonly _extensionUri: vscode.Uri,
-        private readonly serverManager: ServerManager
-    ) {}
-    
+    private static currentPanel: ToolExecutorWebviewProvider | undefined;
+    private readonly _disposables: vscode.Disposable[] = [];
+    private readonly _panel: vscode.WebviewPanel;
+
+    public static createOrShow(extensionUri: vscode.Uri, serverManager: ServerManager, tool?: Tool) {
+        const column = vscode.window.activeTextEditor
+            ? vscode.window.activeTextEditor.viewColumn
+            : undefined;
+
+        if (ToolExecutorWebviewProvider.currentPanel) {
+            ToolExecutorWebviewProvider.currentPanel.updateWithNewTool(tool);
+            ToolExecutorWebviewProvider.currentPanel._panel.reveal(column);
+            return;
+        }
+
+        const panel = vscode.window.createWebviewPanel(
+            ToolExecutorWebviewProvider.viewType,
+            'Tool Executor',
+            column || vscode.ViewColumn.One,
+            {
+                enableScripts: true,
+                localResourceRoots: [vscode.Uri.joinPath(extensionUri, 'media')],
+            }
+        );
+
+        ToolExecutorWebviewProvider.currentPanel = new ToolExecutorWebviewProvider(extensionUri, serverManager, panel, tool);
+    }
+
     public resolveWebviewView(
         webviewView: vscode.WebviewView,
         context: vscode.WebviewViewResolveContext,
@@ -22,67 +46,64 @@ export class ToolExecutorWebviewProvider implements vscode.WebviewViewProvider {
         };
         
         webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
-        
-        // Handle messages from the webview
-        webviewView.webview.onDidReceiveMessage(async (data) => {
-            switch (data.type) {
-                case 'executeTool':
-                    await this.handleToolExecution(data.toolName, data.parameters);
-                    break;
-                case 'getTools':
-                    await this.sendToolsToWebview();
-                    break;
-                case 'getTool':
-                    await this.sendToolToWebview(data.toolName);
-                    break;
-            }
-        });
-        
-        // Send initial tools list
-        this.sendToolsToWebview();
+        this.setupWebviewHooks(webviewView.webview);
     }
-    
-    public setWebviewContent(webview: vscode.Webview, tool?: Tool) {
-        webview.html = this._getHtmlForWebview(webview, tool);
-        
-        // Handle messages for standalone webview
-        webview.onDidReceiveMessage(async (data) => {
-            switch (data.type) {
-                case 'executeTool':
-                    await this.handleToolExecution(data.toolName, data.parameters);
-                    break;
-                case 'getTools':
-                    await this.sendToolsToWebview(webview);
-                    break;
-                case 'getTool':
-                    await this.sendToolToWebview(data.toolName, webview);
-                    break;
-            }
-        });
-        
-        if (tool) {
-            // Send the specific tool to the webview
-            webview.postMessage({
-                type: 'toolLoaded',
-                tool: tool
-            });
+
+    private constructor(
+        private readonly _extensionUri: vscode.Uri,
+        private readonly serverManager: ServerManager,
+        panel: vscode.WebviewPanel,
+        private readonly initialTool?: Tool
+    ) {
+        this._panel = panel;
+        this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+        this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
+        this.setupWebviewHooks(this._panel.webview);
+    }
+
+    private updateWithNewTool(tool?: Tool) {
+        if (this._panel && tool) {
+            this._panel.webview.postMessage({ type: 'toolLoaded', tool });
+        }
+    }
+
+    private setupWebviewHooks(webview: vscode.Webview) {
+        webview.onDidReceiveMessage(
+            async (data) => {
+                switch (data.type) {
+                    case 'executeTool':
+                        await this.handleToolExecution(data.toolName, data.parameters, webview);
+                        break;
+                    case 'getTools':
+                        await this.sendToolsToWebview(webview);
+                        break;
+                    case 'getTool':
+                        await this.sendToolToWebview(data.toolName, webview);
+                        break;
+                }
+            },
+            null,
+            this._disposables
+        );
+
+        if (this.initialTool) {
+            webview.postMessage({ type: 'toolLoaded', tool: this.initialTool });
         } else {
-            // Send tools list
             this.sendToolsToWebview(webview);
         }
     }
     
-    private async handleToolExecution(toolName: string, parameters: any) {
+    private async handleToolExecution(toolName: string, parameters: any, webview: vscode.Webview) {
         try {
             const result = await this.serverManager.executeTool(toolName, parameters);
-            this.sendMessageToWebview({
+            webview.postMessage({
                 type: 'executionResult',
                 success: true,
                 result: result,
                 toolName: toolName
             });
         } catch (error: any) {
-            this.sendMessageToWebview({
+            webview.postMessage({
                 type: 'executionResult',
                 success: false,
                 error: error.message,
@@ -91,39 +112,32 @@ export class ToolExecutorWebviewProvider implements vscode.WebviewViewProvider {
         }
     }
     
-    private async sendToolsToWebview(webview?: vscode.Webview) {
+    private async sendToolsToWebview(webview: vscode.Webview) {
         try {
             const tools = await this.serverManager.getTools();
-            this.sendMessageToWebview({
-                type: 'toolsList',
-                tools: tools
-            }, webview);
+            webview.postMessage({ type: 'toolsList', tools: tools });
         } catch (error) {
             console.error('Failed to send tools to webview:', error);
         }
     }
     
-    private async sendToolToWebview(toolName: string, webview?: vscode.Webview) {
+    private async sendToolToWebview(toolName: string, webview: vscode.Webview) {
         try {
             const tool = await this.serverManager.getTool(toolName);
             if (tool) {
-                this.sendMessageToWebview({
-                    type: 'toolLoaded',
-                    tool: tool
-                }, webview);
+                webview.postMessage({ type: 'toolLoaded', tool: tool });
             }
         } catch (error) {
             console.error('Failed to send tool to webview:', error);
         }
     }
-    
-    private sendMessageToWebview(message: any, webview?: vscode.Webview) {
-        if (webview) {
-            webview.postMessage(message);
-        } else if (this._view) {
-            this._view.webview.postMessage(message);
-        }
+
+    public dispose() {
+        ToolExecutorWebviewProvider.currentPanel = undefined;
+        this._panel.dispose();
+        this._disposables.forEach(d => d.dispose());
     }
+
     
     private _getHtmlForWebview(webview: vscode.Webview, tool?: Tool) {
         const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'toolExecutor.js'));

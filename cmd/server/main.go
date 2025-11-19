@@ -73,6 +73,11 @@ func main() {
 		log.Fatalf("Failed to initialize configuration: %v", err)
 	}
 
+	// Ensure data directory exists BEFORE logger initialization
+	if err := ensureDataDirectory(); err != nil {
+		log.Fatalf("Failed to create data directory: %v", err)
+	}
+
 	// Initialize logger
 	logger, err := initLogger()
 	if err != nil {
@@ -84,15 +89,10 @@ func main() {
 		zap.String("version", "0.1.0"),
 		zap.String("iteration", "0"))
 
-	// Ensure data directory exists
-	if err := ensureDataDirectory(); err != nil {
-		logger.Fatal("Failed to create data directory", zap.Error(err))
-	}
-
 	// Create server instance
 	server, err := core.NewServer(logger)
 	if err != nil {
-		logger.Fatal("Failed to create server", zap.Error(err))
+		logger.Fatal("Failed to create server", zap.Error(err), zap.Stack("stacktrace"))
 	}
 
 	// Start server
@@ -135,7 +135,7 @@ func initConfig(overrides ConfigOverrides) error {
 	viper.SetDefault("storage.path", "./data/aionmcp.db")
 	viper.SetDefault("log.level", "info")
 	viper.SetDefault("log.format", "json")
-	
+
 	// Learning engine defaults
 	viper.SetDefault("learning.enabled", true)
 	viper.SetDefault("learning.sample_rate", 1.0)
@@ -201,14 +201,14 @@ func ensureDataDirectory() error {
 	if dataPath == "" {
 		dataPath = "./data/aionmcp.db"
 	}
-	
+
 	// Extract directory from path
 	dir := filepath.Dir(dataPath)
-	
+
 	// Create directory if it doesn't exist
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("failed to create data directory %s: %w", dir, err)
 	}
-	
+
 	return nil
 }

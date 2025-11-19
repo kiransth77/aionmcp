@@ -24,35 +24,38 @@ export interface ServerStats {
     executionCount: number;
     successRate: number;
 }
-export declare class ServerManager {
+export declare class ServerManager implements vscode.Disposable {
     private context;
     private serverProcess;
     private isRunning;
-    private config;
-    private outputChannel;
-    private stateChangeEmitter;
+    private readonly outputChannel;
+    private readonly stateChangeEmitter;
     readonly onServerStateChanged: vscode.Event<boolean>;
     constructor(context: vscode.ExtensionContext);
+    private getWorkspaceRoot;
+    private getConfig;
+    private isGoProject;
     startServer(): Promise<void>;
+    private handleServerError;
+    private waitForServerReady;
     stopServer(): Promise<void>;
+    private stopServerProcess;
     restartServer(): Promise<void>;
-    getTools(): Promise<Tool[]>;
-    getTool(name: string): Promise<Tool | null>;
-    executeTool(toolName: string, args: any, context?: any): Promise<any>;
-    getAgents(): Promise<Agent[]>;
-    getServerStats(): Promise<ServerStats | null>;
-    importApiSpec(filePath: string): Promise<void>;
-    refreshSpecs(): Promise<void>;
+    private getApiUrl;
+    isServerRunning(): boolean;
     getServerStatus(): {
         isRunning: boolean;
         port: number;
         grpcPort: number;
     };
-    private waitForServer;
-    private getServerPath;
-    private getWorkspaceRoot;
-    private getServerPort;
-    private getGrpcPort;
+    getDashboardData(): Promise<ServerStats>;
+    getTools(): Promise<Tool[]>;
+    getTool(toolName: string): Promise<Tool | undefined>;
+    getAgents(): Promise<Agent[]>;
+    executeTool(toolName: string, parameters: any): Promise<any>;
+    getServerStats(): Promise<ServerStats | null>;
+    private handleApiError;
+    showOutputChannel(): void;
     dispose(): void;
 }
 //# sourceMappingURL=serverManager.d.ts.map

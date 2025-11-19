@@ -16,6 +16,7 @@ scripts/**
 **/*.map
 **/*.ts
 !out/**/*.js
+!dist/**/*.js
 
 # Dependencies
 node_modules/**

@@ -28,18 +28,39 @@ const (
 )
 
 // NewBoltStorage creates a new BoltDB storage instance
-func NewBoltStorage(dbPath string, logger *zap.Logger) (*BoltStorage, error) {
-	// Ensure directory exists
-	if err := ensureDir(filepath.Dir(dbPath)); err != nil {
-		return nil, fmt.Errorf("failed to create database directory: %w", err)
+func NewBoltStorage(path string, logger *zap.Logger) (*BoltStorage, error) {
+	logger.Info("Opening BoltDB", zap.String("path", path))
+
+	// Ensure parent directory exists first
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create data directory %s: %w", dir, err)
+	}
+	logger.Info("BoltDB directory ensured", zap.String("dir", dir))
+
+	// Remove lockfile if it exists (might be from previous crash)
+	lockPath := path + ".lock"
+	if _, err := os.Stat(lockPath); err == nil {
+		logger.Warn("Found stale lockfile, removing it", zap.String("lockPath", lockPath))
+		if err := os.Remove(lockPath); err != nil {
+			logger.Warn("Failed to remove lockfile", zap.Error(err))
+		}
 	}
 
-	db, err := bolt.Open(dbPath, 0600, &bolt.Options{
-		Timeout: 1 * time.Second,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to open BoltDB: %w", err)
+	// Check if database file exists
+	if _, err := os.Stat(path); err == nil {
+		logger.Info("Database file exists")
+	} else {
+		logger.Info("Database file does not exist, will be created")
 	}
+
+	logger.Info("Attempting to open BoltDB with timeout", zap.Duration("timeout", 5*time.Second))
+	db, err := bolt.Open(path, 0600, &bolt.Options{Timeout: 5 * time.Second})
+	if err != nil {
+		logger.Error("Failed to open BoltDB", zap.Error(err))
+		return nil, fmt.Errorf("failed to open BoltDB at %s: %w", path, err)
+	}
+	logger.Info("BoltDB opened successfully")
 
 	storage := &BoltStorage{
 		db:     db,
@@ -475,13 +496,13 @@ func (s *BoltStorage) DeleteInsight(ctx context.Context, id string) error {
 // reduce peak memory usage.
 func (s *BoltStorage) Cleanup(ctx context.Context, retentionPeriod time.Duration) error {
 	cutoff := time.Now().Add(-retentionPeriod)
-	
+
 	return s.db.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(ExecutionsBucket))
 		cursor := bucket.Cursor()
-		
+
 		var keysToDelete [][]byte
-		
+
 		for k, v := cursor.First(); k != nil; k, v = cursor.Next() {
 			var record ExecutionRecord
 			if err := json.Unmarshal(v, &record); err != nil {
@@ -489,20 +510,20 @@ func (s *BoltStorage) Cleanup(ctx context.Context, retentionPeriod time.Duration
 				keysToDelete = append(keysToDelete, copyKey(k))
 				continue
 			}
-			
+
 			if record.Timestamp.Before(cutoff) {
 				// Copy key before appending since cursor keys are only valid during iteration
 				keysToDelete = append(keysToDelete, copyKey(k))
 			}
 		}
-		
+
 		// Delete old records
 		for _, key := range keysToDelete {
 			if err := bucket.Delete(key); err != nil {
 				s.logger.Warn("Failed to delete old record", zap.Error(err))
 			}
 		}
-		
+
 		s.logger.Info("Cleanup completed", zap.Int("deleted_records", len(keysToDelete)))
 		return nil
 	})

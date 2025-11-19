@@ -38,10 +38,26 @@ const vscode = __importStar(require("vscode"));
 class ToolExecutorWebviewProvider {
     _extensionUri;
     serverManager;
+    initialTool;
+    static viewType = 'aionmcp.toolExecutor';
     _view;
-    constructor(_extensionUri, serverManager) {
-        this._extensionUri = _extensionUri;
-        this.serverManager = serverManager;
+    static currentPanel;
+    _disposables = [];
+    _panel;
+    static createOrShow(extensionUri, serverManager, tool) {
+        const column = vscode.window.activeTextEditor
+            ? vscode.window.activeTextEditor.viewColumn
+            : undefined;
+        if (ToolExecutorWebviewProvider.currentPanel) {
+            ToolExecutorWebviewProvider.currentPanel.updateWithNewTool(tool);
+            ToolExecutorWebviewProvider.currentPanel._panel.reveal(column);
+            return;
+        }
+        const panel = vscode.window.createWebviewPanel(ToolExecutorWebviewProvider.viewType, 'Tool Executor', column || vscode.ViewColumn.One, {
+            enableScripts: true,
+            localResourceRoots: [vscode.Uri.joinPath(extensionUri, 'media')],
+        });
+        ToolExecutorWebviewProvider.currentPanel = new ToolExecutorWebviewProvider(extensionUri, serverManager, panel, tool);
     }
     resolveWebviewView(webviewView, context, _token) {
         this._view = webviewView;
@@ -50,30 +66,27 @@ class ToolExecutorWebviewProvider {
             localResourceRoots: [this._extensionUri]
         };
         webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
-        // Handle messages from the webview
-        webviewView.webview.onDidReceiveMessage(async (data) => {
-            switch (data.type) {
-                case 'executeTool':
-                    await this.handleToolExecution(data.toolName, data.parameters);
-                    break;
-                case 'getTools':
-                    await this.sendToolsToWebview();
-                    break;
-                case 'getTool':
-                    await this.sendToolToWebview(data.toolName);
-                    break;
-            }
-        });
-        // Send initial tools list
-        this.sendToolsToWebview();
+        this.setupWebviewHooks(webviewView.webview);
     }
-    setWebviewContent(webview, tool) {
-        webview.html = this._getHtmlForWebview(webview, tool);
-        // Handle messages for standalone webview
+    constructor(_extensionUri, serverManager, panel, initialTool) {
+        this._extensionUri = _extensionUri;
+        this.serverManager = serverManager;
+        this.initialTool = initialTool;
+        this._panel = panel;
+        this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+        this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
+        this.setupWebviewHooks(this._panel.webview);
+    }
+    updateWithNewTool(tool) {
+        if (this._panel && tool) {
+            this._panel.webview.postMessage({ type: 'toolLoaded', tool });
+        }
+    }
+    setupWebviewHooks(webview) {
         webview.onDidReceiveMessage(async (data) => {
             switch (data.type) {
                 case 'executeTool':
-                    await this.handleToolExecution(data.toolName, data.parameters);
+                    await this.handleToolExecution(data.toolName, data.parameters, webview);
                     break;
                 case 'getTools':
                     await this.sendToolsToWebview(webview);
@@ -82,23 +95,18 @@ class ToolExecutorWebviewProvider {
                     await this.sendToolToWebview(data.toolName, webview);
                     break;
             }
-        });
-        if (tool) {
-            // Send the specific tool to the webview
-            webview.postMessage({
-                type: 'toolLoaded',
-                tool: tool
-            });
+        }, null, this._disposables);
+        if (this.initialTool) {
+            webview.postMessage({ type: 'toolLoaded', tool: this.initialTool });
         }
         else {
-            // Send tools list
             this.sendToolsToWebview(webview);
         }
     }
-    async handleToolExecution(toolName, parameters) {
+    async handleToolExecution(toolName, parameters, webview) {
         try {
             const result = await this.serverManager.executeTool(toolName, parameters);
-            this.sendMessageToWebview({
+            webview.postMessage({
                 type: 'executionResult',
                 success: true,
                 result: result,
@@ -106,7 +114,7 @@ class ToolExecutorWebviewProvider {
             });
         }
         catch (error) {
-            this.sendMessageToWebview({
+            webview.postMessage({
                 type: 'executionResult',
                 success: false,
                 error: error.message,
@@ -117,10 +125,7 @@ class ToolExecutorWebviewProvider {
     async sendToolsToWebview(webview) {
         try {
             const tools = await this.serverManager.getTools();
-            this.sendMessageToWebview({
-                type: 'toolsList',
-                tools: tools
-            }, webview);
+            webview.postMessage({ type: 'toolsList', tools: tools });
         }
         catch (error) {
             console.error('Failed to send tools to webview:', error);
@@ -130,23 +135,16 @@ class ToolExecutorWebviewProvider {
         try {
             const tool = await this.serverManager.getTool(toolName);
             if (tool) {
-                this.sendMessageToWebview({
-                    type: 'toolLoaded',
-                    tool: tool
-                }, webview);
+                webview.postMessage({ type: 'toolLoaded', tool: tool });
             }
         }
         catch (error) {
             console.error('Failed to send tool to webview:', error);
         }
     }
-    sendMessageToWebview(message, webview) {
-        if (webview) {
-            webview.postMessage(message);
-        }
-        else if (this._view) {
-            this._view.webview.postMessage(message);
-        }
+    dispose() {
+        ToolExecutorWebviewProvider.currentPanel = undefined;
+        this._disposables.forEach(d => d.dispose());
     }
     _getHtmlForWebview(webview, tool) {
         const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'toolExecutor.js'));
