@@ -66,6 +66,17 @@ go build -o bin/aionmcp cmd/server/main.go
 
 The server will start on `http://localhost:8080` with learning enabled.
 
+## 🤖 GitHub Copilot Integration
+
+Make your APIs available to GitHub Copilot with one click:
+
+1. **Start the server** - Run AionMCP from the VS Code extension
+2. **Register Copilot** - Click the "Register GitHub Copilot Agent" button in Connected Agents view
+3. **Import APIs** - Add OpenAPI, GraphQL, or AsyncAPI specifications
+4. **Use in Copilot** - Copilot now has access to your tools
+
+See **[Copilot Integration Guide](docs/COPILOT_INTEGRATION.md)** for detailed setup.
+
 ## 🏗️ Architecture
 
 ## 📊 Project Status

@@ -33,6 +33,7 @@ type Server struct {
 	wg              sync.WaitGroup
 	serverCtx       context.Context // Server-scoped context for background operations
 	cancelFunc      context.CancelFunc
+	startTime       time.Time // Track server startup time for uptime calculation
 }
 
 // NewServer creates a new AionMCP server instance
@@ -123,7 +124,7 @@ func NewServer(logger *zap.Logger) (*Server, error) {
 	serverCtx, cancelFunc := context.WithCancel(context.Background())
 
 	// Setup HTTP routes
-	setupHTTPRoutes(router, registry, importerManager, fileWatcher, agentAPI, learningEngine, logger, serverCtx)
+	setupHTTPRoutes(router, registry, importerManager, fileWatcher, agentAPI, agentServer, learningEngine, logger, serverCtx, time.Now())
 
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf(":%d", viper.GetInt("server.port")),
@@ -148,6 +149,7 @@ func NewServer(logger *zap.Logger) (*Server, error) {
 		shutdown:        make(chan struct{}),
 		serverCtx:       serverCtx,
 		cancelFunc:      cancelFunc,
+		startTime:       time.Now(),
 	}, nil
 }
 
@@ -217,7 +219,7 @@ func (s *Server) Run(ctx context.Context) error {
 }
 
 // setupHTTPRoutes configures HTTP API routes
-func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager *importer.ImporterManager, fileWatcher *importer.FileWatcher, agentAPI *agent.AgentAPI, learningEngine *selflearn.Engine, logger *zap.Logger, serverCtx context.Context) {
+func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager *importer.ImporterManager, fileWatcher *importer.FileWatcher, agentAPI *agent.AgentAPI, agentServer *agent.AgentServer, learningEngine *selflearn.Engine, logger *zap.Logger, serverCtx context.Context, startTime time.Time) {
 	api := router.Group("/api/v1")
 
 	// Health check
@@ -232,6 +234,52 @@ func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager
 
 	// Agent integration routes
 	agentAPI.RegisterRoutes(api)
+
+	// Register a mock agent for testing (development endpoint) - at API root level
+	api.POST("/register-copilot-agent", func(c *gin.Context) {
+		ctx := c.Request.Context()
+
+		// Register GitHub Copilot mock agent
+		req := &agentpb.RegisterAgentRequest{
+			AgentId:      "github-copilot",
+			AgentName:    "GitHub Copilot",
+			AgentVersion: "1.0.0",
+			Capabilities: &agentpb.AgentCapabilities{
+				SupportedProtocols:      []string{"mcp/1.0"},
+				SupportedToolTypes:      []string{"openapi", "graphql"},
+				SupportsStreaming:       true,
+				SupportsAsyncInvocation: true,
+				MaxConcurrentTools:      10,
+				PreferredFormats:        []string{"json"},
+			},
+			Metadata: map[string]string{
+				"type":     "ai-agent",
+				"provider": "github",
+				"llm":      "gpt-4",
+			},
+			SessionTimeoutSeconds: 3600, // 1 hour timeout
+		}
+
+		resp, err := agentServer.RegisterAgent(ctx, req)
+		if err != nil {
+			logger.Error("Failed to register mock Copilot agent", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		logger.Info("Mock Copilot agent registered successfully",
+			zap.String("session_id", resp.SessionId))
+
+		c.JSON(http.StatusOK, gin.H{
+			"session_id": resp.SessionId,
+			"agent_id":   "github-copilot",
+			"agent_name": "GitHub Copilot",
+			"expires_at": resp.ExpiresAtUnix,
+			"message":    "GitHub Copilot agent registered successfully",
+		})
+	})
 
 	// List available tools
 	api.GET("/tools", func(c *gin.Context) {
@@ -305,5 +353,98 @@ func setupHTTPRoutes(router *gin.Engine, registry *ToolRegistry, importerManager
 			return
 		}
 		c.JSON(http.StatusOK, stats)
+	})
+
+	// Server statistics endpoint for VS Code extension
+	api.GET("/server-stats", func(c *gin.Context) {
+		uptime := time.Since(startTime).Seconds()
+		toolCount := registry.Count()
+
+		// Get learning stats for execution count and success rate
+		learningStats, err := learningEngine.GetStats(c.Request.Context())
+		executionCount := int64(0)
+		successRate := 0.0
+		if err == nil {
+			executionCount = learningStats.TotalExecutions
+			successRate = learningStats.SuccessRate
+		}
+
+		// Get agent count from agent server
+		agentCount := agentServer.GetAgentCount()
+
+		c.JSON(http.StatusOK, gin.H{
+			"uptime":         uptime,
+			"toolCount":      toolCount,
+			"agentCount":     agentCount,
+			"executionCount": executionCount,
+			"successRate":    successRate,
+		})
+	})
+
+	// Import API specification endpoint
+	api.POST("/import-spec", func(c *gin.Context) {
+		var request struct {
+			SpecType string `json:"spec_type" binding:"required"` // "openapi", "graphql", "asyncapi"
+			Path     string `json:"path" binding:"required"`      // File path or URL
+			Name     string `json:"name"`                         // Optional name for the spec
+		}
+
+		if err := c.ShouldBindJSON(&request); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request: " + err.Error()})
+			return
+		}
+
+		// Validate spec type
+		var specType importer.SpecType
+		switch request.SpecType {
+		case "openapi":
+			specType = importer.SpecTypeOpenAPI
+		case "graphql":
+			specType = importer.SpecTypeGraphQL
+		case "asyncapi":
+			specType = importer.SpecTypeAsyncAPI
+		default:
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid spec type: " + request.SpecType})
+			return
+		}
+
+		// Create spec source
+		source := importer.SpecSource{
+			ID:   fmt.Sprintf("%s-%d", string(specType), time.Now().Unix()),
+			Type: specType,
+			Path: request.Path,
+			Name: request.Name,
+		}
+
+		// Import the specification
+		result, err := importerManager.ImportSpec(c.Request.Context(), source)
+		if err != nil {
+			logger.Error("Failed to import specification",
+				zap.String("spec_type", string(specType)),
+				zap.String("path", request.Path),
+				zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to import specification: " + err.Error()})
+			return
+		}
+
+		logger.Info("Specification imported successfully",
+			zap.String("spec_type", string(specType)),
+			zap.String("path", request.Path),
+			zap.Int("tools_count", len(result.Tools)))
+
+		// Record import for learning
+		go func(ctx context.Context) {
+			if recordErr := learningEngine.RecordExecution(ctx, "import_spec", string(specType), source, result, err, result.Duration); recordErr != nil {
+				logger.Warn("Failed to record spec import for learning", zap.Error(recordErr))
+			}
+		}(serverCtx)
+
+		c.JSON(http.StatusOK, gin.H{
+			"source":   source,
+			"tools":    result.Tools,
+			"errors":   result.Errors,
+			"warnings": result.Warnings,
+			"duration": result.Duration,
+		})
 	})
 }

@@ -107,6 +107,62 @@ The server includes several built-in tools for testing and system information:
 1. **echo** - Echoes back input messages for testing
 2. **status** - Returns registry and server status information
 
+## Model-Independent Tool Server
+
+AionMCP is fundamentally a **tool server**, not a model-specific integration:
+
+- ✅ **HTTP REST API**: Any agent/LLM can call tools via standard HTTP
+- ✅ **Agent Agnostic**: Works with GitHub Copilot, Claude, custom agents, etc.
+- ✅ **Not MCP-Dependent**: Uses accessible HTTP/REST, not protocol-specific
+- ✅ **Future-Proof**: New LLMs integrate without code changes
+- ✅ **Language Agnostic**: Call from Python, TypeScript, Go, Java, etc.
+
+### Using with GitHub Copilot
+
+GitHub Copilot (and any agent) can use AionMCP tools via simple HTTP REST API calls:
+
+```typescript
+// Any agent can discover and execute tools
+const tools = await fetch('http://localhost:8080/api/v1/tools');
+const result = await fetch('http://localhost:8080/api/v1/tools/{toolName}/invoke', {
+  method: 'POST',
+  body: JSON.stringify(params)
+});
+```
+
+📖 **[Full Integration Guide →](./GITHUB_COPILOT_INTEGRATION.md)**
+
+See [MODEL_INDEPENDENT_TOOLS.md](./MODEL_INDEPENDENT_TOOLS.md) for architecture details.
+
+## VS Code Extension
+AionMCP includes a comprehensive VS Code extension for managing the server and tools:
+
+- **Server Management**: Start, stop, and monitor the server from VS Code
+- **Tool Management**: Import API specs and manage available tools
+- **Real-time Status**: Monitor server health, ports, uptime, and metrics
+- **Connected Agents**: View and manage connected agents
+
+### Extension Commands
+
+| Command | Description |
+|---------|-------------|
+| `aionmcp.startServer` | Start the AionMCP server |
+| `aionmcp.stopServer` | Stop the AionMCP server |
+| `aionmcp.importApiSpec` | Import an API specification (OpenAPI/GraphQL/AsyncAPI) |
+| `aionmcp.configureClaudeDesktop` | **NEW**: One-click configuration for Claude Desktop |
+| `aionmcp.registerCopilotAgent` | Register GitHub Copilot as an agent |
+| `aionmcp.viewLogs` | View server logs and output |
+
+### Quick Setup with Extension
+
+1. **Install Extension**: Open VS Code and install "AionMCP - Autonomous MCP Server"
+2. **Start Server**: Click the "Start AionMCP Server" button in the sidebar
+3. **Configure Claude**: Click "Configure Claude Desktop for AionMCP" button
+4. **Restart Claude**: Close and reopen Claude Desktop
+5. **Done**: AionMCP is now available in Claude's tools!
+
+For detailed setup instructions, see [Claude Desktop Auto-Configuration Guide](./CLAUDE_DESKTOP_AUTO_CONFIG.md).
+
 ## Next Iterations
 - **Iteration 1**: Spec Importer Layer (OpenAPI, GraphQL, AsyncAPI)
 - **Iteration 2**: Self-Learning & Reflection Engine

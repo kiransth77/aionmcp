@@ -41,6 +41,9 @@ export class ServerManager implements vscode.Disposable {
     private isRunning = false;
     private readonly outputChannel: vscode.OutputChannel;
     private readonly stateChangeEmitter = new vscode.EventEmitter<boolean>();
+    private readonly axiosInstance = axios.create({
+        timeout: 5000, // 5 second timeout for all requests
+    });
     
     public readonly onServerStateChanged = this.stateChangeEmitter.event;
     
@@ -263,7 +266,7 @@ export class ServerManager implements vscode.Disposable {
         }
         const port = this.getConfig('serverPort', 8080);
         try {
-            const response = await axios.get(`http://localhost:${port}/api/v1/stats`);
+            const response = await this.axiosInstance.get(`http://localhost:${port}/api/v1/stats`);
             return response.data;
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -279,7 +282,7 @@ export class ServerManager implements vscode.Disposable {
         }
         const port = this.getConfig('serverPort', 8080);
         try {
-            const response = await axios.get(`http://localhost:${port}/api/v1/tools`);
+            const response = await this.axiosInstance.get(`http://localhost:${port}/api/v1/tools`);
             return response.data.tools || [];
         } catch (error) {
             console.error('Failed to get tools:', error);
@@ -293,7 +296,7 @@ export class ServerManager implements vscode.Disposable {
         }
         const port = this.getConfig('serverPort', 8080);
         try {
-            const response = await axios.get(`http://localhost:${port}/api/v1/tools/${toolName}`);
+            const response = await this.axiosInstance.get(`http://localhost:${port}/api/v1/tools/${toolName}`);
             return response.data;
         } catch (error) {
             console.error(`Failed to get tool ${toolName}:`, error);
@@ -307,7 +310,7 @@ export class ServerManager implements vscode.Disposable {
         }
         const port = this.getConfig('serverPort', 8080);
         try {
-            const response = await axios.get(`http://localhost:${port}/api/v1/agents`);
+            const response = await this.axiosInstance.get(`http://localhost:${port}/api/v1/agents`);
             return response.data.agents || [];
         } catch (error) {
             console.error('Failed to get agents:', error);
@@ -318,7 +321,7 @@ export class ServerManager implements vscode.Disposable {
     async executeTool(toolName: string, parameters: any): Promise<any> {
         if (!this.isRunning) throw new Error('Server is not running.');
         try {
-            const response = await axios.post(`${this.getApiUrl()}/tools/${toolName}/execute`, { args: parameters });
+            const response = await this.axiosInstance.post(`${this.getApiUrl()}/tools/${toolName}/execute`, { args: parameters });
             return response.data;
         } catch (error) {
             this.handleApiError(`Execution of tool '${toolName}' failed`, error);
@@ -329,10 +332,11 @@ export class ServerManager implements vscode.Disposable {
     async getServerStats(): Promise<ServerStats | null> {
         if (!this.isRunning) return null;
         try {
-            const response = await axios.get(`${this.getApiUrl()}/stats`);
+            const response = await this.axiosInstance.get(`${this.getApiUrl()}/server-stats`);
             return response.data;
         } catch (error) {
-            this.handleApiError('Failed to fetch server stats', error);
+            // Silent failure for stats polling to avoid spam
+            console.debug('Failed to fetch server stats:', error);
             return null;
         }
     }
@@ -347,6 +351,42 @@ export class ServerManager implements vscode.Disposable {
 
     public showOutputChannel(): void {
         this.outputChannel.show();
+    }
+
+    async importSpec(specType: string, path: string, name: string = ''): Promise<any> {
+        if (!this.isRunning) {
+            throw new Error('Server is not running.');
+        }
+        const port = this.getConfig('serverPort', 8080);
+        try {
+            const response = await this.axiosInstance.post(`http://localhost:${port}/api/v1/import-spec`, {
+                spec_type: specType,
+                path: path,
+                name: name
+            });
+            return response.data;
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                throw new Error(`Failed to import specification: ${error.response?.data?.error || error.message}`);
+            }
+            throw error;
+        }
+    }
+
+    async registerMockAgent(): Promise<any> {
+        if (!this.isRunning) {
+            throw new Error('Server is not running.');
+        }
+        const port = this.getConfig('serverPort', 8080);
+        try {
+            const response = await this.axiosInstance.post(`http://localhost:${port}/api/v1/register-copilot-agent`);
+            return response.data;
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                throw new Error(`Failed to register agent: ${error.response?.data?.error || error.message}`);
+            }
+            throw error;
+        }
     }
 
     dispose(): void {

@@ -510,6 +510,22 @@ func (s *AgentServer) GetAgentStatus(ctx context.Context, req *agentpb.GetAgentS
 
 // Helper methods
 
+func (s *AgentServer) GetAgentCount() int {
+	s.sessionsMux.RLock()
+	defer s.sessionsMux.RUnlock()
+	return len(s.sessions)
+}
+
+func (s *AgentServer) GetAllSessions() []*AgentSession {
+	s.sessionsMux.RLock()
+	defer s.sessionsMux.RUnlock()
+	sessions := make([]*AgentSession, 0, len(s.sessions))
+	for _, session := range s.sessions {
+		sessions = append(sessions, session)
+	}
+	return sessions
+}
+
 func (s *AgentServer) getSession(sessionID string) (*AgentSession, bool) {
 	s.sessionsMux.RLock()
 	defer s.sessionsMux.RUnlock()

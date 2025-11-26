@@ -79,18 +79,18 @@ export class ServerStatusProvider implements vscode.TreeDataProvider<ServerStatu
                 : new vscode.ThemeColor('charts.red')
         ));
         
-        if (status.isRunning) {
+        if (status.isRunning && status.port !== undefined && status.grpcPort !== undefined) {
             // Server ports
             items.push(new ServerStatusItem(
                 'HTTP Port',
-                status.port.toString(),
+                (status.port || 8080).toString(),
                 vscode.TreeItemCollapsibleState.None,
                 'globe'
             ));
             
             items.push(new ServerStatusItem(
                 'gRPC Port',
-                status.grpcPort.toString(),
+                (status.grpcPort || 50051).toString(),
                 vscode.TreeItemCollapsibleState.None,
                 'network'
             ));
@@ -99,40 +99,40 @@ export class ServerStatusProvider implements vscode.TreeDataProvider<ServerStatu
             if (this.serverStats) {
                 items.push(new ServerStatusItem(
                     'Uptime',
-                    this.formatUptime(this.serverStats.uptime),
+                    this.formatUptime(this.serverStats.uptime || 0),
                     vscode.TreeItemCollapsibleState.None,
                     'clock'
                 ));
                 
                 items.push(new ServerStatusItem(
                     'Tool Count',
-                    this.serverStats.toolCount.toString(),
+                    (this.serverStats.toolCount || 0).toString(),
                     vscode.TreeItemCollapsibleState.None,
                     'tools'
                 ));
                 
                 items.push(new ServerStatusItem(
                     'Connected Agents',
-                    this.serverStats.agentCount.toString(),
+                    (this.serverStats.agentCount || 0).toString(),
                     vscode.TreeItemCollapsibleState.None,
                     'account'
                 ));
                 
                 items.push(new ServerStatusItem(
                     'Executions',
-                    this.serverStats.executionCount.toString(),
+                    (this.serverStats.executionCount || 0).toString(),
                     vscode.TreeItemCollapsibleState.None,
                     'play'
                 ));
                 
                 items.push(new ServerStatusItem(
                     'Success Rate',
-                    `${(this.serverStats.successRate * 100).toFixed(1)}%`,
+                    `${((this.serverStats.successRate || 0) * 100).toFixed(1)}%`,
                     vscode.TreeItemCollapsibleState.None,
                     'graph',
-                    this.serverStats.successRate > 0.9 
+                    (this.serverStats.successRate || 0) > 0.9 
                         ? new vscode.ThemeColor('charts.green')
-                        : this.serverStats.successRate > 0.7
+                        : (this.serverStats.successRate || 0) > 0.7
                             ? new vscode.ThemeColor('charts.yellow')
                             : new vscode.ThemeColor('charts.red')
                 ));
@@ -172,10 +172,10 @@ export class ServerStatusProvider implements vscode.TreeDataProvider<ServerStatu
         // Initial load
         this.loadServerStats();
         
-        // Auto-refresh every 10 seconds
+        // Auto-refresh every 30 seconds to reduce load
         this.refreshInterval = setInterval(() => {
             this.loadServerStats();
-        }, 10000);
+        }, 30000);
     }
     
     private stopAutoRefresh(): void {

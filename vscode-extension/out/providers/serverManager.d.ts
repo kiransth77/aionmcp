@@ -30,6 +30,7 @@ export declare class ServerManager implements vscode.Disposable {
     private isRunning;
     private readonly outputChannel;
     private readonly stateChangeEmitter;
+    private readonly axiosInstance;
     readonly onServerStateChanged: vscode.Event<boolean>;
     constructor(context: vscode.ExtensionContext);
     private getWorkspaceRoot;
@@ -56,6 +57,8 @@ export declare class ServerManager implements vscode.Disposable {
     getServerStats(): Promise<ServerStats | null>;
     private handleApiError;
     showOutputChannel(): void;
+    importSpec(specType: string, path: string, name?: string): Promise<any>;
+    registerMockAgent(): Promise<any>;
     dispose(): void;
 }
 //# sourceMappingURL=serverManager.d.ts.map

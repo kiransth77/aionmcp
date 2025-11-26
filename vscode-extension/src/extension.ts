@@ -151,6 +151,104 @@ function registerCommands(context: vscode.ExtensionContext) {
             if (item?.tool) {
                 ToolExecutorWebviewProvider.createOrShow(context.extensionUri, serverManager, item.tool);
             }
+        },
+
+        'aionmcp.importApiSpec': async () => {
+            console.log('Import spec command received');
+            try {
+                // Ask user for spec type
+                const specType = await vscode.window.showQuickPick(
+                    ['openapi', 'graphql', 'asyncapi'],
+                    { placeHolder: 'Select specification type' }
+                );
+                if (!specType) {
+                    return;
+                }
+
+                // Ask for file path or URL
+                const path = await vscode.window.showInputBox({
+                    prompt: 'Enter file path or URL to the specification',
+                    placeHolder: 'e.g., ./specs/api.yaml or https://api.example.com/openapi.json'
+                });
+                if (!path) {
+                    return;
+                }
+
+                // Ask for optional name
+                const name = await vscode.window.showInputBox({
+                    prompt: 'Optional: Enter a name for this specification',
+                    placeHolder: 'e.g., My API'
+                });
+
+                // Import the spec
+                const result = await serverManager.importSpec(specType, path, name || '');
+                
+                vscode.window.showInformationMessage(
+                    `Successfully imported ${result.tools?.length || 0} tools from ${specType} spec`
+                );
+                
+                // Refresh tools tree
+                toolTreeProvider.refresh();
+            } catch (error) {
+                const msg = error instanceof Error ? error.message : String(error);
+                console.error('Import spec error:', msg);
+                vscode.window.showErrorMessage(`Failed to import specification: ${msg}`);
+            }
+        },
+
+        'aionmcp.registerCopilotAgent': async () => {
+            console.log('Register Copilot agent command received');
+            try {
+                if (!serverManager.isServerRunning()) {
+                    vscode.window.showErrorMessage('Server is not running. Please start the server first.');
+                    return;
+                }
+
+                await serverManager.registerMockAgent();
+                vscode.window.showInformationMessage('GitHub Copilot agent registered successfully!');
+                
+                // Refresh agents tree
+                agentTreeProvider.refresh();
+            } catch (error) {
+                const msg = error instanceof Error ? error.message : String(error);
+                console.error('Register agent error:', msg);
+                vscode.window.showErrorMessage(`Failed to register Copilot agent: ${msg}`);
+            }
+        },
+
+        'aionmcp.showAPIInfo': async () => {
+            console.log('Show API info command received');
+            try {
+                const baseUrl = `http://localhost:8080`;
+                
+                const message = 
+                    `AionMCP Server is running at ${baseUrl}\n\n` +
+                    `API Endpoints:\n` +
+                    `• GET  ${baseUrl}/api/v1/tools - List all tools\n` +
+                    `• GET  ${baseUrl}/api/v1/tools/{id} - Get tool details\n` +
+                    `• POST ${baseUrl}/api/v1/tools/{id}/invoke - Execute tool\n\n` +
+                    `Use these endpoints from any agent or application!\n` +
+                    `See documentation for integration examples.`;
+                
+                const action = await vscode.window.showInformationMessage(
+                    message,
+                    'Copy API URL',
+                    'View Documentation',
+                    'Done'
+                );
+
+                if (action === 'Copy API URL') {
+                    await vscode.env.clipboard.writeText(baseUrl);
+                    vscode.window.showInformationMessage(`Copied ${baseUrl} to clipboard`);
+                } else if (action === 'View Documentation') {
+                    // Open documentation in browser
+                    vscode.env.openExternal(vscode.Uri.parse('https://github.com/kiransth77/aionmcp#model-independent-tool-server'));
+                }
+            } catch (error) {
+                const msg = error instanceof Error ? error.message : String(error);
+                console.error('Show API info error:', msg);
+                vscode.window.showErrorMessage(`Failed to show API info: ${msg}`);
+            }
         }
     };
 

@@ -64,6 +64,16 @@
         "icon": "$(file-add)"
       },
       {
+        "command": "aionmcp.registerCopilotAgent",
+        "title": "Register GitHub Copilot Agent",
+        "icon": "$(account)"
+      },
+      {
+        "command": "aionmcp.showAPIInfo",
+        "title": "Show API Endpoints",
+        "icon": "$(info)"
+      },
+      {
         "command": "aionmcp.viewLogs",
         "title": "View Server Logs",
         "icon": "$(output)"
@@ -112,6 +122,16 @@
         {
           "command": "aionmcp.importApiSpec",
           "when": "view == aionmcp.toolsView",
+          "group": "navigation"
+        },
+        {
+          "command": "aionmcp.registerCopilotAgent",
+          "when": "view == aionmcp.agentsView",
+          "group": "navigation"
+        },
+        {
+          "command": "aionmcp.showAPIInfo",
+          "when": "view == aionmcp.serverView",
           "group": "navigation"
         },
         {
