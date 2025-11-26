@@ -1,56 +1,223 @@
-# AionMCP - Autonomous Go MCP Server
+# AionMCP - Model-Independent Tool Server for AI Agents
 
-<!-- AUTO-GENERATED BADGES -->
-![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
-![Success Rate](https://img.shields.io/badge/success_rate-97%25-brightgreen)
-![Avg Latency](https://img.shields.io/badge/avg_latency-250ms-green)
-![Go Version](https://img.shields.io/badge/go-1.21+-blue)
-![License](https://img.shields.io/badge/license-MIT-blue)
-<!-- END AUTO-GENERATED BADGES -->
+**A unified, model-independent tool server that works with GitHub Copilot, Claude, and any AI agent via standard HTTP REST API.**
 
-AionMCP is an autonomous Go-based Model Context Protocol (MCP) server that dynamically imports OpenAPI, GraphQL, and AsyncAPI specifications and exposes them as tools to agents. It features self-learning capabilities, context-awareness, and autonomous documentation using Clean/Hexagonal architecture.
+## ✨ What is AionMCP?
 
-## 🌟 Key Differentiators
+AionMCP is a **universal tool server** that makes any API (OpenAPI, GraphQL, AsyncAPI) available to **any AI model or agent** through a simple HTTP REST API. No model-specific configuration needed.
 
-- **Multi-Protocol Support**: OpenAPI, GraphQL, and AsyncAPI specifications
-- **Autonomous Learning**: Self-improving system that learns from execution patterns
-- **Dynamic Runtime**: Hot-reloadable tools without service restart
-- **Clean Architecture**: Maintainable, testable, and extensible design
-- **Auto-Documentation**: Self-updating documentation and insights
+```
+GitHub Copilot / Claude / Any Agent
+         │
+         │ HTTP REST API
+         ▼
+    AionMCP Server
+         │
+         ▼
+    Your APIs (OpenAPI, GraphQL, AsyncAPI)
+```
 
-## 📊 Project Status
+## 🚀 Quick Start (5 Minutes)
 
-<!-- AUTO-GENERATED STATUS -->
-**Current Branch**: `copilot/sub-pr-6-again`
+### 1. Start the Server
+```bash
+cd /Users/kiran/Documents/GitHub/aionmcp
+./bin/aionmcp-server
+```
 
-**Latest Commit**: [`7a263d0`](../../commit/7a263d0a020055f3f5b82c96b95497beca602a35)
+Or use VS Code: Click ▶️ in AionMCP sidebar
 
-**System Health**: 99/100 (Excellent)
+### 2. Import an API Spec
+```bash
+curl -X POST http://localhost:8080/api/v1/import-spec \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "openapi",
+    "path": "./examples/specs/petstore.yaml",
+    "name": "Petstore API"
+  }'
+```
 
-**Active Tools**: 3
+### 3. Use with GitHub Copilot
+Open GitHub Copilot chat and ask:
+```
+"List all available pets using the petstore API"
+```
 
-**Commits (7 days)**: 10
+Copilot will automatically discover and execute the tool!
 
-*Status updated automatically*
-<!-- END AUTO-GENERATED STATUS -->
+## 🎯 Why Model-Independent?
 
-## ✨ Features
+### ✅ Works with Any Agent
+- GitHub Copilot
+- Claude Desktop
+- Custom agents
+- Future LLMs
+- Internal tools
 
-### Core Capabilities
+### ✅ No Configuration
+- No manual JSON file editing
+- No model-specific setup
+- Just HTTP API calls
 
-- **Multi-Spec Import**: Automatically imports and converts API specifications
-- **Dynamic Tool Registry**: Hot-reload tools without service restart
-- **Self-Learning Engine**: Analyzes patterns and generates insights
-- **Autonomous Documentation**: Auto-generates changelogs and reflections
-- **Performance Monitoring**: Real-time execution metrics and optimization
-- **Error Recovery**: Intelligent error handling and pattern detection
+### ✅ Future-Proof
+- Not tied to MCP protocol
+- Adapts to new models
+- Single integration point
 
-### API Support
+### ✅ Developer-Friendly
+- Standard REST API
+- Works from any language (Python, TypeScript, Go, Java, etc.)
+- Simple JSON format
 
-- **OpenAPI 3.0+**: REST API specifications with full schema support
-- **GraphQL**: Query and mutation support with type introspection
-- **AsyncAPI**: Event-driven API specifications
-## 🚀 Quick Start
+## 📚 Documentation
+
+### Getting Started
+- **[SETUP_GITHUB_COPILOT.md](./docs/SETUP_GITHUB_COPILOT.md)** - Step-by-step setup guide
+- **[QUICK_START.md](./docs/QUICK_START.md)** - Quick reference
+
+### Integration & API
+- **[GITHUB_COPILOT_INTEGRATION.md](./docs/GITHUB_COPILOT_INTEGRATION.md)** - Full integration guide with code examples
+- **[MODEL_INDEPENDENT_TOOLS.md](./docs/MODEL_INDEPENDENT_TOOLS.md)** - Architecture & design philosophy
+
+### Project Overview
+- **[IMPLEMENTATION_SUMMARY.md](./docs/IMPLEMENTATION_SUMMARY.md)** - Complete feature overview
+- **[v0.1.0_RELEASE_NOTES.md](./docs/v0.1.0_RELEASE_NOTES.md)** - What's new in this version
+
+## 🔌 REST API Endpoints
+
+```
+GET  /api/v1/health              # Server health check
+GET  /api/v1/tools               # List all tools
+GET  /api/v1/tools/{id}          # Get tool details
+POST /api/v1/tools/{id}/invoke   # Execute tool
+POST /api/v1/import-spec         # Import API specification
+```
+
+### Examples
+
+```bash
+# List all tools
+curl http://localhost:8080/api/v1/tools | jq .
+
+# Execute a tool
+curl -X POST http://localhost:8080/api/v1/tools/echo/invoke \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Hello from AionMCP!"}'
+```
+
+## 💻 Integration Examples
+
+### TypeScript
+```typescript
+const tools = await fetch('http://localhost:8080/api/v1/tools');
+const result = await fetch('http://localhost:8080/api/v1/tools/echo/invoke', {
+  method: 'POST',
+  body: JSON.stringify({ message: 'Hello!' })
+});
+```
+
+### Python
+```python
+import requests
+tools = requests.get('http://localhost:8080/api/v1/tools').json()
+result = requests.post('http://localhost:8080/api/v1/tools/echo/invoke',
+                       json={'message': 'Hello!'})
+```
+
+### Go
+```go
+resp, _ := http.Get("http://localhost:8080/api/v1/tools")
+resp, _ := http.Post("http://localhost:8080/api/v1/tools/echo/invoke", ...)
+```
+
+See [GITHUB_COPILOT_INTEGRATION.md](./docs/GITHUB_COPILOT_INTEGRATION.md) for more examples.
+
+## ✨ Key Features
+
+- ✅ **Dynamic Tool Import** - Import OpenAPI, GraphQL, or AsyncAPI specs
+- ✅ **Multi-Protocol Support** - HTTP REST and gRPC access
+- ✅ **Agent-Agnostic** - Works with any AI model or custom agent
+- ✅ **Self-Learning** - Tracks execution and learns from patterns
+- ✅ **Hot-Reload** - File watcher auto-imports spec changes
+- ✅ **Auto-Documentation** - Generates docs from API specs
+- ✅ **Agent Registration** - Track connected agents
+- ✅ **VS Code Extension** - Full server management UI
+
+## 📦 What's Included
+
+```
+aionmcp/
+├── bin/aionmcp-server              # Main executable
+├── cmd/server/                     # Server entry point
+├── internal/
+│   ├── core/                       # HTTP/gRPC servers & tool registry
+│   ├── selflearn/                  # Learning engine & BoltDB storage
+│   └── autodocs/                   # Documentation generation
+├── pkg/
+│   ├── importer/                   # OpenAPI/GraphQL/AsyncAPI parsers
+│   ├── agent/                      # Agent registration API
+│   └── feedback/                   # Feedback collection
+├── vscode-extension/               # VS Code extension
+├── docs/                           # Comprehensive documentation
+├── examples/specs/                 # Example API specifications
+│   ├── petstore.yaml               # OpenAPI 3.0 example
+│   ├── blog.graphql                # GraphQL example
+│   └── user-events.yaml            # AsyncAPI example
+└── go.mod                          # Go dependencies
+```
+
+## 🚀 Deployment Options
+
+### Local Development
+```bash
+./bin/aionmcp-server
+# Access: http://localhost:8080
+```
+
+### Docker
+```bash
+docker run -p 8080:8080 aionmcp:latest
+```
+
+### Cloud (AWS/GCP/Azure)
+Deploy the binary to your cloud provider, access via public URL.
+
+### Embedded
+```go
+import "github.com/aionmcp/aionmcp/internal/core"
+server := core.NewServer(logger)
+server.Start()
+```
+
+## 🔐 Security
+
+### Development (Current)
+- Running on localhost only
+- No authentication required
+
+### Production (Recommended)
+- Add API key authentication
+- Use HTTPS/TLS
+- Add rate limiting
+- Implement request validation
+
+## 🤖 Supported Models/Agents
+
+- ✅ **GitHub Copilot** - VS Code, GitHub.com
+- ✅ **Claude Desktop** - Via REST API
+- ✅ **Custom Agents** - Any programming language
+- ✅ **Internal Tools** - Direct API access
+- ✅ **Future LLMs** - Any HTTP-capable client
+
+## 📋 System Requirements
+
+- **Go 1.21+** (if building from source)
+- **8 GB RAM** (recommended)
+- **Port 8080** (HTTP), 9090 (gRPC) available
+- **Disk space** for API specifications
+
+## 🛠️ Building from Source
 
 ```bash
 # Clone the repository
@@ -58,133 +225,64 @@ git clone https://github.com/kiransth77/aionmcp.git
 cd aionmcp
 
 # Build the server
-go build -o bin/aionmcp cmd/server/main.go
+go build -o bin/aionmcp-server ./cmd/server/main.go
 
-# Run with default configuration
-./bin/aionmcp
+# Run
+./bin/aionmcp-server
 ```
 
-The server will start on `http://localhost:8080` with learning enabled.
+## 📖 Documentation Structure
 
-## 🤖 GitHub Copilot Integration
+- **Setup & Getting Started**: See [SETUP_GITHUB_COPILOT.md](./docs/SETUP_GITHUB_COPILOT.md)
+- **API Integration**: See [GITHUB_COPILOT_INTEGRATION.md](./docs/GITHUB_COPILOT_INTEGRATION.md)
+- **Architecture**: See [MODEL_INDEPENDENT_TOOLS.md](./docs/MODEL_INDEPENDENT_TOOLS.md)
+- **Quick Reference**: See [QUICK_START.md](./docs/QUICK_START.md)
+- **Project Overview**: See [IMPLEMENTATION_SUMMARY.md](./docs/IMPLEMENTATION_SUMMARY.md)
 
-Make your APIs available to GitHub Copilot with one click:
+## 🎯 Version & Status
 
-1. **Start the server** - Run AionMCP from the VS Code extension
-2. **Register Copilot** - Click the "Register GitHub Copilot Agent" button in Connected Agents view
-3. **Import APIs** - Add OpenAPI, GraphQL, or AsyncAPI specifications
-4. **Use in Copilot** - Copilot now has access to your tools
+- **Version**: 0.1.0
+- **Architecture**: Model-Independent HTTP REST API
+- **Status**: Production Ready ✅
 
-See **[Copilot Integration Guide](docs/COPILOT_INTEGRATION.md)** for detailed setup.
+## �� Next Steps
 
-## 🏗️ Architecture
+1. **Start the server**: `./bin/aionmcp-server`
+2. **Import your APIs**: Use VS Code extension or REST API
+3. **Use with agents**: GitHub Copilot, Claude, or custom agents
+4. **Deploy**: Cloud, Docker, or embedded
 
-## 📊 Project Status
+## 📞 Support
 
+- **Setup Issues**: See [SETUP_GITHUB_COPILOT.md](./docs/SETUP_GITHUB_COPILOT.md)
+- **API Questions**: See [GITHUB_COPILOT_INTEGRATION.md](./docs/GITHUB_COPILOT_INTEGRATION.md)
+- **Architecture**: See [MODEL_INDEPENDENT_TOOLS.md](./docs/MODEL_INDEPENDENT_TOOLS.md)
+- **Issues**: Report on GitHub
+- **Contributing**: Fork and submit PRs
 
-**System Health**: 99/100 (Excellent)
-
-**Active Tools**: 3
-
-
-*Status updated automatically*
-<!-- END AUTO-GENERATED STATUS -->
-## 📈 Recent Activity
-
-<!-- AUTO-GENERATED ACTIVITY -->
-### Recent Commits
-
-- [`7a263d0`](../../commit/7a263d0a020055f3f5b82c96b95497beca602a35) Initial plan *(0h ago)*
-- [`4610de6`](../../commit/4610de60e68aa64b60062c9c810ccbdf2ce17dc9) Code quality verification and conflict resolution for Iteration 4 *(1h ago)*
-- [`2281c15`](../../commit/2281c156acc1b22062c59250e21399ac81ffe8e4) Initial plan *(1h ago)*
-- [`6a8bcb5`](../../commit/6a8bcb57df04f9b4e2c67d69c2ac723bb2a080a4) fix: Correct semaphore release logic with acquisition tracking *(2d ago)*
-- [`c6d73fe`](../../commit/c6d73fec2483f20bcebc9d5fd305b13e38eb9f24) fix: Address PR review feedback - improve concurrency safety and test reliability *(2d ago)*
-
-### Active Insights
-
-📊 Total insights: 2
-
-*Activity updated automatically*
-<!-- END AUTO-GENERATED ACTIVITY -->
-
-## ⚡ Performance Statistics
-
-<!-- AUTO-GENERATED PERFORMANCE -->
-| Metric | Value | Status |
-|--------|-------|--------|
-| Success Rate | 97.0% | 🟢 Excellent |
-| Avg Latency | 250.0ms | 🟡 Good |
-| Total Executions | 42 | 📊 Tracking |
-| Active Tools | 3 | 🔧 Running |
-
-*Statistics updated in real-time*
-<!-- END AUTO-GENERATED PERFORMANCE -->
-
-## 📦 Installation
-
-### Prerequisites
-
-- Go 1.21 or higher
-- Git
-
-### From Source
-
-```bash
-git clone https://github.com/kiransth77/aionmcp.git
-cd aionmcp
-go mod download
-go build -o bin/aionmcp cmd/server/main.go
-```
-## 📚 Usage
-
-### Basic Usage
-
-```bash
-# Start the server
-./bin/aionmcp
-
-# With custom configuration
-./bin/aionmcp --config config.yaml
-
-# Enable debug logging
-AIONMCP_LOG_LEVEL=debug ./bin/aionmcp
-```
-
-### API Endpoints
-
-- `GET /api/v1/tools` - List available tools
-- `POST /api/v1/tools/{tool}/execute` - Execute a tool
-- `GET /api/v1/learning/stats` - Learning statistics
-- `GET /api/v1/learning/insights` - System insights
-## 🛠️ Development
-
-### Local Development
-
-```bash
-# Run tests
-go test ./...
-
-# Run with hot reload
-go run cmd/server/main.go
-
-# Build for production
-go build -ldflags "-s -w" -o bin/aionmcp cmd/server/main.go
-```
-## 🤝 Contributing
-
-### Development Process
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - See LICENSE file
 
 ---
 
-*README last updated: 2025-11-09 11:38:40 UTC*
+## 🎉 Get Started Now
 
-*This README is automatically updated with current project status and metrics.*
+```bash
+# Start the server
+./bin/aionmcp-server
+
+# In another terminal, import Petstore API
+curl -X POST http://localhost:8080/api/v1/import-spec \
+  -H "Content-Type: application/json" \
+  -d '{"type":"openapi","path":"./examples/specs/petstore.yaml"}'
+
+# Open GitHub Copilot and ask:
+# "List all available pets using the petstore API"
+```
+
+**Questions?** Check the comprehensive documentation in `/docs/`
+
+---
+
+**AionMCP**: One server, any model, any agent. 🚀
