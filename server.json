@@ -1,7 +1,8 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
   "name": "io.github.kiransth77/aionmcp",
-  "description": "Dynamic API tool generator for OpenAPI, GraphQL, and AsyncAPI specs",
+  "title": "AionMCP",
+  "description": "Dynamic API tool generator for OpenAPI, GraphQL, and AsyncAPI specifications",
   "repository": {
     "url": "https://github.com/kiransth77/aionmcp",
     "source": "github"
@@ -11,14 +12,5 @@
     "name": "Kiran Shrestha"
   },
   "license": "MIT",
-  "homepage": "https://github.com/kiransth77/aionmcp",
-  "packages": [
-    {
-      "registryType": "oci",
-      "identifier": "ghcr.io/kiransth77/aionmcp:0.1.0",
-      "transport": {
-        "type": "stdio"
-      }
-    }
-  ]
+  "homepage": "https://github.com/kiransth77/aionmcp"
 }
