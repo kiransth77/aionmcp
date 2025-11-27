@@ -14,52 +14,8 @@
   "homepage": "https://github.com/kiransth77/aionmcp",
   "packages": [
     {
-      "registryType": "universal",
-      "identifier": "io.github.kiransth77/aionmcp",
-      "version": "0.1.0",
-      "distribution": {
-        "type": "executable",
-        "platforms": [
-          {
-            "os": "darwin",
-            "arch": "amd64",
-            "uri": "https://github.com/kiransth77/aionmcp/releases/download/v0.1.0/aionmcp-v0.1.0-darwin-amd64.tar.gz",
-            "hash": "sha256:c71898b4f86e33d3223f39f37d37f595812d848fce2ae5c2a6ec64590aacbdc2"
-          },
-          {
-            "os": "darwin",
-            "arch": "arm64",
-            "uri": "https://github.com/kiransth77/aionmcp/releases/download/v0.1.0/aionmcp-v0.1.0-darwin-arm64.tar.gz",
-            "hash": "sha256:37b5265f9e0c860398d159c49c942ab62ff2cbcf3ad6387aa003a0d562848ccc"
-          },
-          {
-            "os": "linux",
-            "arch": "amd64",
-            "uri": "https://github.com/kiransth77/aionmcp/releases/download/v0.1.0/aionmcp-v0.1.0-linux-amd64.tar.gz",
-            "hash": "sha256:d5edf69c9312ec978f576a4ee5bf81f77f1d0c09cbe23f5984445439d8d7e87f"
-          },
-          {
-            "os": "linux",
-            "arch": "arm64",
-            "uri": "https://github.com/kiransth77/aionmcp/releases/download/v0.1.0/aionmcp-v0.1.0-linux-arm64.tar.gz",
-            "hash": "sha256:69a209d8060288d3a0c97854a8c6ca2fab4d608126ab7a455026eb194dd1e596"
-          },
-          {
-            "os": "windows",
-            "arch": "amd64",
-            "uri": "https://github.com/kiransth77/aionmcp/releases/download/v0.1.0/aionmcp-v0.1.0-windows-amd64.zip",
-            "hash": "sha256:b69e8d0252702937ae8c7a84ceca1f8899372bbc7e9272338ad945d2fff1fb3d"
-          }
-        ]
-      },
-      "transport": {
-        "type": "streamable-http",
-        "url": "http://localhost:8080"
-      }
-    },
-    {
       "registryType": "docker",
-      "identifier": "io.github.kiransth77/aionmcp-docker",
+      "identifier": "io.github.kiransth77/aionmcp",
       "image": "ghcr.io/kiransth77/aionmcp:0.1.0",
       "transport": {
         "type": "streamable-http",
