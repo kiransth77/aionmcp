@@ -14,10 +14,8 @@
   "homepage": "https://github.com/kiransth77/aionmcp",
   "packages": [
     {
-      "registryType": "github-release",
+      "registryType": "http",
       "identifier": "io.github.kiransth77/aionmcp",
-      "repository": "kiransth77/aionmcp",
-      "version": "0.1.0",
       "transport": {
         "type": "streamable-http",
         "url": "http://localhost:8080"
