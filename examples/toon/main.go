@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/kiransth77/aionmcp/pkg/toon"
+	"github.com/aionmcp/aionmcp/pkg/toon"
 )
 
 // Example demonstrating TOON (Token-Oriented Object Notation) context for LLMs
 func main() {
-	fmt.Println("=== TOON Context Builder Example ===\n")
+	fmt.Println("=== TOON Context Builder Example ===")
 
 	// Example 1: Basic Context
 	basicExample()
