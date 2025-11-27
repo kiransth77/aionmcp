@@ -1,0 +1,43 @@
+version: '3.9'
+
+services:
+  aionmcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aionmcp-server
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+    environment:
+      - LOG_LEVEL=info
+      - API_HOST=0.0.0.0
+      - API_PORT=8080
+      - GRPC_HOST=0.0.0.0
+      - GRPC_PORT=9090
+    volumes:
+      - ./examples/specs:/root/examples/specs:ro
+      - ./data:/root/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  # Optional: Postgres for future state management
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: aionmcp-db
+  #   environment:
+  #     POSTGRES_DB: aionmcp
+  #     POSTGRES_USER: aionmcp
+  #     POSTGRES_PASSWORD: aionmcp-dev
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+
+# volumes:
+#   postgres_data:
