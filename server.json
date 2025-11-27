@@ -14,11 +14,10 @@
   "homepage": "https://github.com/kiransth77/aionmcp",
   "packages": [
     {
-      "registryType": "http",
-      "identifier": "io.github.kiransth77/aionmcp",
+      "registryType": "oci",
+      "identifier": "ghcr.io/kiransth77/aionmcp:0.1.0",
       "transport": {
-        "type": "streamable-http",
-        "url": "http://localhost:8080"
+        "type": "stdio"
       }
     }
   ]
