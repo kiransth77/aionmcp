@@ -1,6 +1,7 @@
 package toon
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -54,20 +55,20 @@ func (tf *ToolFormatter) formatVerbose(
 	tags []string,
 ) string {
 	var sb strings.Builder
-	
+
 	sb.WriteString(fmt.Sprintf("Tool: %s\n", name))
 	sb.WriteString(fmt.Sprintf("ID: %s\n", toolID))
 	sb.WriteString(fmt.Sprintf("Description: %s\n", description))
-	
+
 	if len(tags) > 0 {
 		sb.WriteString(fmt.Sprintf("Tags: %s\n", strings.Join(tags, ", ")))
 	}
-	
-	if inputSchema != nil && len(inputSchema) > 0 {
+
+	if len(inputSchema) > 0 {
 		sb.WriteString("Parameters:\n")
 		sb.WriteString(formatSchema(inputSchema, "  "))
 	}
-	
+
 	return sb.String()
 }
 
@@ -82,7 +83,7 @@ func formatTags(tags []string) string {
 // formatSchema returns a formatted schema string
 func formatSchema(schema map[string]interface{}, indent string) string {
 	var sb strings.Builder
-	
+
 	if properties, ok := schema["properties"].(map[string]interface{}); ok {
 		for key, prop := range properties {
 			propMap, _ := prop.(map[string]interface{})
@@ -99,7 +100,7 @@ func formatSchema(schema map[string]interface{}, indent string) string {
 			sb.WriteString(fmt.Sprintf("%s%s (%s, %s)\n", indent, key, propType, required))
 		}
 	}
-	
+
 	return sb.String()
 }
 
@@ -146,10 +147,10 @@ func (cc *ConversationContext) AddMessage(role string, content string) {
 // GetSystemContext returns the system context formatted for the model
 func (cc *ConversationContext) GetSystemContext(compact bool) string {
 	var sb strings.Builder
-	
+
 	sb.WriteString(cc.SystemPrompt)
 	sb.WriteString("\n\n")
-	
+
 	if compact {
 		sb.WriteString(fmt.Sprintf("[TOOLS:%d] ", len(cc.Tools)))
 		var names []string
@@ -163,19 +164,19 @@ func (cc *ConversationContext) GetSystemContext(compact bool) string {
 			sb.WriteString(fmt.Sprintf("%d. %s - %s\n", i+1, tool.Name, tool.Description))
 		}
 	}
-	
+
 	return sb.String()
 }
 
 // GetConversationHistory returns formatted conversation history
 func (cc *ConversationContext) GetConversationHistory(maxMessages int, compact bool) string {
 	var sb strings.Builder
-	
+
 	start := len(cc.History) - maxMessages
 	if start < 0 {
 		start = 0
 	}
-	
+
 	for _, msg := range cc.History[start:] {
 		if compact {
 			sb.WriteString(fmt.Sprintf("[%s] %s\n", shortRole(msg.Role), msg.Content))
@@ -183,7 +184,7 @@ func (cc *ConversationContext) GetConversationHistory(maxMessages int, compact b
 			sb.WriteString(fmt.Sprintf("%s: %s\n", msg.Role, msg.Content))
 		}
 	}
-	
+
 	return sb.String()
 }
 
@@ -208,16 +209,16 @@ func shortRole(role string) string {
 func (cc *ConversationContext) EstimateTokens() int {
 	// Rough estimation: ~1 token per 4 characters
 	count := len(cc.SystemPrompt) / 4
-	
+
 	for _, tool := range cc.Tools {
 		count += len(tool.Name) / 4
 		count += len(tool.Description) / 4
 	}
-	
+
 	for _, msg := range cc.History {
 		count += len(msg.Content) / 4
 	}
-	
+
 	return count
 }
 
@@ -226,7 +227,7 @@ func (cc *ConversationContext) PruneHistory(maxTokens int) {
 	if cc.EstimateTokens() <= maxTokens {
 		return
 	}
-	
+
 	// Keep only recent messages
 	if len(cc.History) > 1 {
 		cc.History = cc.History[1:]
@@ -283,60 +284,60 @@ func (cr *ContextRenderer) renderJSON(cc *ConversationContext) string {
 		Messages: cc.History,
 		State:    cc.State,
 	}
-	json, _ := ctx.ToJSON()
-	return json
+	data, _ := json.Marshal(ctx)
+	return string(data)
 }
 
 // renderText renders as readable text
 func (cr *ContextRenderer) renderText(cc *ConversationContext) string {
 	var sb strings.Builder
-	
+
 	sb.WriteString(cc.SystemPrompt)
 	sb.WriteString("\n\n")
-	
+
 	sb.WriteString("=== Available Tools ===\n")
 	for i, tool := range cc.Tools {
 		sb.WriteString(fmt.Sprintf("%d. %s\n   %s\n\n", i+1, tool.Name, tool.Description))
 	}
-	
+
 	sb.WriteString("=== Conversation History ===\n")
 	for _, msg := range cc.History {
 		sb.WriteString(fmt.Sprintf("[%s]\n%s\n\n", strings.ToUpper(msg.Role), msg.Content))
 	}
-	
+
 	return sb.String()
 }
 
 // renderCompact renders in compact format for token efficiency
 func (cr *ContextRenderer) renderCompact(cc *ConversationContext) string {
 	var sb strings.Builder
-	
+
 	sb.WriteString(fmt.Sprintf("P:%q\n", cc.SystemPrompt[:min(50, len(cc.SystemPrompt))]))
 	sb.WriteString(fmt.Sprintf("T:%d\n", len(cc.Tools)))
 	sb.WriteString(fmt.Sprintf("H:%d\n", len(cc.History)))
-	
+
 	return sb.String()
 }
 
 // renderMarkdown renders as markdown
 func (cr *ContextRenderer) renderMarkdown(cc *ConversationContext) string {
 	var sb strings.Builder
-	
+
 	sb.WriteString("# Conversation Context\n\n")
 	sb.WriteString("## System Prompt\n\n")
 	sb.WriteString(cc.SystemPrompt)
 	sb.WriteString("\n\n## Available Tools\n\n")
-	
+
 	for _, tool := range cc.Tools {
 		sb.WriteString(fmt.Sprintf("### %s\n\n", tool.Name))
 		sb.WriteString(fmt.Sprintf("%s\n\n", tool.Description))
 	}
-	
+
 	sb.WriteString("## Conversation History\n\n")
 	for _, msg := range cc.History {
 		sb.WriteString(fmt.Sprintf("**%s:**\n\n%s\n\n", msg.Role, msg.Content))
 	}
-	
+
 	return sb.String()
 }
 
