@@ -19,7 +19,7 @@ type EngineConfig struct {
 	// WeekStartDay defines which day of the week is considered the start of the week
 	// for weekly scheduling. Default is time.Monday.
 	WeekStartDay time.Weekday
-	
+
 	// MaxHistoryEntries is the maximum number of generation results to keep in history.
 	// When the limit is reached, older entries are removed. Use 0 for default (100 entries).
 	MaxHistoryEntries int
@@ -35,12 +35,12 @@ func DefaultEngineConfig() *EngineConfig {
 
 // Engine implements the DocumentEngine interface
 type Engine struct {
-	generators  map[DocumentType]Generator
-	dataSource  DataSource
-	projectRoot string
-	config      *EngineConfig
-	history     []GenerationResult
-	historyMu   sync.RWMutex
+	generators    map[DocumentType]Generator
+	dataSource    DataSource
+	projectRoot   string
+	config        *EngineConfig
+	history       []GenerationResult
+	historyMu     sync.RWMutex
 	scheduledJobs map[string]*ScheduledJob
 	mu            sync.RWMutex
 }
@@ -64,12 +64,12 @@ func NewEngineWithConfig(projectRoot string, dataSource DataSource, config *Engi
 	if config == nil {
 		config = DefaultEngineConfig()
 	}
-	
+
 	// Ensure MaxHistoryEntries has a valid value
 	if config.MaxHistoryEntries <= 0 {
 		config.MaxHistoryEntries = DefaultMaxHistoryEntries
 	}
-	
+
 	engine := &Engine{
 		generators:    make(map[DocumentType]Generator),
 		dataSource:    dataSource,
@@ -509,7 +509,7 @@ func (e *Engine) addToHistory(result GenerationResult) {
 	defer e.historyMu.Unlock()
 
 	e.history = append(e.history, result)
-	
+
 	// Keep only last MaxHistoryEntries results
 	if len(e.history) > e.config.MaxHistoryEntries {
 		e.history = e.history[len(e.history)-e.config.MaxHistoryEntries:]

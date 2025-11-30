@@ -247,7 +247,7 @@ func (g *GitDataSource) GetCurrentVersion() (string, error) {
 // CategorizeCommit categorizes a commit based on its message
 func (g *GitDataSource) CategorizeCommit(commit GitCommit) string {
 	subject := strings.ToLower(commit.Subject)
-	
+
 	// Use shared categorization patterns from utils
 	for category, keywords := range CommitCategorizationPatterns {
 		for _, keyword := range keywords {

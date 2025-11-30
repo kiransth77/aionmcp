@@ -6,18 +6,18 @@ import (
 
 // ExecutionRecord represents a single tool execution with metadata
 type ExecutionRecord struct {
-	ID           string                 `json:"id"`
-	ToolName     string                 `json:"tool_name"`
-	Timestamp    time.Time              `json:"timestamp"`
-	Duration     time.Duration          `json:"duration"`
-	Success      bool                   `json:"success"`
-	Input        interface{}            `json:"input,omitempty"`
-	Output       interface{}            `json:"output,omitempty"`
-	Error        string                 `json:"error,omitempty"`
-	ErrorType    string                 `json:"error_type,omitempty"` // Use string for consistency with public API
-	Context      map[string]interface{} `json:"context,omitempty"`
-	RetryCount   int                    `json:"retry_count"`
-	SourceType   string                 `json:"source_type"` // openapi, graphql, asyncapi, builtin
+	ID         string                 `json:"id"`
+	ToolName   string                 `json:"tool_name"`
+	Timestamp  time.Time              `json:"timestamp"`
+	Duration   time.Duration          `json:"duration"`
+	Success    bool                   `json:"success"`
+	Input      interface{}            `json:"input,omitempty"`
+	Output     interface{}            `json:"output,omitempty"`
+	Error      string                 `json:"error,omitempty"`
+	ErrorType  string                 `json:"error_type,omitempty"` // Use string for consistency with public API
+	Context    map[string]interface{} `json:"context,omitempty"`
+	RetryCount int                    `json:"retry_count"`
+	SourceType string                 `json:"source_type"` // openapi, graphql, asyncapi, builtin
 }
 
 // ErrorType represents the classification of errors
@@ -71,11 +71,11 @@ type Insight struct {
 type InsightType string
 
 const (
-	InsightTypeOptimization    InsightType = "optimization"
-	InsightTypeConfiguration   InsightType = "configuration"
-	InsightTypeReliability     InsightType = "reliability"
-	InsightTypePerformance     InsightType = "performance"
-	InsightTypeUsage           InsightType = "usage"
+	InsightTypeOptimization  InsightType = "optimization"
+	InsightTypeConfiguration InsightType = "configuration"
+	InsightTypeReliability   InsightType = "reliability"
+	InsightTypePerformance   InsightType = "performance"
+	InsightTypeUsage         InsightType = "usage"
 )
 
 // Priority represents the priority level of an insight
@@ -90,22 +90,22 @@ const (
 
 // LearningStats represents overall learning statistics
 type LearningStats struct {
-	TotalExecutions   int64          `json:"total_executions"`
-	SuccessRate       float64        `json:"success_rate"`
-	AverageLatency    time.Duration  `json:"average_latency"`
-	ErrorBreakdown    map[string]int `json:"error_breakdown"` // Use string for error types
-	TopTools          []ToolStat     `json:"top_tools"`
-	RecentPatterns    []Pattern      `json:"recent_patterns"`
-	ActiveInsights    []Insight      `json:"active_insights"`
-	LastUpdated       time.Time      `json:"last_updated"`
+	TotalExecutions int64          `json:"total_executions"`
+	SuccessRate     float64        `json:"success_rate"`
+	AverageLatency  time.Duration  `json:"average_latency"`
+	ErrorBreakdown  map[string]int `json:"error_breakdown"` // Use string for error types
+	TopTools        []ToolStat     `json:"top_tools"`
+	RecentPatterns  []Pattern      `json:"recent_patterns"`
+	ActiveInsights  []Insight      `json:"active_insights"`
+	LastUpdated     time.Time      `json:"last_updated"`
 }
 
 // ToolStat represents statistics for a specific tool
 type ToolStat struct {
 	Name           string        `json:"name"`
 	ExecutionCount int64         `json:"execution_count"`
-	SuccessCount   int64         `json:"success_count"`   // Track successes separately
-	FailureCount   int64         `json:"failure_count"`   // Track failures separately
+	SuccessCount   int64         `json:"success_count"` // Track successes separately
+	FailureCount   int64         `json:"failure_count"` // Track failures separately
 	SuccessRate    float64       `json:"success_rate"`
 	AverageLatency time.Duration `json:"average_latency"`
 	FirstUsed      time.Time     `json:"first_used"`
@@ -114,28 +114,28 @@ type ToolStat struct {
 
 // CollectionConfig represents configuration for feedback collection
 type CollectionConfig struct {
-	Enabled              bool          `json:"enabled"`
-	SampleRate           float64       `json:"sample_rate"`           // 0.0 to 1.0
-	MaxInputSize         int           `json:"max_input_size"`        // bytes
-	MaxOutputSize        int           `json:"max_output_size"`       // bytes
-	RetentionPeriod      time.Duration `json:"retention_period"`     // how long to keep records
-	PIIFilterEnabled     bool          `json:"pii_filter_enabled"`   // filter out PII data
-	AsyncProcessing      bool          `json:"async_processing"`     // process feedback asynchronously
-	IncludeSuccessful    bool          `json:"include_successful"`   // collect data for successful executions
-	IncludeInputOutput   bool          `json:"include_input_output"` // include actual input/output data
+	Enabled            bool          `json:"enabled"`
+	SampleRate         float64       `json:"sample_rate"`          // 0.0 to 1.0
+	MaxInputSize       int           `json:"max_input_size"`       // bytes
+	MaxOutputSize      int           `json:"max_output_size"`      // bytes
+	RetentionPeriod    time.Duration `json:"retention_period"`     // how long to keep records
+	PIIFilterEnabled   bool          `json:"pii_filter_enabled"`   // filter out PII data
+	AsyncProcessing    bool          `json:"async_processing"`     // process feedback asynchronously
+	IncludeSuccessful  bool          `json:"include_successful"`   // collect data for successful executions
+	IncludeInputOutput bool          `json:"include_input_output"` // include actual input/output data
 }
 
 // DefaultCollectionConfig returns a sensible default configuration
 func DefaultCollectionConfig() CollectionConfig {
 	return CollectionConfig{
-		Enabled:              true,
-		SampleRate:           1.0, // collect all executions by default
-		MaxInputSize:         1024,
-		MaxOutputSize:        4096,
-		RetentionPeriod:      30 * 24 * time.Hour, // 30 days
-		PIIFilterEnabled:     true,
-		AsyncProcessing:      true,
-		IncludeSuccessful:    true,
-		IncludeInputOutput:   true,
+		Enabled:            true,
+		SampleRate:         1.0, // collect all executions by default
+		MaxInputSize:       1024,
+		MaxOutputSize:      4096,
+		RetentionPeriod:    30 * 24 * time.Hour, // 30 days
+		PIIFilterEnabled:   true,
+		AsyncProcessing:    true,
+		IncludeSuccessful:  true,
+		IncludeInputOutput: true,
 	}
 }

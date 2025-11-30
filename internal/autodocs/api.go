@@ -427,7 +427,7 @@ func (h *APIHandler) MiddlewareRequestLogging() gin.HandlerFunc {
 
 		// Only log documentation API requests
 		if strings.HasPrefix(path, "/api/v1/docs") {
-			fmt.Printf("[DOCS-API] %s %s %d %v %s\n", 
+			fmt.Printf("[DOCS-API] %s %s %d %v %s\n",
 				method, path, statusCode, latency, clientIP)
 		}
 	}

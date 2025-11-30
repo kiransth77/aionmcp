@@ -93,7 +93,7 @@ func (r *Reflector) generateErrorInsights(ctx context.Context) ([]Insight, error
 
 		var priority Priority
 		var suggestion string
-		
+
 		// Safely get error_type with default value
 		errorType := "unknown"
 		if et, exists := pattern.Metadata["error_type"]; exists && et != "" {
@@ -103,7 +103,7 @@ func (r *Reflector) generateErrorInsights(ctx context.Context) ([]Insight, error
 		switch {
 		case pattern.Frequency >= 50:
 			priority = PriorityCritical
-			suggestion = fmt.Sprintf("Immediate attention required: %s errors occur very frequently (%d times). Consider reviewing the tool configuration, endpoint availability, or implementing retry logic.", 
+			suggestion = fmt.Sprintf("Immediate attention required: %s errors occur very frequently (%d times). Consider reviewing the tool configuration, endpoint availability, or implementing retry logic.",
 				errorType, pattern.Frequency)
 		case pattern.Frequency >= 20:
 			priority = PriorityHigh
@@ -260,9 +260,9 @@ func (r *Reflector) generateConfigurationInsights(ctx context.Context) ([]Insigh
 			},
 			CreatedAt: time.Now().UTC(),
 			Metadata: map[string]string{
-				"success_rate":      fmt.Sprintf("%.2f", stats.SuccessRate),
-				"total_executions":  fmt.Sprintf("%d", stats.TotalExecutions),
-				"source_type":       "system_stats",
+				"success_rate":     fmt.Sprintf("%.2f", stats.SuccessRate),
+				"total_executions": fmt.Sprintf("%d", stats.TotalExecutions),
+				"source_type":      "system_stats",
 			},
 		}
 

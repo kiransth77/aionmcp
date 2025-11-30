@@ -11,9 +11,9 @@ import (
 type contextKey string
 
 const (
-	contextKeySessionID  contextKey = "session_id"
-	contextKeyRequestID  contextKey = "request_id"
-	contextKeyUserAgent  contextKey = "user_agent"
+	contextKeySessionID contextKey = "session_id"
+	contextKeyRequestID contextKey = "request_id"
+	contextKeyUserAgent contextKey = "user_agent"
 )
 
 // Engine is the main self-learning engine that coordinates feedback collection,

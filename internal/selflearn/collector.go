@@ -26,11 +26,11 @@ func NewCollector(config CollectionConfig, storage Storage, logger *zap.Logger) 
 	// Compile PII patterns once at initialization
 	piiPatterns := []*regexp.Regexp{
 		regexp.MustCompile(`\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b`), // email
-		regexp.MustCompile(`\b\d{3}-\d{2}-\d{4}\b`),                                    // SSN
-		regexp.MustCompile(`\b\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\b`),                       // credit card
-		regexp.MustCompile(`\b\d{3}-\d{3}-\d{4}\b`),                                   // phone
+		regexp.MustCompile(`\b\d{3}-\d{2}-\d{4}\b`),                               // SSN
+		regexp.MustCompile(`\b\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\b`),                   // credit card
+		regexp.MustCompile(`\b\d{3}-\d{3}-\d{4}\b`),                               // phone
 	}
-	
+
 	return &Collector{
 		config:      config,
 		storage:     storage,
@@ -86,7 +86,7 @@ func (c *Collector) CollectExecution(ctx context.Context, execCtx ExecutionConte
 // createExecutionRecord creates an execution record from the provided data
 func (c *Collector) createExecutionRecord(execCtx ExecutionContext, input interface{}, output interface{}, err error, duration time.Duration) ExecutionRecord {
 	recordID := c.generateID()
-	
+
 	record := ExecutionRecord{
 		ID:         recordID,
 		ToolName:   execCtx.ToolName,
@@ -246,7 +246,7 @@ func (c *Collector) filterPII(data interface{}) interface{} {
 
 	// Convert to string for pattern matching
 	dataStr := fmt.Sprintf("%v", data)
-	
+
 	// Apply PII masking using pre-compiled patterns
 	for _, pattern := range c.piiPatterns {
 		dataStr = pattern.ReplaceAllString(dataStr, "[REDACTED]")

@@ -208,9 +208,9 @@ func (c *ChangelogGenerator) generateDayEntry(content *strings.Builder, date str
 	if err != nil {
 		parsedDate = time.Now()
 	}
-	
+
 	content.WriteString(fmt.Sprintf("## %s (%s)\n\n", parsedDate.Format("2006-01-02"), parsedDate.Weekday().String()))
-	
+
 	// Categorize commits
 	categories := c.categorizeCommits(commits)
 

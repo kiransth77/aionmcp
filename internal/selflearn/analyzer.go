@@ -57,7 +57,7 @@ func (a *Analyzer) AnalyzePatterns(ctx context.Context) ([]Pattern, error) {
 	// Store discovered patterns
 	for _, pattern := range patterns {
 		if err := a.storage.StorePattern(ctx, pattern); err != nil {
-			a.logger.Error("Failed to store pattern", 
+			a.logger.Error("Failed to store pattern",
 				zap.String("pattern_id", pattern.ID),
 				zap.Error(err))
 		}
@@ -72,7 +72,7 @@ func (a *Analyzer) analyzeErrorPatterns(ctx context.Context) ([]Pattern, error) 
 	// Get recent executions with errors
 	endTime := time.Now()
 	startTime := endTime.Add(-24 * time.Hour) // Last 24 hours
-	
+
 	executions, err := a.storage.GetExecutionsByTimeRange(ctx, startTime, endTime, 1000)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get executions: %w", err)
@@ -80,7 +80,7 @@ func (a *Analyzer) analyzeErrorPatterns(ctx context.Context) ([]Pattern, error) 
 
 	// Group errors by type and tool
 	errorGroups := make(map[string]*errorGroup)
-	
+
 	for _, exec := range executions {
 		if exec.Success {
 			continue
@@ -108,7 +108,7 @@ func (a *Analyzer) analyzeErrorPatterns(ctx context.Context) ([]Pattern, error) 
 	}
 
 	var patterns []Pattern
-	
+
 	// Convert significant error groups to patterns
 	for _, group := range errorGroups {
 		if group.count >= 3 { // Threshold for pattern recognition
@@ -155,10 +155,10 @@ func (a *Analyzer) analyzePerformancePatterns(ctx context.Context) ([]Pattern, e
 				FirstSeen:   toolStat.FirstUsed,
 				LastSeen:    toolStat.LastUsed,
 				Metadata: map[string]string{
-					"tool_name":        toolStat.Name,
-					"average_latency":  toolStat.AverageLatency.String(),
-					"execution_count":  fmt.Sprintf("%d", toolStat.ExecutionCount),
-					"success_rate":     fmt.Sprintf("%.2f", toolStat.SuccessRate),
+					"tool_name":       toolStat.Name,
+					"average_latency": toolStat.AverageLatency.String(),
+					"execution_count": fmt.Sprintf("%d", toolStat.ExecutionCount),
+					"success_rate":    fmt.Sprintf("%.2f", toolStat.SuccessRate),
 				},
 			}
 			patterns = append(patterns, pattern)
@@ -212,7 +212,7 @@ func (a *Analyzer) calculateConfidence(frequency, totalSamples int) float64 {
 
 	// Simple confidence calculation based on frequency and sample size
 	ratio := float64(frequency) / float64(totalSamples)
-	
+
 	// Base confidence on ratio and sample size
 	confidence := ratio
 	if frequency >= 10 {

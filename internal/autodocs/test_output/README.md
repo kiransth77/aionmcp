@@ -21,15 +21,15 @@ AionMCP is an autonomous Go-based Model Context Protocol (MCP) server that dynam
 ## 📊 Project Status
 
 <!-- AUTO-GENERATED STATUS -->
-**Current Branch**: `copilot/sub-pr-6-again`
+**Current Branch**: `main`
 
-**Latest Commit**: [`7a263d0`](../../commit/7a263d0a020055f3f5b82c96b95497beca602a35)
+**Latest Commit**: [`f4f41db`](../../commit/f4f41db9fffc0d43c67153b80d68480905f7c3d3)
 
 **System Health**: 99/100 (Excellent)
 
 **Active Tools**: 3
 
-**Commits (7 days)**: 10
+**Commits (7 days)**: 17
 
 *Status updated automatically*
 <!-- END AUTO-GENERATED STATUS -->
@@ -99,11 +99,11 @@ AionMCP follows Clean/Hexagonal Architecture principles:
 <!-- AUTO-GENERATED ACTIVITY -->
 ### Recent Commits
 
-- [`7a263d0`](../../commit/7a263d0a020055f3f5b82c96b95497beca602a35) Initial plan *(0h ago)*
-- [`4610de6`](../../commit/4610de60e68aa64b60062c9c810ccbdf2ce17dc9) Code quality verification and conflict resolution for Iteration 4 *(1h ago)*
-- [`2281c15`](../../commit/2281c156acc1b22062c59250e21399ac81ffe8e4) Initial plan *(1h ago)*
-- [`6a8bcb5`](../../commit/6a8bcb57df04f9b4e2c67d69c2ac723bb2a080a4) fix: Correct semaphore release logic with acquisition tracking *(2d ago)*
-- [`c6d73fe`](../../commit/c6d73fec2483f20bcebc9d5fd305b13e38eb9f24) fix: Address PR review feedback - improve concurrency safety and test reliability *(2d ago)*
+- [`f4f41db9`](../../commit/f4f41db9fffc0d43c67153b80d68480905f7c3d3) fix: clean up TOON package formatting and remove duplicate package declaration *(0h ago)*
+- [`8b97b173`](../../commit/8b97b173d7a8b7b5521f03e6ef9f901b28603541) fix: update go-ci.yml to use Go 1.25 to match go.mod requirement *(0h ago)*
+- [`ebeeee28`](../../commit/ebeeee2896733d1c8ff3da684e052b451f195bab) fix: remove redundant newline in fmt.Println to pass linting *(0h ago)*
+- [`a91eb5f4`](../../commit/a91eb5f414c56f9e0d5b92a5f189f94e374bc452) feat: add TOON (Token-Oriented Object Notation) for LLM context optimization *(0h ago)*
+- [`bd39bb10`](../../commit/bd39bb1023fe6886d712a6b2900b5537f108940a) fix: update Dockerfile Go version to 1.25 *(0h ago)*
 
 ### Active Insights
 
@@ -177,19 +177,18 @@ go build -ldflags "-s -w" -o bin/aionmcp cmd/server/main.go
 ```
 ## 🤝 Contributing
 
-### Development Process
+### Active Insights
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
+📊 Total insights: 2
+
+*Activity updated automatically*
+<!-- END AUTO-GENERATED ACTIVITY -->
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-*README last updated: 2025-11-09 11:38:39 UTC*
+*README last updated: 2025-11-27 22:47:17 AEST*
 
 *This README is automatically updated with current project status and metrics.*

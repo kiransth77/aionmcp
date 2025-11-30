@@ -191,7 +191,7 @@ func (r *ReflectionGenerator) generateExecutiveSummary(content *strings.Builder,
 	// Overall health assessment
 	healthScore := CalculateHealthScore(learning)
 	healthStatus := GetHealthStatus(healthScore)
-	
+
 	content.WriteString("### System Health\n\n")
 	content.WriteString(fmt.Sprintf("**Overall Health Score**: %d/100 (%s)\n\n", healthScore, healthStatus))
 

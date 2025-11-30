@@ -5,65 +5,74 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-*This changelog was automatically generated on 2025-11-09 11:38:38*
+*This changelog was automatically generated on 2025-11-27 22:47:17*
 
-## 2025-11-09 (Sunday)
+## 2025-11-27 (Thursday)
 
-### 📦 Other
+### ✨ Features
 
-- Initial plan ([`7a263d0`](../../commit/7a263d0a020055f3f5b82c96b95497beca602a35)) by copilot-swe-agent[bot]
-- Code quality verification and conflict resolution for Iteration 4 ([`4610de6`](../../commit/4610de60e68aa64b60062c9c810ccbdf2ce17dc9)) by copilot-swe-agent[bot] (30 files, +970/-829 lines)
-  Co-authored-by: kiransth77 <23469105+kiransth77@users.noreply.github.com>
-- Initial plan ([`2281c15`](../../commit/2281c156acc1b22062c59250e21399ac81ffe8e4)) by copilot-swe-agent[bot]
-
-## 2025-11-07 (Friday)
-
-### 🐛 Bug Fixes
-
-- fix: Correct semaphore release logic with acquisition tracking ([`6a8bcb5`](../../commit/6a8bcb57df04f9b4e2c67d69c2ac723bb2a080a4)) by copilot-swe-agent[bot] (7 files, +51/-39 lines)
-  Co-authored-by: kiransth77 <23469105+kiransth77@users.noreply.github.com>
-- fix: Address PR review feedback - improve concurrency safety and test reliability ([`c6d73fe`](../../commit/c6d73fec2483f20bcebc9d5fd305b13e38eb9f24)) by copilot-swe-agent[bot] (8 files, +193/-114 lines)
-  Co-authored-by: kiransth77 <23469105+kiransth77@users.noreply.github.com>
-
-### 📦 Other
-
-- Update internal/core/registry.go ([`00f652e`](../../commit/00f652e7482387f43e4ae13d4070c8769df8c2d3)) by Kiran Shrestha (1 files, +9/-5 lines)
-  Co-authored-by: Copilot <175728472+Copilot@users.noreply.github.com>
-
-## 2025-11-06 (Thursday)
+- fix: remove redundant newline in fmt.Println to pass linting ([`ebeeee28`](../../commit/ebeeee2896733d1c8ff3da684e052b451f195bab)) by Kiran Shrestha (1 files, +2/-2 lines)
+- feat: add TOON (Token-Oriented Object Notation) for LLM context optimization ([`a91eb5f4`](../../commit/a91eb5f414c56f9e0d5b92a5f189f94e374bc452)) by Kiran Shrestha (4 files, +1255/-0 lines)
+  New optional feature for efficient LLM interaction and context management:
+- feat: add Docker/OCI support with GitHub Actions CI/CD ([`f630fdb0`](../../commit/f630fdb0b0859e3d7aeaac3840ea615d1594538c)) by Kiran Shrestha (5 files, +625/-0 lines)
+  - Add Dockerfile with multi-stage build (Go builder + Alpine runtime)
+- feat: add server.json with binary distribution for v0.1.0 ([`de9282b5`](../../commit/de9282b5e136a8827154c3ddee84d6b932e68492)) by Kiran Shrestha (1 files, +71/-0 lines)
 
 ### 🐛 Bug Fixes
 
-- fix: Apply PR review feedback - implement handler removal and fix concurrency issues ([`85d4dd5`](../../commit/85d4dd5894bced7e9e7694f6101a9aed1d29da9a)) by copilot-swe-agent[bot] (10 files, +325/-92 lines)
-  Co-authored-by: kiransth77 <23469105+kiransth77@users.noreply.github.com>
-- fix: Address code review feedback - error classification, metadata access, and comment accuracy ([`1580003`](../../commit/1580003c8972e02959df07ad17caf6f2c4c3454e)) by copilot-swe-agent[bot] (3 files, +8/-6 lines)
-  Co-authored-by: kiransth77 <23469105+kiransth77@users.noreply.github.com>
+- fix: clean up TOON package formatting and remove duplicate package declaration ([`f4f41db9`](../../commit/f4f41db9fffc0d43c67153b80d68480905f7c3d3)) by Kiran Shrestha (2 files, +259/-266 lines)
+- fix: update go-ci.yml to use Go 1.25 to match go.mod requirement ([`8b97b173`](../../commit/8b97b173d7a8b7b5521f03e6ef9f901b28603541)) by Kiran Shrestha (1 files, +1/-1 lines)
+- fix: update Dockerfile Go version to 1.25 ([`bd39bb10`](../../commit/bd39bb1023fe6886d712a6b2900b5537f108940a)) by Kiran Shrestha (1 files, +1/-1 lines)
+  go.mod requires Go >= 1.25.0, but Dockerfile was using 1.21-alpine.
+- fix: use OCI (Docker) registry type with correct transport ([`4367eddf`](../../commit/4367eddfcf5d9910127d7515ae8acade5457a8ed)) by Kiran Shrestha (1 files, +3/-4 lines)
+- fix: use http registry type for remote server ([`bfcf1030`](../../commit/bfcf103011e866585d659e39bf4082bbd6434610)) by Kiran Shrestha (1 files, +1/-3 lines)
+- fix: use github-release registry type ([`2c94c727`](../../commit/2c94c72771a11a764c2b4a10e2a279283e6a18eb)) by Kiran Shrestha (1 files, +3/-2 lines)
+- fix: simplify to docker registry type for initial publication ([`7f3bdd60`](../../commit/7f3bdd605ac766afcaa258dca0ea80a040330ce4)) by Kiran Shrestha (1 files, +1/-45 lines)
+- fix: use universal registry type for binary distribution ([`41aacac9`](../../commit/41aacac98c381ecf747ac4b71c56d6444e5170f6)) by Kiran Shrestha (1 files, +1/-2 lines)
 
-### 📦 Other
+### 📚 Documentation
 
-- Initial plan ([`0f89f83`](../../commit/0f89f83c3f120cf09cfb4976996649bf2cb5604d)) by copilot-swe-agent[bot]
-- Initial plan ([`4ab4519`](../../commit/4ab451948d7107e984e7420e30460698315f28d4)) by copilot-swe-agent[bot]
+- docs: add comprehensive OCI publishing guide ([`2fb46b6f`](../../commit/2fb46b6fb230e1d1c9c7a9f547f887e0b54ce839)) by Kiran Shrestha (1 files, +402/-0 lines)
+  Complete guide for publishing AionMCP to GitHub Container Registry:
+- docs: add visibility strategy, roadmap, comparison, and contributing guide ([`3bce366d`](../../commit/3bce366df5d8caf8869273f5f5a18e2f8f95d4bc)) by Kiran Shrestha (7 files, +1915/-0 lines)
+  - Add VISIBILITY_STRATEGY.md for community growth planning
+
+### 🔧 Chores
+
+- chore: remove packages - listing as metadata-only entry ([`5e873b19`](../../commit/5e873b19921bf8c8775e4b97be5824c33f1ffcbc)) by Kiran Shrestha (1 files, +3/-11 lines)
+
+## 2025-11-26 (Wednesday)
+
+### ✨ Features
+
+- feat: make AionMCP model-independent with universal REST API ([`d1f85839`](../../commit/d1f85839888e0cd9778d71983aab784b1333a427)) by Kiran Shrestha (37 files, +3583/-1914 lines)
+  - Remove Claude Desktop specific configuration (no longer model-dependent)
+
+### 📚 Documentation
+
+- docs: update root README with model-independent focus ([`d3cfa422`](../../commit/d3cfa4223a62de44f6ebaea60a8d7709411bc390)) by Kiran Shrestha (1 files, +223/-125 lines)
+  - Emphasize universal REST API architecture
 
 ## Summary
 
-**Period:** 2025-11-02 to 2025-11-09
+**Period:** 2025-11-20 to 2025-11-27
 
-**Total commits:** 10
+**Total commits:** 17
 
 **Changes by type:**
 
-- Other: 6
-- Features: 1
-- Bug Fixes: 3
+- Chores: 1
+- Features: 4
+- Bug Fixes: 9
+- Documentation: 3
 
-**Contributors:** 2
+**Contributors:** 1
 
-- copilot-swe-agent[bot]: 9 commits
-- Kiran Shrestha: 1 commits
+- Kiran Shrestha: 17 commits
 
 **Code changes:**
-- Files changed: 59
-- Lines added: +1556
-- Lines removed: -1085
-- Net change: +471 lines
+- Files changed: 67
+- Lines added: +8349
+- Lines removed: -2376
+- Net change: +5973 lines
 

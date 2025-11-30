@@ -194,7 +194,7 @@ func (l *LearningDataSource) GetDetailedInsights() ([]InsightSummary, error) {
 	if l.learningAPIURL == "" {
 		return l.getMockLearningSnapshot().ActiveInsights, nil
 	}
-	
+
 	ctx, cancel := context.WithTimeout(context.Background(), l.httpClient.Timeout)
 	defer cancel()
 
@@ -230,7 +230,7 @@ func (l *LearningDataSource) GetPatterns() ([]PatternSummary, error) {
 	if l.learningAPIURL == "" {
 		return l.getMockLearningSnapshot().RecentPatterns, nil
 	}
-	
+
 	ctx, cancel := context.WithTimeout(context.Background(), l.httpClient.Timeout)
 	defer cancel()
 
@@ -266,7 +266,7 @@ func (l *LearningDataSource) TriggerAnalysis() error {
 	if l.learningAPIURL == "" {
 		return nil // No-op if learning system not available
 	}
-	
+
 	ctx, cancel := context.WithTimeout(context.Background(), l.httpClient.Timeout)
 	defer cancel()
 
@@ -295,10 +295,10 @@ func (l *LearningDataSource) GetHealthStatus() (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Calculate health score using shared utility
 	healthScore := CalculateHealthScore(snapshot)
-	
+
 	// Determine status
 	var status string
 	if healthScore >= 90 {
